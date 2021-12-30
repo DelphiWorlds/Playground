@@ -1,0 +1,48 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{E04891D2-655A-484A-9673-2FA2317AD025}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="Application\LocationDemo.dproj">
+            <Dependencies>Service\LocationDemoService.dproj</Dependencies>
+        </Projects>
+        <Projects Include="Service\LocationDemoService.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="LocationDemo" DependsOnTargets="LocationDemoService">
+        <MSBuild Projects="Application\LocationDemo.dproj"/>
+    </Target>
+    <Target Name="LocationDemo:Clean" DependsOnTargets="LocationDemoService:Clean">
+        <MSBuild Projects="Application\LocationDemo.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="LocationDemo:Make" DependsOnTargets="LocationDemoService:Make">
+        <MSBuild Projects="Application\LocationDemo.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="LocationDemoService">
+        <MSBuild Projects="Service\LocationDemoService.dproj"/>
+    </Target>
+    <Target Name="LocationDemoService:Clean">
+        <MSBuild Projects="Service\LocationDemoService.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="LocationDemoService:Make">
+        <MSBuild Projects="Service\LocationDemoService.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="LocationDemo;LocationDemoService"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="LocationDemo:Clean;LocationDemoService:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="LocationDemo:Make;LocationDemoService:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>

@@ -1,0 +1,36 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{260216F8-608B-4C0B-B782-5CF2C1D66330}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="Application\LocationDemo.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="LocationDemo">
+        <MSBuild Projects="Application\LocationDemo.dproj"/>
+    </Target>
+    <Target Name="LocationDemo:Clean">
+        <MSBuild Projects="Application\LocationDemo.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="LocationDemo:Make">
+        <MSBuild Projects="Application\LocationDemo.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="LocationDemo"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="LocationDemo:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="LocationDemo:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>
