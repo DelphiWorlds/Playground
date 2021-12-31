@@ -13,33 +13,122 @@ unit DW.LocationMonitor.iOS;
 
 {$I DW.GlobalDefines.inc}
 
-// *** NOTE ***: Requires dw-fusedlocation.jar (in the Lib folder) to be added to the Libraries node under the Android platform in Project Manager
-
 interface
 
 uses
   // RTL
-  System.Sensors, System.Sensors.Components,
+  System.Sensors, System.Classes, System.TypInfo,
+  // macOS
+  Macapi.ObjectiveC,
+  // iOS
+  iOSapi.CoreLocation, iOSapi.Foundation,
   // DW
-  DW.LocationMonitor, DW.Sensors;
+  DW.LocationMonitor;
 
 type
+  IApplicationActiveNotifications = interface(NSObject)
+    ['{BCEDAA3F-B9AB-4A77-B7BC-9457C3A304BD}']
+    procedure willEnterForeground(notification: Pointer); cdecl;
+    procedure didEnterBackground(notification: Pointer); cdecl;
+  end;
+
+  TApplicationActiveNotifier = class(TOCLocal)
+  private
+    class var FIsLaunched: Boolean;
+  private
+    FIsActive: Boolean;
+    FOnChange: TNotifyEvent;
+    procedure DoChange;
+  protected
+    function GetObjectiveCClass: PTypeInfo; override;
+  protected
+    class property IsLaunched: Boolean read FIsLaunched;
+  public
+    { IApplicationActiveNotifications }
+    procedure willEnterForeground(notification: Pointer); cdecl;
+    procedure didEnterBackground(notification: Pointer); cdecl;
+  public
+    constructor Create;
+    destructor Destroy; override;
+    property IsActive: Boolean read FIsActive;
+    property OnChange: TNotifyEvent read FOnChange write FOnChange;
+  end;
+
+  TPlatformLocationMonitor = class;
+
+  TLocationManagerDelegate = class(TOCLocal, CLLocationManagerDelegate)
+  private
+    FMonitor: TPlatformLocationMonitor;
+    // FPreviousLocation: TLocationCoord2D;
+  public
+    { CLLocationManagerDelegate }
+    procedure locationManager(manager: CLLocationManager; didFailWithError: NSError); overload; cdecl;
+    procedure locationManager(manager: CLLocationManager; didUpdateHeading: CLHeading); overload; cdecl;
+    procedure locationManager(manager: CLLocationManager; didUpdateToLocation: CLLocation; fromLocation: CLLocation); overload; cdecl;
+    procedure locationManager(manager: CLLocationManager; monitoringDidFailForRegion: CLRegion; withError: NSError); overload; cdecl;
+    procedure locationManager(manager: CLLocationManager; didChangeAuthorizationStatus: CLAuthorizationStatus); overload; cdecl;
+    [MethodName('locationManager:didUpdateLocations:')]
+    procedure locationManagerDidUpdateLocations(manager: CLLocationManager; locations: NSArray); cdecl;
+    function locationManagerShouldDisplayHeadingCalibration(manager: CLLocationManager): Boolean; cdecl;
+    [MethodName('locationManager:didDetermineState:forRegion:')]
+    procedure locationManagerDidDetermineStateForRegion(manager: CLLocationManager; state: CLRegionState; region: CLRegion); cdecl;
+    [MethodName('locationManager:didRangeBeacons:inRegion:')]
+    procedure locationManagerDidRangeBeaconsInRegion(manager: CLLocationManager; beacons: NSArray; region: CLBeaconRegion); cdecl;
+    [MethodName('locationManager:rangingBeaconsDidFailForRegion:withError:')]
+    procedure locationManagerRangingBeaconsDidFailForRegionWithError(manager: CLLocationManager; region: CLBeaconRegion; error: NSError); cdecl;
+    [MethodName('locationManager:didEnterRegion:')]
+    procedure locationManagerDidEnterRegion(manager: CLLocationManager; region: CLRegion); cdecl;
+    [MethodName('locationManager:didExitRegion:')]
+    procedure locationManagerDidExitRegion(manager: CLLocationManager; region: CLRegion); cdecl;
+    [MethodName('locationManager:didStartMonitoringForRegion:')]
+    procedure locationManagerDidStartMonitoringForRegion(manager: CLLocationManager; region: CLRegion); cdecl;
+    procedure locationManagerDidPauseLocationUpdates(manager: CLLocationManager); cdecl;
+    procedure locationManagerDidResumeLocationUpdates(manager: CLLocationManager); cdecl;
+    [MethodName('locationManager:didFinishDeferredUpdatesWithError:')]
+    procedure locationManagerDidFinishDeferredUpdatesWithError(manager: CLLocationManager; error: NSError); cdecl;
+  public
+    constructor Create(const AMonitor: TPlatformLocationMonitor);
+  end;
+
+  TLocationChangeMonitoring = (Normal, Significant);
+
   TPlatformLocationMonitor = class(TCustomPlatformLocationMonitor)
   private
-    FSensor: TLocationSensor;
-    procedure SensorLocationChangedHandler(Sender: TObject; const AOldLocation, ANewLocation: TLocationCoord2D);
+    const
+      cActivityValues: array[TLocationActivityType] of CLActivityType = (
+        CLActivityTypeOther, CLActivityTypeAutomotiveNavigation, CLActivityTypeFitness, CLActivityTypeOtherNavigation
+      );
+  private
+    FActivityType: TLocationActivityType;
+    FApplicationActiveNotifier: TApplicationActiveNotifier;
+    FIsActive: Boolean;
+    FLocationChangeMonitoring: TLocationChangeMonitoring;
+    FLocationDelegate: TLocationManagerDelegate;
+    FLocationManager: CLLocationManager;
+    FRequestedActiveChange: Boolean;
+    FUsageAuthorization: TLocationUsageAuthorization;
+    function CheckPermission: Boolean;
+    procedure DoApplicationActiveChanged(Sender: TObject);
+    function HasAlwaysAuthorization: Boolean;
+    function HasSignificantChangeMonitoring: Boolean;
+    procedure RequestPermission;
+    procedure Start(const APermissionCheck: Boolean);
+    procedure StartMonitoring;
+    procedure Stop;
+    procedure StopMonitoring;
   protected
+    procedure DidChangeAuthorizationStatus(const AAuthorizationStatus: CLAuthorizationStatus);
+    procedure DidUpdateLocation(const ALocation: CLLocation);
     function GetAccuracy: Double; override;
     function GetActivityType: TLocationActivityType; override;
     function GetDistance: Double; override;
     function GetUsageAuthorization: TLocationUsageAuthorization; override;
     function GetIsActive: Boolean; override;
-    procedure LocationUpdatesChange(const AActive: Boolean);
     procedure SetAccuracy(const Value: Double); override;
     procedure SetActivityType(const Value: TLocationActivityType); override;
     procedure SetDistance(const Value: Double); override;
-    procedure SetUsageAuthorization(const Value: TLocationUsageAuthorization); override;
     procedure SetIsActive(const AValue: Boolean); override;
+    procedure SetUsageAuthorization(const Value: TLocationUsageAuthorization); override;
   public
     constructor Create(const ALocationMonitor: TLocationMonitor); override;
     destructor Destroy; override;
@@ -48,121 +137,354 @@ type
 implementation
 
 uses
+  // RTL
+  System.SysUtils,
+  // macOS
+  Macapi.ObjCRuntime, Macapi.Helpers,
+  // iOS
+  iOSapi.Helpers, iOSapi.UIKit,
+  // DW
+  DW.OSLog,
   DW.Location.Types;
+
+{ TApplicationActiveNotifier }
+
+constructor TApplicationActiveNotifier.Create;
+begin
+  inherited;
+  FIsActive := TiOSHelper.SharedApplication.applicationState <> UIApplicationStateBackground;
+  TiOSHelper.DefaultNotificationCenter.addObserver(GetObjectID, sel_getUid('willEnterForeground:'),
+    NSObjectToID(UIApplicationWillEnterForegroundNotification), nil);
+  TiOSHelper.DefaultNotificationCenter.addObserver(GetObjectID, sel_getUid('didEnterBackground:'),
+    NSObjectToID(UIApplicationDidEnterBackgroundNotification), nil);
+end;
+
+destructor TApplicationActiveNotifier.Destroy;
+begin
+  TiOSHelper.DefaultNotificationCenter.removeObserver(GetObjectID);
+  inherited;
+end;
+
+function TApplicationActiveNotifier.GetObjectiveCClass: PTypeInfo;
+begin
+  Result := TypeInfo(IApplicationActiveNotifications);
+end;
+
+procedure TApplicationActiveNotifier.didEnterBackground(notification: Pointer);
+begin
+  FIsActive := False;
+  DoChange;
+end;
+
+procedure TApplicationActiveNotifier.willEnterForeground(notification: Pointer);
+begin
+  FIsActive := True;
+  FIsLaunched := True;
+  DoChange;
+end;
+
+procedure TApplicationActiveNotifier.DoChange;
+begin
+  if Assigned(FOnChange) then
+    FOnChange(Self);
+end;
+
+{ TLocationManagerDelegate }
+
+constructor TLocationManagerDelegate.Create(const AMonitor: TPlatformLocationMonitor);
+begin
+  inherited Create;
+  FMonitor := AMonitor;
+end;
+
+procedure TLocationManagerDelegate.locationManager(manager: CLLocationManager; didChangeAuthorizationStatus: CLAuthorizationStatus);
+begin
+  FMonitor.DidChangeAuthorizationStatus(didChangeAuthorizationStatus);
+end;
+
+procedure TLocationManagerDelegate.locationManager(manager: CLLocationManager; monitoringDidFailForRegion: CLRegion; withError: NSError);
+begin
+  // TODO?
+end;
+
+procedure TLocationManagerDelegate.locationManager(manager: CLLocationManager; didUpdateToLocation, fromLocation: CLLocation);
+begin
+  // Handled in locationManagerDidUpdateLocations
+end;
+
+procedure TLocationManagerDelegate.locationManager(manager: CLLocationManager; didUpdateHeading: CLHeading);
+begin
+  // Possible future implementation
+end;
+
+procedure TLocationManagerDelegate.locationManager(manager: CLLocationManager; didFailWithError: NSError);
+begin
+  // TODO?
+end;
+
+procedure TLocationManagerDelegate.locationManagerDidDetermineStateForRegion(manager: CLLocationManager; state: CLRegionState; region: CLRegion);
+begin
+  // TODO?
+end;
+
+procedure TLocationManagerDelegate.locationManagerDidEnterRegion(manager: CLLocationManager; region: CLRegion);
+begin
+  // TODO
+end;
+
+procedure TLocationManagerDelegate.locationManagerDidExitRegion(manager: CLLocationManager; region: CLRegion);
+begin
+  // TODO
+end;
+
+procedure TLocationManagerDelegate.locationManagerDidFinishDeferredUpdatesWithError(manager: CLLocationManager; error: NSError);
+begin
+  // Not implemented
+end;
+
+procedure TLocationManagerDelegate.locationManagerDidPauseLocationUpdates(manager: CLLocationManager);
+begin
+  // TODO
+end;
+
+procedure TLocationManagerDelegate.locationManagerDidRangeBeaconsInRegion(manager: CLLocationManager; beacons: NSArray; region: CLBeaconRegion);
+begin
+  // TODO
+end;
+
+procedure TLocationManagerDelegate.locationManagerDidResumeLocationUpdates(manager: CLLocationManager);
+begin
+  // TODO
+end;
+
+procedure TLocationManagerDelegate.locationManagerDidStartMonitoringForRegion(manager: CLLocationManager; region: CLRegion);
+begin
+  // TODO
+end;
+
+procedure TLocationManagerDelegate.locationManagerDidUpdateLocations(manager: CLLocationManager; locations: NSArray);
+begin
+  FMonitor.DidUpdateLocation(TCLLocation.Wrap(locations.lastObject));
+end;
+
+procedure TLocationManagerDelegate.locationManagerRangingBeaconsDidFailForRegionWithError(manager: CLLocationManager; region: CLBeaconRegion;
+  error: NSError);
+begin
+  // Not implemented
+end;
+
+function TLocationManagerDelegate.locationManagerShouldDisplayHeadingCalibration(manager: CLLocationManager): Boolean;
+begin
+  Result := False;
+end;
 
 { TPlatformLocationMonitor }
 
 constructor TPlatformLocationMonitor.Create(const ALocationMonitor: TLocationMonitor);
 begin
   inherited;
-  FSensor := TLocationSensor.Create(nil);
-  FSensor.OnLocationChanged := SensorLocationChangedHandler;
+  FApplicationActiveNotifier := TApplicationActiveNotifier.Create;
+  FApplicationActiveNotifier.OnChange := DoApplicationActiveChanged;
+  FLocationDelegate := TLocationManagerDelegate.Create(Self);
+  FLocationManager := TCLLocationManager.Create;
+  FLocationManager.retain;
+  FLocationManager.setDelegate(FLocationDelegate.GetObjectID);
 end;
 
 destructor TPlatformLocationMonitor.Destroy;
 begin
-  FSensor.Free;
+  FLocationManager.setDelegate(nil);
+  FLocationManager.release;
+  FLocationDelegate.Free;
   inherited;
 end;
 
-procedure TPlatformLocationMonitor.LocationUpdatesChange(const AActive: Boolean);
+function TPlatformLocationMonitor.CheckPermission: Boolean;
 begin
-  // FRequestedActiveChange := False;
+  Result := False;
+  case TCLLocationManager.OCClass.authorizationStatus of
+    kCLAuthorizationStatusNotDetermined:
+      RequestPermission;
+    kCLAuthorizationStatusAuthorized, kCLAuthorizationStatusAuthorizedWhenInUse:
+      Result := True;
+  end;
+end;
+
+procedure TPlatformLocationMonitor.RequestPermission;
+begin
+  case FUsageAuthorization of
+    TLocationUsageAuthorization.WhenInUse:
+      FLocationManager.requestWhenInUseAuthorization;
+    TLocationUsageAuthorization.Always:
+      FLocationManager.requestAlwaysAuthorization;
+  end;
+end;
+
+procedure TPlatformLocationMonitor.DidChangeAuthorizationStatus(const AAuthorizationStatus: CLAuthorizationStatus);
+begin
+  TOSLog.d('TPlatformLocationMonitor.DidChangeAuthorizationStatus');
+  case AAuthorizationStatus of
+    kCLAuthorizationStatusAuthorized, kCLAuthorizationStatusAuthorizedWhenInUse:
+    begin
+      if FRequestedActiveChange then
+        Start(False);
+    end;
+    kCLAuthorizationStatusDenied, kCLAuthorizationStatusRestricted:
+      Stop;
+  end;
+end;
+
+procedure TPlatformLocationMonitor.DoApplicationActiveChanged(Sender: TObject);
+begin
+  // Changes level of monitoring depending on the application state.
+  TOSLog.d('TPlatformLocationMonitor.DoApplicationActiveChanged');
+  if FIsActive then
+    StartMonitoring;
+end;
+
+procedure TPlatformLocationMonitor.Start(const APermissionCheck: Boolean);
+begin
+  TOSLog.d('TPlatformLocationMonitor.Start');
+  if not APermissionCheck or CheckPermission then
+  begin
+    if TOSVersion.Check(9) and TiOSHelper.HasBackgroundMode('location') then
+      FLocationManager.setAllowsBackgroundLocationUpdates(True);
+    StartMonitoring;
+    FRequestedActiveChange := False;
+    FIsActive := True;
+  end;
+end;
+
+procedure TPlatformLocationMonitor.StartMonitoring;
+begin
+  FLocationManager.setPausesLocationUpdatesAutomatically(FApplicationActiveNotifier.IsActive);
+  if HasSignificantChangeMonitoring and HasAlwaysAuthorization and not FApplicationActiveNotifier.IsActive then
+  begin
+    TOSLog.d('TPlatformLocationMonitor.StartMonitoring > Significant');
+    FLocationManager.startMonitoringSignificantLocationChanges;
+    FLocationChangeMonitoring := TLocationChangeMonitoring.Significant;
+  end
+  else
+  begin
+    FLocationManager.startUpdatingLocation;
+    FLocationChangeMonitoring := TLocationChangeMonitoring.Normal;
+  end;
+end;
+
+procedure TPlatformLocationMonitor.Stop;
+begin
+  StopMonitoring;
+  FIsActive := False;
   DoStateChanged;
+end;
+
+procedure TPlatformLocationMonitor.StopMonitoring;
+begin
+  if FLocationChangeMonitoring = TLocationChangeMonitoring.Significant then
+    FLocationManager.stopMonitoringSignificantLocationChanges
+  else
+    FLocationManager.stopUpdatingLocation;
 end;
 
 function TPlatformLocationMonitor.GetAccuracy: Double;
 begin
-  Result := FSensor.Accuracy;
+  Result := FLocationManager.desiredAccuracy;
 end;
 
 function TPlatformLocationMonitor.GetActivityType: TLocationActivityType;
 begin
-  Result := FSensor.ActivityType;
+  Result := FActivityType;
 end;
 
 function TPlatformLocationMonitor.GetDistance: Double;
 begin
-  Result := FSensor.Distance;
+  Result := FLocationManager.distanceFilter;
 end;
 
 function TPlatformLocationMonitor.GetIsActive: Boolean;
 begin
-  Result := FSensor.Active;
+  Result := FIsActive;
 end;
 
 function TPlatformLocationMonitor.GetUsageAuthorization: TLocationUsageAuthorization;
 begin
-  Result := FSensor.UsageAuthorization;
+  Result := FUsageAuthorization;
+end;
+
+function TPlatformLocationMonitor.HasAlwaysAuthorization: Boolean;
+begin
+  Result := TCLLocationManager.OCClass.authorizationStatus = kCLAuthorizationStatusAuthorizedAlways;
+end;
+
+function TPlatformLocationMonitor.HasSignificantChangeMonitoring: Boolean;
+begin
+  Result := TCLLocationManager.OCClass.significantLocationChangeMonitoringAvailable;
 end;
 
 procedure TPlatformLocationMonitor.SetAccuracy(const Value: Double);
 begin
-  FSensor.Accuracy := Value;
+  FLocationManager.setDesiredAccuracy(Value);
 end;
 
 procedure TPlatformLocationMonitor.SetActivityType(const Value: TLocationActivityType);
 begin
-  FSensor.ActivityType := Value;
+  FActivityType := Value;
+  FLocationManager.setActivityType(cActivityValues[FActivityType]);
 end;
 
 procedure TPlatformLocationMonitor.SetDistance(const Value: Double);
 begin
-  FSensor.Distance := Value;
+  FLocationManager.setDistanceFilter(Value);
 end;
 
 procedure TPlatformLocationMonitor.SetIsActive(const AValue: Boolean);
 begin
-{
-  if not FRequestedActiveChange and (AValue <> IsActive) then
+  if not FRequestedActiveChange and (AValue <> FIsActive) then
   begin
-    if IsActive then
+    TOSLog.d('TPlatformLocationMonitor.SetIsActive');
+    TOSLog.d('> Changing');
+    if FIsActive then
+      Stop
+    else
     begin
       FRequestedActiveChange := True;
-      FClient.stopLocationUpdates;
-    end
-    else if HasPermissions then
-    begin
-      FRequestedActiveChange := True;
-      UpdateClient;
-      FClient.startLocationUpdates;
-    end
-    // else invoke some error thingy
+      Start(True);
+    end;
   end;
-}
 end;
 
 procedure TPlatformLocationMonitor.SetUsageAuthorization(const Value: TLocationUsageAuthorization);
 begin
-  FSensor.UsageAuthorization := Value;
+  if Value <> FUsageAuthorization then
+  begin
+    FUsageAuthorization := Value;
+    if FIsActive then
+      RequestPermission;
+  end;
 end;
 
-procedure TPlatformLocationMonitor.SensorLocationChangedHandler(Sender: TObject; const AOldLocation, ANewLocation: TLocationCoord2D);
+procedure TPlatformLocationMonitor.DidUpdateLocation(const ALocation: CLLocation);
 var
   LData: TLocationData;
 begin
-  LData.Location := ANewLocation;
-  if FSensor.Sensor <> nil then
-  begin
-    Include(LData.Flags, TLocationDataFlag.Accuracy);
-    LData.Accuracy := FSensor.Sensor.Accuracy;
-    if TCustomLocationSensor.TProperty.Altitude in FSensor.Sensor.AvailableProperties then
-    begin
-      Include(LData.Flags, TLocationDataFlag.Altitude);
-      LData.Altitude := FSensor.Sensor.Altitude;
-    end;
-    if TCustomLocationSensor.TProperty.TrueHeading in FSensor.Sensor.AvailableProperties then
-    begin
-      Include(LData.Flags, TLocationDataFlag.Bearing);
-      LData.Bearing := FSensor.Sensor.TrueHeading;
-    end;
-    if TCustomLocationSensor.TProperty.Speed in FSensor.Sensor.AvailableProperties then
-    begin
-      Include(LData.Flags, TLocationDataFlag.Speed);
-      LData.Speed := FSensor.Sensor.Speed;
-    end;
-  end;
+  LData.Accuracy := ALocation.horizontalAccuracy;
+  LData.Altitude := ALocation.altitude;
+  LData.Bearing := ALocation.course;
+  LData.Location := TLocationCoord2D.Create(ALocation.coordinate.latitude, ALocation.coordinate.longitude);
+  LData.DateTime := NSDateToDate(ALocation.timestamp);
+  LData.Speed := ALocation.speed;
+  LData.Flags := [TLocationDataFlag.Accuracy, TLocationDataFlag.Altitude, TLocationDataFlag.Bearing, TLocationDataFlag.Speed];
+  if not FApplicationActiveNotifier.IsActive then
+    LData.ApplicationState := TLocationApplicationState.Background;
+  // This means that iOS launched the application into the background, but it is not shown
+  if not TApplicationActiveNotifier.IsLaunched then
+    LData.ApplicationState := TLocationApplicationState.Hidden;
   DoLocationChanged(LData);
+  if not FApplicationActiveNotifier.IsActive then
+    TOSLog.d('TPlatformLocationMonitor.DidUpdateLocation > %.6f, %.6f', [LData.Location.Latitude, LData.Location.Longitude]);
 end;
+
+initialization
+  TOSLog.Tag := 'Locn';
 
 end.
