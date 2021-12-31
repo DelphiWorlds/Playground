@@ -16,6 +16,8 @@ For the Android platform, this demo (as per a later version of the original demo
 
 This means that the Delphi code no longer needs to start a service - the service will be invoked when the location updates are sent. This also means that the service code is greatly simplified.
 
+**NOTE:** Even though the location settings are controlled via application code, the **service still needs to do the actual work** when location updates are sent by the system.
+
 ### iOS
 
 The iOS implementation is a complete rewrite of the original, which was based on TLocationSensor. It now behaves as it should, e.g.:
@@ -71,11 +73,12 @@ In the project options, ensure that the application has the `Receive Boot Comple
 
 For iOS, ensure that the `location` option is selected for `UIBackgroundModes`
 
-## Status of this demo (Dec 30th, 2021)
+## Status of this demo (Jan 1st, 2022)
 
 ### General status
 
 * In the process of determining whether it fits requirements of those already using projects based on the original demo. 
+* Currently, there is no code in this demo for updating of a database, or sending the location updates to a web server. This will be added later, however feel free to add your own code from your existing app(s) to test it
 * Testing, testing, testing...
 
 ### Android status
