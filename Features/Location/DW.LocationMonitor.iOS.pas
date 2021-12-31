@@ -144,7 +144,6 @@ uses
   // iOS
   iOSapi.Helpers, iOSapi.UIKit,
   // DW
-  DW.OSLog,
   DW.Location.Types;
 
 { TApplicationActiveNotifier }
@@ -322,7 +321,6 @@ end;
 
 procedure TPlatformLocationMonitor.DidChangeAuthorizationStatus(const AAuthorizationStatus: CLAuthorizationStatus);
 begin
-  TOSLog.d('TPlatformLocationMonitor.DidChangeAuthorizationStatus');
   case AAuthorizationStatus of
     kCLAuthorizationStatusAuthorized, kCLAuthorizationStatusAuthorizedWhenInUse:
     begin
@@ -337,14 +335,12 @@ end;
 procedure TPlatformLocationMonitor.DoApplicationActiveChanged(Sender: TObject);
 begin
   // Changes level of monitoring depending on the application state.
-  TOSLog.d('TPlatformLocationMonitor.DoApplicationActiveChanged');
   if FIsActive then
     StartMonitoring;
 end;
 
 procedure TPlatformLocationMonitor.Start(const APermissionCheck: Boolean);
 begin
-  TOSLog.d('TPlatformLocationMonitor.Start');
   if not APermissionCheck or CheckPermission then
   begin
     if TOSVersion.Check(9) and TiOSHelper.HasBackgroundMode('location') then
@@ -360,7 +356,6 @@ begin
   FLocationManager.setPausesLocationUpdatesAutomatically(FApplicationActiveNotifier.IsActive);
   if HasSignificantChangeMonitoring and HasAlwaysAuthorization and not FApplicationActiveNotifier.IsActive then
   begin
-    TOSLog.d('TPlatformLocationMonitor.StartMonitoring > Significant');
     FLocationManager.startMonitoringSignificantLocationChanges;
     FLocationChangeMonitoring := TLocationChangeMonitoring.Significant;
   end
@@ -441,8 +436,6 @@ procedure TPlatformLocationMonitor.SetIsActive(const AValue: Boolean);
 begin
   if not FRequestedActiveChange and (AValue <> FIsActive) then
   begin
-    TOSLog.d('TPlatformLocationMonitor.SetIsActive');
-    TOSLog.d('> Changing');
     if FIsActive then
       Stop
     else
@@ -480,11 +473,6 @@ begin
   if not TApplicationActiveNotifier.IsLaunched then
     LData.ApplicationState := TLocationApplicationState.Hidden;
   DoLocationChanged(LData);
-  if not FApplicationActiveNotifier.IsActive then
-    TOSLog.d('TPlatformLocationMonitor.DidUpdateLocation > %.6f, %.6f', [LData.Location.Latitude, LData.Location.Longitude]);
 end;
-
-initialization
-  TOSLog.Tag := 'Locn';
 
 end.
