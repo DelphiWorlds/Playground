@@ -14,7 +14,11 @@ This means that the Delphi code no longer needs to start a service - the service
 
 ### iOS
 
-For iOS, this demo has been modified from the original demo to take advantage of changes in Delphi 10.4.2. Otherwise, from a developers point of view this part of the implemenation is virtually identical to the original demo.
+The iOS implementation is a complete rewrite of the original, which was based on TLocationSensor. It now behaves as it should, e.g.:
+
+* When setting IsActive to True, it requests permissions **first**, and waits for the authorization result before attempting to start location monitoring
+* Location data is now retrieved from the underlying CLLocation itself, rather than relying on the Sensor property of TLocationSensor.
+* The application state is included in the location data passed to the event. `Normal` means that the application was launched normally, by the user. `Background` means that the app was launched by the user, but is now in the background. `Hidden` means that the app was launched by the system but not shown. This is how background location updates happen.
 
 ## Creating your own project from scratch
 
@@ -54,9 +58,18 @@ Add the following, after `<%receivers%>`:
 
 In the project options, ensure that the application has the `Access Background Location` permission checked.
 
-## Status of this demo
+### Version Info
 
-In the process of determining whether it fits requirements of those already using projects based on the original demo (Dec 30th, 2021)
+For iOS, ensure that the `location` option is selected for `UIBackgroundModes`
+
+## Status of this demo (Dec 30th, 2021)
+
+### General status
+
+* In the process of determining whether it fits requirements of those already using projects based on the original demo. 
+* Testing, testing, testing...
+
+### Android status
 
 According to my research, location updates should still be sent when the device is in "doze" mode - usually if location updates occur it means the device has moved sufficiently to bring it out of "doze" mode anyway.
 
