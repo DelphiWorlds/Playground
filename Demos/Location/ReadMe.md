@@ -55,12 +55,17 @@ The first meta-data entry tells the broadcast receiver (DWLocationReceiver, ment
 Add the following, after `<%receivers%>`:
 
 ```
-  <receiver android:name="com.delphiworlds.kastri.DWLocationReceiver" />
+    <receiver android:name="com.delphiworlds.kastri.DWLocationReceiver">
+      <intent-filter>
+        <action android:name="android.intent.action.BOOT_COMPLETED"/>
+        <action android:name="android.intent.action.QUICKBOOT_POWERON" />
+      </intent-filter>    
+    </receiver>
 ```
 
 ### Permissions
 
-In the project options, ensure that the application has the `Access Background Location` permission checked.
+In the project options, ensure that the application has the `Receive Boot Completed` and `Access Background Location` permissions checked.
 
 ### Version Info
 
