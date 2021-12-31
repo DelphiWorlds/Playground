@@ -4,6 +4,10 @@
 
 To replace the existing Cross-Platform Location Demo in Kastri, subsituting a standard Service with a JobIntentService (even though this is deprecated)
 
+## Feedback
+
+Please provide feedback about this demo as per [the main ReadMe.](https://github.com/DelphiWorlds/Playground/blob/main/Readme.md)
+
 ## Description
 
 ### Android
