@@ -4,7 +4,8 @@ interface
 
 uses
   System.SysUtils, System.Classes, System.Android.Service,
-  AndroidApi.JNI.GraphicsContentViewText, Androidapi.JNI.Os;
+  AndroidApi.JNI.GraphicsContentViewText, Androidapi.JNI.Os,
+  DW.Location.Types;
 
 type
   TServiceModule = class(TAndroidIntentService)
@@ -21,8 +22,9 @@ implementation
 {$R *.dfm}
 
 uses
-  Androidapi.Helpers, Androidapi.JNI.Location,
-  DW.OSLog, DW.Location.Types, DW.Androidapi.JNI.Location, DW.LocationHelpers.Android;
+  Androidapi.Helpers, Androidapi.JNI.Location, Androidapi.JNI.JavaTypes,
+  DW.Androidapi.JNI.Location, DW.LocationHelpers.Android,
+  LD.LocationUpdater;
 
 procedure TServiceModule.AndroidIntentServiceHandleIntent(const Sender: TObject; const AnIntent: JIntent);
 var
@@ -37,7 +39,7 @@ begin
     if LLocation <> nil then
     begin
       LHelper.BroadcastLocationData(LLocation);
-      TOSLog.d('%.5f, %.5f', [LHelper.Data.Location.Latitude, LHelper.Data.Location.Longitude]);
+      TLocationUpdater.HandleLocationData(LHelper.Data);
     end;
   end;
 end;
