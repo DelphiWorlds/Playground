@@ -48,7 +48,8 @@ uses
   System.Permissions,
   FMX.DialogService.Async,
   DW.OSLog, DW.OSDevice,
-  DW.Sensors, DW.Consts.Android, DW.UIHelper, DW.Permissions.Helpers;
+  DW.Sensors, DW.Consts.Android, DW.UIHelper, DW.Permissions.Helpers,
+  LD.LocationUpdater;
 
 const
   cBackgroundPermissionsMessage = 'This application requires access to location updates in the background'#13#10#13#10 +
@@ -157,6 +158,9 @@ procedure TMainView.LocationMonitorLocationChangedHandler(Sender: TObject; const
 var
   LTimestamp: string;
 begin
+  // This event is where the data needs to be handled on iOS. On Android, the data needs to be handled in the service
+  if TOSVersion.Platform = TOSVersion.TPlatform.pfiOS then
+    TLocationUpdater.HandleLocationData(AData);
   LTimestamp := FormatDateTime('hh:nn:ss.zzz', Now);
   Memo.Lines.Add(Format('%s - Location: %2.6f, %2.6f', [LTimestamp, AData.Location.Latitude, AData.Location.Longitude]));
   Memo.Lines.Add(Format('%s - Speed: %.1f, Altitude: %.1f, Bearing: %.1f', [LTimestamp, AData.Speed, AData.Altitude, AData.Bearing]));
