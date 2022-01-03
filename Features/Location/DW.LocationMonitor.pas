@@ -98,18 +98,41 @@ type
     ///   ActivityType property on iOS
     /// </summary>
     property ActivityType: TLocationActivityType read GetActivityType write SetActivityType;
+    /// <summary>
+    ///   On Android, the service is sent an alarm intent *when not in doze mode* if this value is greater than zero
+    /// </summary>
     property AlarmInterval: Int64 read GetAlarmInterval write SetAlarmInterval;
     /// <summary>
-    ///   Distance property on iOS
+    ///   Distance property on iOS, MinimumDisplacement property on Android
     /// </summary>
     property Distance: Double read GetDistance write SetDistance;
+    /// <summary>
+    ///   On Android, the fastest interval that location updates can be received
+    /// </summary>
+    /// <remarks>
+    ///   If other apps are also receiving location updates, those updates can be shared here, at this rate
+    /// </remarks>
     property FastestInterval: Int64 read GetFastestInterval write SetFastestInterval;
+    /// <summary>
+    ///   On Android, the interval that location updates can be received
+    /// </summary>
     property Interval: Int64 read GetInterval write SetInterval;
+    /// <summary>
+    ///   Determines whether or not location updates are active
+    /// </summary>
     property IsActive: Boolean read GetIsActive write SetIsActive;
     /// <summary>
     ///   Determines whether or not Access Background Location is required on Android
     /// </summary>
     property NeedsBackgroundAccess: Boolean read FNeedsBackgroundAccess write FNeedsBackgroundAccess;
+    /// <summary>
+    ///   On Android, determines the priority of the updates
+    /// </summary>
+    /// <remarks>
+    ///   For valid values, please see:
+    ///     https://developers.google.com/android/reference/com/google/android/gms/location/LocationRequest#PRIORITY_BALANCED_POWER_ACCURACY
+    ///   Defaults to: 100
+    /// </remarks>
     property Priority: Integer read GetPriority write SetPriority;
     /// <summary>
     ///   UsageAuthorization property on iOS
