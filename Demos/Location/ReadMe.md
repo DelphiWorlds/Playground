@@ -16,7 +16,9 @@ For the Android platform, this demo (as per a later version of the original demo
 
 This means that the Delphi code no longer needs to start a service - the service will be invoked when the location updates are sent. This also means that the service code is greatly simplified.
 
-**NOTE:** Even though the location settings are controlled via application code, the **service still needs to do the actual work** when location updates are sent by the system.
+The service will also be invoked if the AlarmInterval property is set to a value greater than zero. Note that the **alarm will not be received in the service if the device is in doze mode.** Unfortunately there is currently no simple way around this.
+
+**NOTE:** Even though the location settings are controlled via application code, and the application can receive broadcasts with the location data, the **service still needs to do the actual work** when location updates are sent by the system.
 
 ### iOS
 
