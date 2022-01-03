@@ -65,7 +65,7 @@ begin
   FLocationMonitor.OnLocationChanged := LocationMonitorLocationChangedHandler;
   FLocationMonitor.UsageAuthorization := TLocationUsageAuthorization.Always;
   FLocationMonitor.ActivityType := TLocationActivityType.Navigation;
-  FLocationMonitor.AlarmInterval := 60000; // Once per minute
+  FLocationMonitor.AlarmInterval := 15000; // Once per 15 secs
   UpdateChangeStateButton;
 end;
 
