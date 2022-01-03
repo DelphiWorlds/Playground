@@ -26,10 +26,11 @@ type
 
   TCustomPlatformLocationMonitor = class(TObject)
   private
+    FAlarmInterval: Int64;
     FLocationMonitor: TLocationMonitor;
-    FNeedsBackgroundAccess: Boolean;
     FFastestInterval: Int64;
     FInterval: Int64;
+    FNeedsBackgroundAccess: Boolean;
     FPriority: Integer;
   protected
     procedure DoLocationChanged(const AData: TLocationData); virtual;
@@ -41,11 +42,13 @@ type
     function GetIsActive: Boolean; virtual;
     procedure SetAccuracy(const Value: Double); virtual;
     procedure SetActivityType(const Value: TLocationActivityType); virtual;
+    procedure SetAlarmInterval(const Value: Int64); virtual;
     procedure SetDistance(const Value: Double); virtual;
     procedure SetUsageAuthorization(const Value: TLocationUsageAuthorization); virtual;
     procedure SetIsActive(const AValue: Boolean); virtual;
     property Accuracy: Double read GetAccuracy write SetAccuracy;
     property ActivityType: TLocationActivityType read GetActivityType write SetActivityType;
+    property AlarmInterval: Int64 read FAlarmInterval write SetAlarmInterval;
     property Distance: Double read GetDistance write SetDistance;
     property FastestInterval: Int64 read FFastestInterval write FFastestInterval;
     property Interval: Int64 read FInterval write FInterval;
@@ -79,6 +82,8 @@ type
     procedure SetIsActive(const Value: Boolean);
     procedure SetPriority(const Value: Integer);
     procedure SetUsageAuthorization(const Value: TLocationUsageAuthorization);
+    function GetAlarmInterval: Int64;
+    procedure SetAlarmInterval(const Value: Int64);
   protected
     procedure DoLocationChanged(const AData: TLocationData);
     procedure DoStateChanged;
@@ -93,6 +98,7 @@ type
     ///   ActivityType property on iOS
     /// </summary>
     property ActivityType: TLocationActivityType read GetActivityType write SetActivityType;
+    property AlarmInterval: Int64 read GetAlarmInterval write SetAlarmInterval;
     /// <summary>
     ///   Distance property on iOS
     /// </summary>
@@ -179,6 +185,11 @@ begin
   //
 end;
 
+procedure TCustomPlatformLocationMonitor.SetAlarmInterval(const Value: Int64);
+begin
+  FAlarmInterval := Value;
+end;
+
 procedure TCustomPlatformLocationMonitor.SetDistance(const Value: Double);
 begin
   //
@@ -230,6 +241,11 @@ begin
   Result := FPlatformLocationMonitor.ActivityType;
 end;
 
+function TLocationMonitor.GetAlarmInterval: Int64;
+begin
+  Result := FPlatformLocationMonitor.AlarmInterval;
+end;
+
 function TLocationMonitor.GetDistance: Double;
 begin
   Result := FPlatformLocationMonitor.Distance;
@@ -268,6 +284,11 @@ end;
 procedure TLocationMonitor.SetActivityType(const Value: TLocationActivityType);
 begin
   FPlatformLocationMonitor.ActivityType := Value;
+end;
+
+procedure TLocationMonitor.SetAlarmInterval(const Value: Int64);
+begin
+  FPlatformLocationMonitor.AlarmInterval := Value;
 end;
 
 procedure TLocationMonitor.SetDistance(const Value: Double);

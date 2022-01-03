@@ -64,6 +64,7 @@ type
     function GetIsActive: Boolean; override;
     procedure LocationChange(const ALocation: JLocation);
     procedure LocationUpdatesChange(const AActive: Boolean);
+    procedure SetAlarmInterval(const Value: Int64); override;
     procedure SetIsActive(const AValue: Boolean); override;
   public
     constructor Create(const ALocationMonitor: TLocationMonitor); override;
@@ -139,6 +140,7 @@ begin
   FDelegate := TFusedLocationClientDelegate.Create(Self);
   FClient := TJDWFusedLocationClient.JavaClass.init(TAndroidHelper.Context, FDelegate);
   FLocationReceiver := TLocationReceiver.Create(Self);
+  AlarmInterval := FClient.getAlarmInterval;
   FastestInterval := FClient.getFastestInterval;
   Interval := FClient.getInterval;
   Priority := FClient.getPriority;
@@ -180,6 +182,12 @@ end;
 function TPlatformLocationMonitor.GetIsActive: Boolean;
 begin
   Result := (FClient <> nil) and FClient.getIsActive;
+end;
+
+procedure TPlatformLocationMonitor.SetAlarmInterval(const Value: Int64);
+begin
+  inherited;
+  FClient.setAlarmInterval(Value);
 end;
 
 procedure TPlatformLocationMonitor.SetIsActive(const AValue: Boolean);
