@@ -34,8 +34,9 @@ end;
 class procedure TLocationUpdater.HandleLocationData(const AData: TLocationData);
 var
   LStoredData: TLocationData;
-  LMessage, LFileName: string;
+  LMessage, LFileName, LModifier: string;
   LDistance: Double;
+  LModifiers: TArray<string>;
 begin
   LStoredData.Reset;
   LFileName := GetStoredLocationFileName;
@@ -45,8 +46,15 @@ begin
     LDistance := TGeodetic.DistanceBetween(LStoredData.Location, AData.Location)
   else
     LDistance := 0;
-  LMessage := Format('%s [%d] Location: %.5f, %.5f, Distance: %.2f, Speed: %.2f',
-    [TOSDevice.GetDeviceModel, Ord(AData.ApplicationState), AData.Location.Latitude, AData.Location.Longitude, LDistance, AData.Speed]);
+  LModifier := '';
+  if AData.IsCached then
+    LModifiers := LModifiers + ['Cached'];
+  if AData.IsMocked then
+    LModifiers := LModifiers + ['Mocked'];
+  if Length(LModifiers) > 0 then
+    LModifier := ' (' + string.Join(', ', LModifiers) + ')';
+  LMessage := Format('%s [%d]%s Location: %.5f, %.5f, Distance: %.2f, Speed: %.2f',
+    [TOSDevice.GetDeviceModel, Ord(AData.ApplicationState), LModifier, AData.Location.Latitude, AData.Location.Longitude, LDistance, AData.Speed]);
   if (LStoredData.DateTime = 0) or (LDistance >= cMinimumDistance) then
   begin
     // Handle the first location, or a location greater than or equal to the minimum distance from the last location
