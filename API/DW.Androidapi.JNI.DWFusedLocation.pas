@@ -31,6 +31,7 @@ type
   [JavaSignature('com/delphiworlds/kastri/DWFusedLocationClient')]
   JDWFusedLocationClient = interface(JObject)
     ['{8C54A1DE-2B00-4C77-B1C5-6D07E1174076}']
+    function getAlarmInterval: Int64; cdecl;
     function getFastestInterval: Int64; cdecl;
     function getInterval: Int64; cdecl;
     function getIsActive: Boolean; cdecl;
@@ -38,6 +39,7 @@ type
     function getPriority: Integer; cdecl;
     function getSmallestDisplacement: Single; cdecl;
     procedure requestLastKnownLocation; cdecl;
+    procedure setAlarmInterval(interval: Int64); cdecl;
     procedure setFastestInterval(interval: Int64); cdecl;
     procedure setInterval(interval: Int64); cdecl;
     procedure setMockLocation(latitude: Double; longitude: Double); cdecl;
