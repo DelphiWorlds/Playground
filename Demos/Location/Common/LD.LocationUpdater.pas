@@ -45,7 +45,7 @@ begin
     LDistance := TGeodetic.DistanceBetween(LStoredData.Location, AData.Location)
   else
     LDistance := 0;
-  LMessage := Format('%s [%d] %.5f, %.5f, %.2f, %.2f',
+  LMessage := Format('%s [%d] Location: %.5f, %.5f, Distance: %.2f, Speed: %.2f',
     [TOSDevice.GetDeviceModel, Ord(AData.ApplicationState), AData.Location.Latitude, AData.Location.Longitude, LDistance, AData.Speed]);
   if (LStoredData.DateTime = 0) or (LDistance >= cMinimumDistance) then
   begin
