@@ -4,6 +4,8 @@
 
 To replace the existing Cross-Platform Location Demo in Kastri, subsituting a standard Service with a JobIntentService (even though this is deprecated)
 
+This version of the demo solely uses [Fused Location API](https://developers.google.com/location-context/fused-location-provider). As such, it is unaffected by the [issue that affects TLocationSensor on Android 12.](https://quality.embarcadero.com/browse/RSP-35804)
+
 ## Feedback
 
 Please provide feedback about this demo as per [the main ReadMe.](https://github.com/DelphiWorlds/Playground/blob/main/Readme.md)
