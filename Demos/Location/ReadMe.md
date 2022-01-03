@@ -69,6 +69,10 @@ Add the following, after `<%receivers%>`:
     </receiver>
 ```
 
+### Libraries
+
+If creating your own project, you will need to add the [`dw-fusedlocation-2.0.0.jar`](https://github.com/DelphiWorlds/Playground/blob/master/Lib/dw-fusedlocation-2.0.0.jar) and [`dw-kastri-base-2.0.0.jar`](https://github.com/DelphiWorlds/Playground/blob/master/Lib/dw-kastri-base-2.0.0.jar) files to the Libraries node under the Android platform in Project Manager
+
 ### Permissions
 
 In the project options, ensure that the application has the `Receive Boot Completed` and `Access Background Location` permissions checked.
