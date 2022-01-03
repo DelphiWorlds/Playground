@@ -61,11 +61,11 @@ constructor TMainView.Create(AOwner: TComponent);
 begin
   inherited;
   FLocationMonitor := TLocationMonitor.Create;
-  FLocationMonitor.IsActive := False;
   FLocationMonitor.OnStateChanged := LocationMonitorStateChangedHandler;
   FLocationMonitor.OnLocationChanged := LocationMonitorLocationChangedHandler;
   FLocationMonitor.UsageAuthorization := TLocationUsageAuthorization.Always;
   FLocationMonitor.ActivityType := TLocationActivityType.Navigation;
+  FLocationMonitor.AlarmInterval := 60000; // Once per minute
   UpdateChangeStateButton;
 end;
 
@@ -173,9 +173,9 @@ end;
 
 procedure TMainView.ChangeStateButtonClick(Sender: TObject);
 begin
-  if HasBasePermissions then
+  if HasBasePermissions or FLocationMonitor.IsActive then
     ToggleLocationActive
-  else
+  else if not FLocationMonitor.IsActive then
     RequestPermissions;
 end;
 
