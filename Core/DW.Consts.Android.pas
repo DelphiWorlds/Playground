@@ -63,6 +63,7 @@ const
   cDWBroadcastReceiverExtraStartUnlock = cDWBroadcastReceiverName + '.EXTRA_START_UNLOCK';
 
   cDWFusedLocationClientName = 'com.delphiworlds.kastri.DWFusedLocationClient';
+  cDWFusedLocationClientKeyServiceClassName = cDWFusedLocationClientName + '.KEY_SERVICE_CLASS_NAME';
   cDWFusedLocationClientActionAlarm = cDWFusedLocationClientName + '.ACTION_ALARM';
   cDWFusedLocationClientExtraAlarmInterval = cDWFusedLocationClientName + '.EXTRA_ALARM_INTERVAL';
   cDWFusedLocationClientExtraAlarmTimestamp = cDWFusedLocationClientName + '.EXTRA_ALARM_TIMESTAMP';
