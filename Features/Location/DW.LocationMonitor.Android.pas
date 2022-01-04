@@ -213,16 +213,17 @@ end;
 procedure TPlatformLocationMonitor.TriggerAlarm;
 var
   LComponentName: JComponentName;
-  LServiceName: string;
+  LServiceName, LJobId: string;
   LIntent: JIntent;
 begin
   if TPlatformOSMetadata.GetValue(cDWFusedLocationClientKeyServiceClassName, LServiceName) then
   begin
+    TPlatformOSMetadata.GetValue(cDWFusedLocationClientKeyJobId, LJobId);
     LComponentName := TJComponentName.JavaClass.init(TAndroidHelper.Context, StringToJString(LServiceName));
     LIntent := TJIntent.JavaClass.init(StringToJString(cDWFusedLocationClientActionAlarm));
-    LIntent.putExtra(StringToJString(cDWFusedLocationClientExtraAlarmInterval), 0);
+    LIntent.putExtra(StringToJString(cDWFusedLocationClientExtraAlarmInterval), Int64(0));
     LIntent.putExtra(StringToJString(cDWFusedLocationClientExtraAlarmTimestamp), TJSystem.JavaClass.currentTimeMillis);
-    TJapp_JobIntentService.JavaClass.enqueueWork(TAndroidHelper.Context, LComponentName, 0, LIntent);
+    TJapp_JobIntentService.JavaClass.enqueueWork(TAndroidHelper.Context, LComponentName, StrToIntDef(LJobId, 234567), LIntent);
   end;
 end;
 

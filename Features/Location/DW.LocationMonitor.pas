@@ -94,7 +94,7 @@ type
     /// <summary>
     ///   On Android, triggers an alarm in the service immediately
     /// </summary>
-    procedure TriggerAlarm(const AServiceName: string);
+    procedure TriggerAlarm;
     /// <summary>
     ///   Accuracy property on iOS
     /// </summary>
