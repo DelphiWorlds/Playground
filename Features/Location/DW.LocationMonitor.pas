@@ -46,6 +46,7 @@ type
     procedure SetDistance(const Value: Double); virtual;
     procedure SetUsageAuthorization(const Value: TLocationUsageAuthorization); virtual;
     procedure SetIsActive(const AValue: Boolean); virtual;
+    procedure TriggerAlarm; virtual;
     property Accuracy: Double read GetAccuracy write SetAccuracy;
     property ActivityType: TLocationActivityType read GetActivityType write SetActivityType;
     property AlarmInterval: Int64 read FAlarmInterval write SetAlarmInterval;
@@ -68,6 +69,7 @@ type
     FNeedsBackgroundAccess: Boolean;
     function GetAccuracy: Double;
     function GetActivityType: TLocationActivityType;
+    function GetAlarmInterval: Int64;
     function GetDistance: Double;
     function GetFastestInterval: Int64;
     function GetInterval: Int64;
@@ -76,20 +78,23 @@ type
     function GetUsageAuthorization: TLocationUsageAuthorization;
     procedure SetAccuracy(const Value: Double);
     procedure SetActivityType(const Value: TLocationActivityType);
+    procedure SetAlarmInterval(const Value: Int64);
     procedure SetDistance(const Value: Double);
     procedure SetFastestInterval(const Value: Int64);
     procedure SetInterval(const Value: Int64);
     procedure SetIsActive(const Value: Boolean);
     procedure SetPriority(const Value: Integer);
     procedure SetUsageAuthorization(const Value: TLocationUsageAuthorization);
-    function GetAlarmInterval: Int64;
-    procedure SetAlarmInterval(const Value: Int64);
   protected
     procedure DoLocationChanged(const AData: TLocationData);
     procedure DoStateChanged;
   public
     constructor Create;
     destructor Destroy; override;
+    /// <summary>
+    ///   On Android, triggers an alarm in the service immediately
+    /// </summary>
+    procedure TriggerAlarm(const AServiceName: string);
     /// <summary>
     ///   Accuracy property on iOS
     /// </summary>
@@ -228,6 +233,11 @@ begin
   //
 end;
 
+procedure TCustomPlatformLocationMonitor.TriggerAlarm;
+begin
+  //
+end;
+
 { TLocationMonitor }
 
 constructor TLocationMonitor.Create;
@@ -342,6 +352,11 @@ end;
 procedure TLocationMonitor.SetUsageAuthorization(const Value: TLocationUsageAuthorization);
 begin
   FPlatformLocationMonitor.UsageAuthorization := Value;
+end;
+
+procedure TLocationMonitor.TriggerAlarm;
+begin
+  FPlatformLocationMonitor.TriggerAlarm;
 end;
 
 end.

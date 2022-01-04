@@ -66,6 +66,7 @@ type
     procedure LocationUpdatesChange(const AActive: Boolean);
     procedure SetAlarmInterval(const Value: Int64); override;
     procedure SetIsActive(const AValue: Boolean); override;
+    procedure TriggerAlarm; override;
   public
     constructor Create(const ALocationMonitor: TLocationMonitor); override;
     destructor Destroy; override;
@@ -77,9 +78,9 @@ uses
   // RTL
   System.Permissions, System.SysUtils, System.DateUtils, System.Sensors,
   // Android
-  Androidapi.Helpers, Androidapi.JNI.Provider,
+  Androidapi.Helpers, Androidapi.JNI.Provider, Androidapi.JNI.Support,
   // DW
-  DW.OSLog, DW.Consts.Android, DW.Geodetic, DW.LocationHelpers.Android;
+  DW.OSLog, DW.Consts.Android, DW.Geodetic, DW.LocationHelpers.Android, DW.OSMetadata.Android, DW.Androidapi.JNI.Os;
 
 { TFusedLocationClientDelegate }
 
@@ -206,6 +207,22 @@ begin
       FClient.startLocationUpdates;
     end
     // else invoke some error thingy
+  end;
+end;
+
+procedure TPlatformLocationMonitor.TriggerAlarm;
+var
+  LComponentName: JComponentName;
+  LServiceName: string;
+  LIntent: JIntent;
+begin
+  if TPlatformOSMetadata.GetValue(cDWFusedLocationClientKeyServiceClassName, LServiceName) then
+  begin
+    LComponentName := TJComponentName.JavaClass.init(TAndroidHelper.Context, StringToJString(LServiceName));
+    LIntent := TJIntent.JavaClass.init(StringToJString(cDWFusedLocationClientActionAlarm));
+    LIntent.putExtra(StringToJString(cDWFusedLocationClientExtraAlarmInterval), 0);
+    LIntent.putExtra(StringToJString(cDWFusedLocationClientExtraAlarmTimestamp), TJSystem.JavaClass.currentTimeMillis);
+    TJapp_JobIntentService.JavaClass.enqueueWork(TAndroidHelper.Context, LComponentName, 0, LIntent);
   end;
 end;
 
