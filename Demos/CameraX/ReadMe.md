@@ -4,7 +4,7 @@
 
 To implement CameraX in Delphi, potentially as a replacement for the existing camera support in Kastri.
 
-** NOTE: This demo is currently non-functional. See the Status section, below. **
+**NOTE: This demo is currently non-functional. See the Status section, below.**
 
 ## Description
 
