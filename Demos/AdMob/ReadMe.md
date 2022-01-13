@@ -1,4 +1,4 @@
-# Advertising test project
+# AdMob test project
 
 ## Purpose
 
@@ -28,9 +28,14 @@ Please provide feedback about this demo as per [the main ReadMe.](https://github
 
 ## Status
 
-Jan 4th, 2022
+Jan 14th, 2022
 
-All it does at present is show test interstital ads.
+Implemented so far (Android only):
+
+TAdMobBannerAd:  [Banner Ad](https://developers.google.com/admob/android/banner)  - very basic testing has been performed
+TAppOpenAd: [App Open Ad](https://developers.google.com/admob/android/app-open) - basic testing
+TInterstitialAd: [Interstitial Ad](https://developers.google.com/admob/android/interstitial) - basic testing
+TRewardedAd: [Rewarded Ad](https://developers.google.com/admob/android/rewarded) - untested
 
 **The code/demo was built for Delphi 11, however it might be able to be modified to work in Delphi 10.4.2**
 
