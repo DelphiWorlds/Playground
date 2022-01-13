@@ -32,5 +32,5 @@ Jan 4th, 2022
 
 All it does at present is show test interstital ads.
 
-**The code/demo was built for Delphi 11, however it might be able to be made to work in Delphi 10.4.2**
+**The code/demo was built for Delphi 11, however it might be able to be modified to work in Delphi 10.4.2**
 

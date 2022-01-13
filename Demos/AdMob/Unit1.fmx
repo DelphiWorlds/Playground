@@ -3,7 +3,7 @@ object Form1: TForm1
   Top = 0
   Caption = 'Form1'
   ClientHeight = 640
-  ClientWidth = 455
+  ClientWidth = 456
   FormFactor.Width = 320
   FormFactor.Height = 480
   FormFactor.Devices = [Desktop]
@@ -16,12 +16,12 @@ object Form1: TForm1
     Margins.Top = 4.000000000000000000
     Margins.Right = 4.000000000000000000
     Margins.Bottom = 4.000000000000000000
-    Size.Width = 447.000000000000000000
-    Size.Height = 592.000000000000000000
+    Size.Width = 448.000000000000000000
+    Size.Height = 524.000000000000000000
     Size.PlatformDefault = False
     TabOrder = 0
-    Viewport.Width = 443.000000000000000000
-    Viewport.Height = 588.000000000000000000
+    Viewport.Width = 444.000000000000000000
+    Viewport.Height = 520.000000000000000000
   end
   object ButtonsLayout: TLayout
     Align = Bottom
@@ -29,8 +29,8 @@ object Form1: TForm1
     Padding.Top = 4.000000000000000000
     Padding.Right = 4.000000000000000000
     Padding.Bottom = 4.000000000000000000
-    Position.Y = 600.000000000000000000
-    Size.Width = 455.000000000000000000
+    Position.Y = 532.000000000000000000
+    Size.Width = 456.000000000000000000
     Size.Height = 40.000000000000000000
     Size.PlatformDefault = False
     TabOrder = 1
@@ -45,5 +45,20 @@ object Form1: TForm1
       Text = 'Show'
       OnClick = ShowButtonClick
     end
+  end
+  object AdMobBannerAd1: TAdMobBannerAd
+    AdSize = Banner
+    Align = Bottom
+    Position.Y = 572.000000000000000000
+    Size.Width = 456.000000000000000000
+    Size.Height = 68.000000000000000000
+    Size.PlatformDefault = False
+    TestMode = True
+    OnAdClicked = AdMobBannerAd1AdClicked
+    OnAdClosed = AdMobBannerAd1AdClosed
+    OnAdFailedToLoad = AdMobBannerAd1AdFailedToLoad
+    OnAdImpression = AdMobBannerAd1AdImpression
+    OnAdLoaded = AdMobBannerAd1AdLoaded
+    OnAdOpened = AdMobBannerAd1AdOpened
   end
 end
