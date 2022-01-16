@@ -19,13 +19,13 @@ implementation
 
 uses
   // RTL
-  System.TypInfo, System.Classes, System.SysUtils, System.UITypes, System.Types,
+  System.Types,
   // Android
-  Androidapi.JNI.GraphicsContentViewText, Androidapi.JNI.Widget, Androidapi.Helpers, Androidapi.JNI.Net, Androidapi.JNI.JavaTypes,
-  Androidapi.JNIBridge, Androidapi.JNI, Androidapi.JNI.Support, Androidapi.JNI.Util, Androidapi.JNI.AdMob,
+  Androidapi.JNIBridge, Androidapi.JNI.AdMob, Androidapi.JNI.GraphicsContentViewText, Androidapi.JNI.Widget, Androidapi.Helpers,
+  Androidapi.JNI.JavaTypes,
   // FMX
-  FMX.Presentation.Messages, FMX.Presentation.Android, FMX.Presentation.Factory, FMX.Controls, FMX.Controls.Presentation, FMX.Controls.Model,
-  FMX.Graphics, FMX.Types,
+  FMX.Presentation.Android, FMX.Controls.Model, FMX.Controls.Presentation, FMX.Presentation.Messages, FMX.Presentation.Factory,
+  FMX.Controls, FMX.Types,
   // DW
   DW.AdMob, DW.AdMobBannerAd;
 
