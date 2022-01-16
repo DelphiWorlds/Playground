@@ -36,7 +36,7 @@ Please provide feedback about this demo as per [the main ReadMe.](https://github
 
 Jan 16th, 2022
 
-Implemented so far:
+Implemented so far (Android and iOS):
 
 * TAdMobBannerAd:  [Banner Ad](https://developers.google.com/admob/android/banner)  - very basic testing has been performed
 * TAppOpenAd: [App Open Ad](https://developers.google.com/admob/android/app-open) - basic testing
