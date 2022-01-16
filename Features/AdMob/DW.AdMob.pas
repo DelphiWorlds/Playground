@@ -1,5 +1,18 @@
 unit DW.AdMob;
 
+{*******************************************************}
+{                                                       }
+{                      Kastri                           }
+{                                                       }
+{         Delphi Worlds Cross-Platform Library          }
+{                                                       }
+{  Copyright 2020-2021 Dave Nottage under MIT license   }
+{  which is located in the root folder of this library  }
+{                                                       }
+{*******************************************************}
+
+{$I DW.GlobalDefines.inc}
+
 interface
 
 const
@@ -21,5 +34,15 @@ type
   TAdErrorEvent = procedure(Sender: TObject; const Error: TAdError) of object;
 
 implementation
+
+// May be required when using Mediation?
+//{$IF Defined(IOS)}
+//uses
+//  DW.AdMob.iOS;
+//{$ENDIF}
+//{$IF Defined(Android)}
+//uses
+//  DW.AdMob.Android;
+//{$ENDIF}
 
 end.
