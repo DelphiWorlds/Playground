@@ -1,9 +1,24 @@
 unit DW.AdMobAds;
 
+{*******************************************************}
+{                                                       }
+{                      Kastri                           }
+{                                                       }
+{         Delphi Worlds Cross-Platform Library          }
+{                                                       }
+{  Copyright 2020-2021 Dave Nottage under MIT license   }
+{  which is located in the root folder of this library  }
+{                                                       }
+{*******************************************************}
+
+{$I DW.GlobalDefines.inc}
+
 interface
 
 uses
+  // RTL
   System.Classes, System.Messaging,
+  // DW
   DW.AdMob;
 
 type
@@ -17,15 +32,15 @@ type
     FTestMode: Boolean;
     procedure ApplicationEventMessageHandler(const Sender: TObject; const M: TMessage);
   protected
-    FAdUnitID: string;
+    FAdUnitId: string;
     procedure ApplicationBecameActive; virtual;
     procedure ApplicationEnteredBackground; virtual;
     procedure DoAdFailedToLoad(const AError: TAdError); virtual;
     procedure DoAdLoaded; virtual;
-    function GetAdUnitID: string; virtual;
+    function GetAdUnitId: string; virtual;
     procedure Load; virtual;
     function IsWarmStart: Boolean;
-    property AdUnitID: string read GetAdUnitID write FAdUnitID;
+    property AdUnitId: string read GetAdUnitId write FAdUnitId;
     property TestMode: Boolean read FTestMode write FTestMode;
   public
     constructor Create(const ABaseAd: TBaseAd);
@@ -50,17 +65,48 @@ type
   TCustomPlatformInterstitialAd = class(TCustomPlatformFullScreenAd)
   private
     FInterstitialAd: TInterstitialAd;
+  protected
+    function GetAdUnitId: string; override;
   public
     constructor Create(const AInterstitialAd: TInterstitialAd); virtual;
   end;
 
+  TAdReward = record
+    Amount: Integer;
+    RewardType: string;
+  end;
+
+  TBaseRewardedAd = class;
+
+  TCustomPlatformBaseRewardedAd = class(TCustomPlatformFullScreenAd)
+  private
+    FBaseRewardedAd: TBaseRewardedAd;
+  protected
+    procedure DoUserEarnedReward(const AReward: TAdReward); virtual;
+  public
+    constructor Create(const ABaseRewardedAd: TBaseRewardedAd);
+  end;
+
   TRewardedAd = class;
 
-  TCustomPlatformRewardedAd = class(TCustomPlatformFullScreenAd)
+  TCustomPlatformRewardedAd = class(TCustomPlatformBaseRewardedAd)
   private
     FRewardedAd: TRewardedAd;
+  protected
+    function GetAdUnitId: string; override;
   public
     constructor Create(const ARewardedAd: TRewardedAd); virtual;
+  end;
+
+  TRewardedInterstitialAd = class;
+
+  TCustomPlatformRewardedInterstitialAd = class(TCustomPlatformBaseRewardedAd)
+  private
+    FRewardedInterstitialAd: TRewardedInterstitialAd;
+  protected
+    function GetAdUnitId: string; override;
+  public
+    constructor Create(const ARewardedInterstitialAd: TRewardedInterstitialAd); virtual;
   end;
 
   TAppOpenAdOrientation = (Portrait, Landscape);
@@ -72,6 +118,7 @@ type
     FAppOpenAd: TAppOpenAd;
     FOrientation: TAppOpenAdOrientation;
   protected
+    function GetAdUnitId: string; override;
     property Orientation: TAppOpenAdOrientation read FOrientation write FOrientation;
   public
     constructor Create(const AAppOpenAd: TAppOpenAd); virtual;
@@ -81,8 +128,8 @@ type
   private
     FOnAdFailedToLoad: TAdErrorEvent;
     FOnAdLoaded: TNotifyEvent;
-    function GetAdUnitID: string;
-    procedure SetAdUnitID(const Value: string);
+    function GetAdUnitId: string;
+    procedure SetAdUnitId(const Value: string);
     function GetTestMode: Boolean;
     procedure SetTestMode(const Value: Boolean);
   protected
@@ -92,7 +139,7 @@ type
     property PlatformBaseAd: TCustomPlatformBaseAd read GetPlatformBaseAd;
   public
     procedure Load;
-    property AdUnitID: string read GetAdUnitID write SetAdUnitID;
+    property AdUnitId: string read GetAdUnitId write SetAdUnitId;
     property TestMode: Boolean read GetTestMode write SetTestMode;
     property OnAdFailedToLoad: TAdErrorEvent read FOnAdFailedToLoad write FOnAdFailedToLoad;
     property OnAdLoaded: TNotifyEvent read FOnAdLoaded write FOnAdLoaded;
@@ -123,9 +170,30 @@ type
     destructor Destroy; override;
   end;
 
-  TRewardedAd = class(TFullScreenAd)
+  TAdRewardEvent = procedure(Sender: TObject; const Reward: TAdReward) of object;
+
+  TBaseRewardedAd = class(TFullScreenAd)
+  private
+    FOnUserEarnedReward: TAdRewardEvent;
+  protected
+    procedure DoUserEarnedReward(const AReward: TAdReward);
+  public
+    property OnUserEarnedReward: TAdRewardEvent read FOnUserEarnedReward write FOnUserEarnedReward;
+  end;
+
+  TRewardedAd = class(TBaseRewardedAd)
   private
     FPlatformRewardedAd: TCustomPlatformRewardedAd;
+  protected
+    function GetPlatformBaseAd: TCustomPlatformBaseAd; override;
+  public
+    constructor Create;
+    destructor Destroy; override;
+  end;
+
+  TRewardedInterstitialAd = class(TBaseRewardedAd)
+  private
+    FPlatformRewardedInterstitialAd: TCustomPlatformRewardedInterstitialAd;
   protected
     function GetPlatformBaseAd: TCustomPlatformBaseAd; override;
   public
@@ -149,13 +217,20 @@ type
 implementation
 
 uses
+  DW.OSLog,
+  // DW
 {$IF Defined(ANDROID)}
   DW.AdMobAds.Android,
 {$ENDIF}
+{$IF Defined(IOS)}
+  DW.AdMobAds.iOS,
+{$ENDIF}
+  // RTL
   System.SysUtils,
+  // FMX
   FMX.Platform;
 
-{$IF not Defined(ANDROID)}
+{$IF not Defined(ANDROID) and not Defined(IOS)}
 type
   TPlatformInterstitialAd = class(TCustomPlatformInterstitialAd);
   TPlatformRewardedAd = class(TCustomPlatformRewardedAd);
@@ -187,9 +262,9 @@ begin
   FBaseAd.DoAdLoaded;
 end;
 
-function TCustomPlatformBaseAd.GetAdUnitID: string;
+function TCustomPlatformBaseAd.GetAdUnitId: string;
 begin
-  Result := FAdUnitID;
+  Result := FAdUnitId;
 end;
 
 function TCustomPlatformBaseAd.IsWarmStart: Boolean;
@@ -256,12 +331,58 @@ begin
   FInterstitialAd := AInterstitialAd;
 end;
 
+function TCustomPlatformInterstitialAd.GetAdUnitId: string;
+begin
+  if TestMode then
+    Result := cTestAdUnitIdInterstitial
+  else
+    Result := FAdUnitId;
+end;
+
+{ TCustomPlatformBaseRewardedAd }
+
+constructor TCustomPlatformBaseRewardedAd.Create(const ABaseRewardedAd: TBaseRewardedAd);
+begin
+  inherited Create(ABaseRewardedAd);
+  FBaseRewardedAd := ABaseRewardedAd;
+end;
+
+procedure TCustomPlatformBaseRewardedAd.DoUserEarnedReward(const AReward: TAdReward);
+begin
+  TOSLog.d('TCustomPlatformBaseRewardedAd.DoUserEarnedReward');
+  FBaseRewardedAd.DoUserEarnedReward(AReward);
+end;
+
 { TCustomPlatformRewardedAd }
 
 constructor TCustomPlatformRewardedAd.Create(const ARewardedAd: TRewardedAd);
 begin
-  inherited Create(TFullScreenAd(ARewardedAd));
+  inherited Create(TBaseRewardedAd(ARewardedAd));
   FRewardedAd := ARewardedAd;
+end;
+
+function TCustomPlatformRewardedAd.GetAdUnitId: string;
+begin
+  if TestMode then
+    Result := cTestAdUnitIdRewarded
+  else
+    Result := FAdUnitId;
+end;
+
+{ TCustomPlatformRewardedInterstitialAd }
+
+constructor TCustomPlatformRewardedInterstitialAd.Create(const ARewardedInterstitialAd: TRewardedInterstitialAd);
+begin
+  inherited Create(TBaseRewardedAd(ARewardedInterstitialAd));
+  FRewardedInterstitialAd := ARewardedInterstitialAd;
+end;
+
+function TCustomPlatformRewardedInterstitialAd.GetAdUnitId: string;
+begin
+  if TestMode then
+    Result := cTestAdUnitIdRewardedInterstitial
+  else
+    Result := FAdUnitId;
 end;
 
 { TCustomPlatformAppOpenAd }
@@ -270,6 +391,14 @@ constructor TCustomPlatformAppOpenAd.Create(const AAppOpenAd: TAppOpenAd);
 begin
   inherited Create(TFullScreenAd(AAppOpenAd));
   FAppOpenAd := AAppOpenAd;
+end;
+
+function TCustomPlatformAppOpenAd.GetAdUnitId: string;
+begin
+  if TestMode then
+    Result := cTestAdUnitIdAppOpen
+  else
+    Result := FAdUnitId;
 end;
 
 { TBaseAd }
@@ -286,9 +415,9 @@ begin
     FOnAdLoaded(Self);
 end;
 
-function TBaseAd.GetAdUnitID: string;
+function TBaseAd.GetAdUnitId: string;
 begin
-  Result := PlatformBaseAd.AdUnitID;
+  Result := PlatformBaseAd.AdUnitId;
 end;
 
 function TBaseAd.GetTestMode: Boolean;
@@ -298,13 +427,13 @@ end;
 
 procedure TBaseAd.Load;
 begin
-  if not AdUnitID.IsEmpty then
+  if not AdUnitId.IsEmpty then
     PlatformBaseAd.Load;
 end;
 
-procedure TBaseAd.SetAdUnitID(const Value: string);
+procedure TBaseAd.SetAdUnitId(const Value: string);
 begin
-  PlatformBaseAd.AdUnitID := Value;
+  PlatformBaseAd.AdUnitId := Value;
 end;
 
 procedure TBaseAd.SetTestMode(const Value: Boolean);
@@ -351,6 +480,14 @@ begin
   Result := FPlatformInterstitialAd;
 end;
 
+{ TBaseRewardedAd }
+
+procedure TBaseRewardedAd.DoUserEarnedReward(const AReward: TAdReward);
+begin
+  if Assigned(FOnUserEarnedReward) then
+    FOnUserEarnedReward(Self, AReward);
+end;
+
 { TRewardedAd }
 
 constructor TRewardedAd.Create;
@@ -368,6 +505,25 @@ end;
 function TRewardedAd.GetPlatformBaseAd: TCustomPlatformBaseAd;
 begin
   Result := FPlatformRewardedAd;
+end;
+
+{ TRewardedInterstitialAd }
+
+constructor TRewardedInterstitialAd.Create;
+begin
+  inherited;
+  FPlatformRewardedInterstitialAd := TPlatformRewardedInterstitialAd.Create(Self);
+end;
+
+destructor TRewardedInterstitialAd.Destroy;
+begin
+  FPlatformRewardedInterstitialAd.Free;
+  inherited;
+end;
+
+function TRewardedInterstitialAd.GetPlatformBaseAd: TCustomPlatformBaseAd;
+begin
+  Result := FPlatformRewardedInterstitialAd;
 end;
 
 { TAppOpenAd }
