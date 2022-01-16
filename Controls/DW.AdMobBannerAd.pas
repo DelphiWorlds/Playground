@@ -30,7 +30,6 @@ const
   MM_BANNER_TESTMODE_CHANGED = MM_USER + 4;
 
 type
-  //!!!!!!!!
   TAdMobBannerAdSize = (Banner, LargeBanner, MediumRectangle, FullBanner, Leaderboard);
 
   TCustomAdMobBannerAdModel = class(TDataModel)
@@ -119,9 +118,10 @@ procedure Register;
 implementation
 
 uses
-//  {$IF Defined(IOS)}
-//  DW.AdMobBannerAd.iOS,
-//  {$ENDIF}
+  // DW
+  {$IF Defined(IOS)}
+  DW.AdMobBannerAd.iOS,
+  {$ENDIF}
   {$IF Defined(ANDROID)}
   DW.AdMobBannerAd.Android,
   {$ENDIF}
