@@ -23,10 +23,13 @@ type
     procedure AdMobBannerAd1AdOpened(Sender: TObject);
   private
     // FAd: TInterstitialAd;
-    FAd: TAppOpenAd;
+    FAd: TRewardedAd;
+    // FAd: TRewardedInterstitialAd;
+    // FAd: TAppOpenAd;
     procedure AdDismissedFullScreenContentHandler(Sender: TObject);
     procedure AdFailedToShowFullScreenContentHandler(Sender: TObject; const AError: TAdError);
     procedure AdShowedFullScreenContentHandler(Sender: TObject);
+    procedure UserEarnedRewardHandler(Sender: TObject; const AReward: TAdReward);
   public
     constructor Create(AOwner: TComponent); override;
   end;
@@ -38,23 +41,36 @@ implementation
 
 {$R *.fmx}
 
+uses
+  DW.OSLog;
+
 { TForm1 }
 
 constructor TForm1.Create(AOwner: TComponent);
 begin
   inherited;
+  TOSLog.d('TForm1.Create');
   // FAd := TInterstitialAd.Create;
-  FAd := TAppOpenAd.Create;
+  FAd := TRewardedAd.Create;
+  // FAd := TRewardedInterstitialAd.Create;
+  // FAd := TAppOpenAd.Create;
   FAd.TestMode := True;
   FAd.OnAdDismissedFullScreenContent := AdDismissedFullScreenContentHandler;
   FAd.OnAdFailedToShowFullScreenContent := AdFailedToShowFullScreenContentHandler;
   FAd.OnAdShowedFullScreenContent := AdShowedFullScreenContentHandler;
+  // RewardAds only
+  FAd.OnUserEarnedReward := UserEarnedRewardHandler;
 end;
 
 procedure TForm1.ShowButtonClick(Sender: TObject);
 begin
-  // FAd.Load;
-  // AdMobBannerAd1.LoadAd;
+  // FAd.Load; // Not required for TAppOpenAd
+  AdMobBannerAd1.LoadAd;
+end;
+
+procedure TForm1.UserEarnedRewardHandler(Sender: TObject; const AReward: TAdReward);
+begin
+  Memo.Lines.Add('Rewarded Ad Reward - ' + AReward.RewardType + ': ' + AReward.Amount.ToString);
 end;
 
 procedure TForm1.AdDismissedFullScreenContentHandler(Sender: TObject);
