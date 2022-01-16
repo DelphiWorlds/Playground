@@ -14,6 +14,8 @@ type
   JOnAdMetadataChangedListener = interface;
   JRewardedAd = interface;
   JRewardedAdLoadCallback = interface;
+  JRewardedInterstitialAd = interface;
+  JRewardedInterstitialAdLoadCallback = interface;
   JRewardItem = interface;
   JServerSideVerificationOptions = interface;
   JServerSideVerificationOptions_Builder = interface;
@@ -133,6 +135,45 @@ type
     ['{00E1C8B6-19B4-4163-A73D-735595543833}']
   end;
   TJRewardedAdLoadCallback = class(TJavaGenericImport<JRewardedAdLoadCallbackClass, JRewardedAdLoadCallback>) end;
+
+  JRewardedInterstitialAdClass = interface(JObjectClass)
+    ['{CA3EE48A-A9E0-4DDC-B4A2-535E9AF010B2}']
+    {class} function init: JRewardedInterstitialAd; cdecl;
+    {class} procedure load(context: JContext; adUnitId: JString; adRequest: JAdRequest;
+      loadCallback: JRewardedInterstitialAdLoadCallback); cdecl; overload;
+    {class} procedure load(context: JContext; adUnitId: JString; adManagerAdRequest: JAdManagerAdRequest;
+      loadCallback: JRewardedInterstitialAdLoadCallback); cdecl; overload;
+  end;
+
+  [JavaSignature('com/google/android/gms/ads/rewardedinterstitial/RewardedInterstitialAd')]
+  JRewardedInterstitialAd = interface(JObject)
+    ['{0C482D95-82D3-4F8C-A5AE-244724C60764}']
+    function getAdMetadata: JBundle; cdecl;
+    function getAdUnitId: JString; cdecl;
+    function getFullScreenContentCallback: JFullScreenContentCallback; cdecl;
+    function getOnAdMetadataChangedListener: JOnAdMetadataChangedListener; cdecl;
+    function getOnPaidEventListener: JOnPaidEventListener; cdecl;
+    function getResponseInfo: JResponseInfo; cdecl;
+    function getRewardItem: JRewardItem; cdecl;
+    procedure setFullScreenContentCallback(fullScreenContentCallback: JFullScreenContentCallback); cdecl;
+    procedure setImmersiveMode(immersiveModeEnabed: Boolean); cdecl;
+    procedure setOnAdMetadataChangedListener(onAdMetadataChangedEventListener: JOnAdMetadataChangedListener); cdecl;
+    procedure setOnPaidEventListener(onPaidEventListener: JOnPaidEventListener); cdecl;
+    procedure setServerSideVerificationOptions(options: JServerSideVerificationOptions); cdecl;
+    procedure show(activity: JActivity; onUserEarnedRewardListener: JOnUserEarnedRewardListener); cdecl;
+  end;
+  TJRewardedInterstitialAd = class(TJavaGenericImport<JRewardedInterstitialAdClass, JRewardedInterstitialAd>) end;
+
+  JRewardedInterstitialAdLoadCallbackClass = interface(JAdLoadCallbackClass)
+    ['{516D8730-6332-4131-838D-F970EC52FC3E}']
+    {class} function init: JRewardedInterstitialAdLoadCallback; cdecl;
+  end;
+
+  [JavaSignature('com/google/android/gms/ads/rewardedinterstitial/RewardedInterstitialAdLoadCallback')]
+  JRewardedInterstitialAdLoadCallback = interface(JAdLoadCallback)
+    ['{901F40C2-B8F3-4092-8139-F74E1ADFEEF4}']
+  end;
+  TJRewardedInterstitialAdLoadCallback = class(TJavaGenericImport<JRewardedInterstitialAdLoadCallbackClass, JRewardedInterstitialAdLoadCallback>) end;
 
   JRewardItemClass = interface(JObjectClass)
     ['{4581F808-6897-4913-8DBC-F85211B4F1A3}']
