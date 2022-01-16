@@ -1,9 +1,27 @@
 unit DW.AdMobAds.Android;
 
+{*******************************************************}
+{                                                       }
+{                      Kastri                           }
+{                                                       }
+{         Delphi Worlds Cross-Platform Library          }
+{                                                       }
+{  Copyright 2020-2021 Dave Nottage under MIT license   }
+{  which is located in the root folder of this library  }
+{                                                       }
+{*******************************************************}
+
+{$I DW.GlobalDefines.inc}
+
 interface
 
 uses
-  Androidapi.JNIBridge, Androidapi.JNI.JavaTypes, Androidapi.JNI.AdMob, Androidapi.JNI.GraphicsContentViewText, Androidapi.JNI.Os, Androidapi.JNI.App,
+  // RTL
+  System.Classes, System.SysUtils,
+  // Android
+  Androidapi.JNIBridge, Androidapi.JNI.JavaTypes, Androidapi.JNI.AdMob, Androidapi.JNI.GraphicsContentViewText,
+  Androidapi.JNI.Os, Androidapi.JNI.App,
+  // DW
   DW.Androidapi.JNI.AdMob, DW.AdMob, DW.AdMobAds;
 
 type
@@ -13,6 +31,8 @@ type
   JDWInterstitialAdCallbackDelegate = interface;
   JDWRewardedAdLoadCallback = interface;
   JDWRewardedAdLoadCallbackDelegate = interface;
+  JDWRewardedInterstitialAdLoadCallback = interface;
+  JDWRewardedInterstitialAdLoadCallbackDelegate = interface;
 
   JDWInterstitialAdCallbackClass = interface(JInterstitialAdLoadCallbackClass)
     ['{5CC7467D-5131-4C6A-BB4E-FE8945F6F5B6}']
@@ -48,7 +68,7 @@ type
   JDWRewardedAdLoadCallback = interface(JRewardedAdLoadCallback)
     ['{8818EEA7-36A6-4246-8079-CA10E5F141DB}']
   end;
-  TJDWRewardedAdCallback = class(TJavaGenericImport<JDWRewardedAdLoadCallbackClass, JDWRewardedAdLoadCallback>) end;
+  TJDWRewardedAdLoadCallback = class(TJavaGenericImport<JDWRewardedAdLoadCallbackClass, JDWRewardedAdLoadCallback>) end;
 
   JDWRewardedAdLoadCallbackDelegateClass = interface(IJavaClass)
     ['{81A3438F-D0A8-4392-B604-81A47B875FD4}']
@@ -63,7 +83,35 @@ type
     procedure onAdFailedToShowFullScreenContent(adError: JAdError); cdecl;
     procedure onAdShowedFullScreenContent; cdecl;
   end;
-  TJDWRewardedAdCallbackDelegate = class(TJavaGenericImport<JDWRewardedAdLoadCallbackDelegateClass, JDWRewardedAdLoadCallbackDelegate>) end;
+  TJDWRewardedAdLoadCallbackDelegate = class(TJavaGenericImport<JDWRewardedAdLoadCallbackDelegateClass, JDWRewardedAdLoadCallbackDelegate>) end;
+
+  JDWRewardedInterstitialAdLoadCallbackClass = interface(JRewardedInterstitialAdLoadCallbackClass)
+    ['{06214E8A-0F7C-45C3-A2CB-5016E57E8534}']
+    {class} function init(delegate: JDWRewardedInterstitialAdLoadCallbackDelegate): JDWRewardedInterstitialAdLoadCallback; cdecl;
+  end;
+
+  [JavaSignature('com/delphiworlds/kastri/DWRewardedInterstitialAdLoadCallback')]
+  JDWRewardedInterstitialAdLoadCallback = interface(JRewardedInterstitialAdLoadCallback)
+    ['{C3369D51-0B53-44E0-B97A-E1BEC17675BE}']
+  end;
+  TJDWRewardedInterstitialAdLoadCallback = class(TJavaGenericImport<JDWRewardedInterstitialAdLoadCallbackClass,
+    JDWRewardedInterstitialAdLoadCallback>) end;
+
+  JDWRewardedInterstitialAdLoadCallbackDelegateClass = interface(IJavaClass)
+    ['{71C29500-D2F2-49C9-B240-3F4FDD116F48}']
+  end;
+
+  [JavaSignature('com/delphiworlds/kastri/DWRewardedInterstitialAdLoadCallbackDelegate')]
+  JDWRewardedInterstitialAdLoadCallbackDelegate = interface(IJavaInstance)
+    ['{F61B31AD-2721-4387-83B2-F649EB779FB4}']
+    procedure onAdFailedToLoad(loadAdError: JLoadAdError); cdecl;
+    procedure onAdLoaded(rewardedInterstitialAd: JRewardedInterstitialAd); cdecl;
+    procedure onAdDismissedFullScreenContent; cdecl;
+    procedure onAdFailedToShowFullScreenContent(adError: JAdError); cdecl;
+    procedure onAdShowedFullScreenContent; cdecl;
+  end;
+  TJDWRewardedInterstitialAdLoadCallbackDelegate = class(TJavaGenericImport<JDWRewardedInterstitialAdLoadCallbackDelegateClass,
+    JDWRewardedInterstitialAdLoadCallbackDelegate>) end;
 
   JDWAppOpenAdLoadCallbackClass = interface(JAppOpenAd_AppOpenAdLoadCallbackClass)
     ['{C6E850B3-3CB4-4FEF-BF18-BC76EFD112B4}']
@@ -118,26 +166,27 @@ type
     procedure DoAdDismissedFullScreenContent; override;
     procedure DoAdFailedToShowFullScreenContent(const AError: TAdError); override;
     procedure DoAdShowedFullScreenContent; override;
-    function GetAdUnitID: string; override;
     procedure Load; override;
   public
     constructor Create(const AInterstitialAd: TInterstitialAd); override;
     destructor Destroy; override;
   end;
 
-  TPlatformRewardedAd = class;
+  TOpenCustomPlatformBaseRewardedAd = class(TCustomPlatformBaseRewardedAd);
 
   TUserEarnedRewardListener = class(TJavaLocal, JOnUserEarnedRewardListener)
   private
-    FPlatformRewardedAd: TPlatformRewardedAd;
+    FPlatformBaseRewardedAd: TOpenCustomPlatformBaseRewardedAd;
   public
     { JOnUserEarnedRewardListener }
     procedure onUserEarnedReward(rewardItem: JRewardItem); cdecl;
   public
-    constructor Create(const APlatformRewardedAd: TPlatformRewardedAd);
+    constructor Create(const APlatformBaseRewardedAd: TCustomPlatformBaseRewardedAd);
   end;
 
-  TRewardedAdCallbackDelegate = class(TJavaLocal, JDWRewardedAdLoadCallbackDelegate)
+  TPlatformRewardedAd = class;
+
+  TRewardedAdLoadCallbackDelegate = class(TJavaLocal, JDWRewardedAdLoadCallbackDelegate)
   private
     FPlatformRewardedAd: TPlatformRewardedAd;
     FCallback: JDWRewardedAdLoadCallback;
@@ -157,18 +206,54 @@ type
   TPlatformRewardedAd = class(TCustomPlatformRewardedAd)
   private
     FAd: JRewardedAd;
-    FCallbackDelegate: TRewardedAdCallbackDelegate;
+    FCallbackDelegate: TRewardedAdLoadCallbackDelegate;
     FUserEarnedRewardListener: JOnUserEarnedRewardListener;
   protected
     procedure AdLoaded(const ARewardedAd: JRewardedAd);
     procedure DoAdDismissedFullScreenContent; override;
     procedure DoAdFailedToShowFullScreenContent(const AError: TAdError); override;
     procedure DoAdShowedFullScreenContent; override;
-    function GetAdUnitID: string; override;
+    procedure DoUserEarnedReward(const AReward: TAdReward); override;
     procedure Load; override;
-    procedure UserEarnedReward(const ARewardItem: JRewardItem);
   public
     constructor Create(const ARewardedAd: TRewardedAd); override;
+    destructor Destroy; override;
+  end;
+
+  TPlatformRewardedInterstitialAd = class;
+
+  TRewardedInterstitialAdLoadCallbackDelegate = class(TJavaLocal, JDWRewardedInterstitialAdLoadCallbackDelegate)
+  private
+    FPlatformRewardedInterstitialAd: TPlatformRewardedInterstitialAd;
+    FCallback: JDWRewardedInterstitialAdLoadCallback;
+  protected
+    property Callback: JDWRewardedInterstitialAdLoadCallback read FCallback;
+  public
+    { JDWRewardedInterstitialAdCallbackDelegate }
+    procedure onAdDismissedFullScreenContent; cdecl;
+    procedure onAdFailedToLoad(loadAdError: JLoadAdError); cdecl;
+    procedure onAdFailedToShowFullScreenContent(adError: JAdError); cdecl;
+    procedure onAdLoaded(rewardedInterstitialAd: JRewardedInterstitialAd); cdecl;
+    procedure onAdShowedFullScreenContent; cdecl;
+  public
+    constructor Create(const APlatformRewardedInterstitialAd: TPlatformRewardedInterstitialAd);
+  end;
+
+  TPlatformRewardedInterstitialAd = class(TCustomPlatformRewardedInterstitialAd)
+  private
+    FAd: JRewardedInterstitialAd;
+    FCallbackDelegate: TRewardedInterstitialAdLoadCallbackDelegate;
+    FUserEarnedRewardListener: JOnUserEarnedRewardListener;
+    procedure LoadAd;
+  protected
+    procedure AdLoaded(const ARewardedInterstitialAd: JRewardedInterstitialAd);
+    procedure DoAdDismissedFullScreenContent; override;
+    procedure DoAdFailedToShowFullScreenContent(const AError: TAdError); override;
+    procedure DoAdShowedFullScreenContent; override;
+    procedure DoUserEarnedReward(const AReward: TAdReward); override;
+    procedure Load; override;
+  public
+    constructor Create(const ARewardedInterstitialAd: TRewardedInterstitialAd); override;
     destructor Destroy; override;
   end;
 
@@ -207,7 +292,6 @@ type
     procedure DoAdFailedToShowFullScreenContent(const AError: TAdError); override;
     procedure DoAdLoaded; override;
     procedure DoAdShowedFullScreenContent; override;
-    function GetAdUnitID: string; override;
   public
     constructor Create(const AAppOpenAd: TAppOpenAd); override;
     destructor Destroy; override;
@@ -216,7 +300,6 @@ type
 implementation
 
 uses
-  System.SysUtils,
   Androidapi.Helpers;
 
 { TInterstitialAdCallbackDelegate }
@@ -280,21 +363,13 @@ end;
 procedure TPlatformInterstitialAd.AdLoaded(const AInterstitialAd: JInterstitial_InterstitialAd);
 begin
   FAd := AInterstitialAd;
-  FAd.show(TAndroidHelper.Activity);
   DoAdLoaded;
+  FAd.show(TAndroidHelper.Activity);
 end;
 
 procedure TPlatformInterstitialAd.DoAdShowedFullScreenContent;
 begin
   inherited;
-end;
-
-function TPlatformInterstitialAd.GetAdUnitID: string;
-begin
-  if TestMode then
-    Result := cTestAdUnitIdInterstitial
-  else
-    Result := FAdUnitId;
 end;
 
 procedure TPlatformInterstitialAd.Load;
@@ -313,32 +388,36 @@ end;
 
 { TUserEarnedRewardListener }
 
-constructor TUserEarnedRewardListener.Create(const APlatformRewardedAd: TPlatformRewardedAd);
+constructor TUserEarnedRewardListener.Create(const APlatformBaseRewardedAd: TCustomPlatformBaseRewardedAd);
 begin
   inherited Create;
-  FPlatformRewardedAd := APlatformRewardedAd;
+  FPlatformBaseRewardedAd := TOpenCustomPlatformBaseRewardedAd(APlatformBaseRewardedAd);
 end;
 
 procedure TUserEarnedRewardListener.onUserEarnedReward(rewardItem: JRewardItem);
+var
+  LReward: TAdReward;
 begin
-  FPlatformRewardedAd.UserEarnedReward(rewardItem);
+  LReward.Amount := rewardItem.getAmount;
+  LReward.RewardType := JStringToString(rewardItem.getType);
+  FPlatformBaseRewardedAd.DoUserEarnedReward(LReward);
 end;
 
-{ TRewardedAdCallbackDelegate }
+{ TRewardedAdLoadCallbackDelegate }
 
-constructor TRewardedAdCallbackDelegate.Create(const APlatformRewardedAd: TPlatformRewardedAd);
+constructor TRewardedAdLoadCallbackDelegate.Create(const APlatformRewardedAd: TPlatformRewardedAd);
 begin
   inherited Create;
   FPlatformRewardedAd := APlatformRewardedAd;
-  FCallback := TJDWRewardedAdCallback.JavaClass.init(Self);
+  FCallback := TJDWRewardedAdLoadCallback.JavaClass.init(Self);
 end;
 
-procedure TRewardedAdCallbackDelegate.onAdDismissedFullScreenContent;
+procedure TRewardedAdLoadCallbackDelegate.onAdDismissedFullScreenContent;
 begin
   FPlatformRewardedAd.DoAdDismissedFullScreenContent;
 end;
 
-procedure TRewardedAdCallbackDelegate.onAdFailedToLoad(loadAdError: JLoadAdError);
+procedure TRewardedAdLoadCallbackDelegate.onAdFailedToLoad(loadAdError: JLoadAdError);
 var
   LError: TAdError;
 begin
@@ -347,7 +426,7 @@ begin
   FPlatformRewardedAd.DoAdFailedToLoad(LError);
 end;
 
-procedure TRewardedAdCallbackDelegate.onAdFailedToShowFullScreenContent(adError: JAdError);
+procedure TRewardedAdLoadCallbackDelegate.onAdFailedToShowFullScreenContent(adError: JAdError);
 var
   LError: TAdError;
 begin
@@ -356,12 +435,12 @@ begin
   FPlatformRewardedAd.DoAdFailedToShowFullScreenContent(LError);
 end;
 
-procedure TRewardedAdCallbackDelegate.onAdLoaded(rewardedAd: JRewardedAd);
+procedure TRewardedAdLoadCallbackDelegate.onAdLoaded(rewardedAd: JRewardedAd);
 begin
   FPlatformRewardedAd.AdLoaded(rewardedAd);
 end;
 
-procedure TRewardedAdCallbackDelegate.onAdShowedFullScreenContent;
+procedure TRewardedAdLoadCallbackDelegate.onAdShowedFullScreenContent;
 begin
   FPlatformRewardedAd.DoAdShowedFullScreenContent;
 end;
@@ -371,7 +450,7 @@ end;
 constructor TPlatformRewardedAd.Create(const ARewardedAd: TRewardedAd);
 begin
   inherited;
-  FCallbackDelegate := TRewardedAdCallbackDelegate.Create(Self);
+  FCallbackDelegate := TRewardedAdLoadCallbackDelegate.Create(Self);
   FUserEarnedRewardListener := TUserEarnedRewardListener.Create(Self);
 end;
 
@@ -403,12 +482,9 @@ begin
   inherited;
 end;
 
-function TPlatformRewardedAd.GetAdUnitID: string;
+procedure TPlatformRewardedAd.DoUserEarnedReward(const AReward: TAdReward);
 begin
-  if TestMode then
-    Result := cTestAdUnitIdRewarded
-  else
-    Result := FAdUnitId;
+  inherited;
 end;
 
 procedure TPlatformRewardedAd.Load;
@@ -425,9 +501,107 @@ begin
   // else ad already showing
 end;
 
-procedure TPlatformRewardedAd.UserEarnedReward(const ARewardItem: JRewardItem);
+{ TRewardedInterstitialAdLoadCallbackDelegate }
+
+constructor TRewardedInterstitialAdLoadCallbackDelegate.Create(const APlatformRewardedInterstitialAd: TPlatformRewardedInterstitialAd);
 begin
-  //
+  inherited Create;
+  FPlatformRewardedInterstitialAd := APlatformRewardedInterstitialAd;
+  FCallback := TJDWRewardedInterstitialAdLoadCallback.JavaClass.init(Self);
+end;
+
+procedure TRewardedInterstitialAdLoadCallbackDelegate.onAdDismissedFullScreenContent;
+begin
+  FPlatformRewardedInterstitialAd.DoAdDismissedFullScreenContent;
+end;
+
+procedure TRewardedInterstitialAdLoadCallbackDelegate.onAdFailedToLoad(loadAdError: JLoadAdError);
+var
+  LError: TAdError;
+begin
+  LError.ErrorCode := loadAdError.getCode;
+  LError.Message := JStringToString(loadAdError.getMessage);
+  FPlatformRewardedInterstitialAd.DoAdFailedToLoad(LError);
+end;
+
+procedure TRewardedInterstitialAdLoadCallbackDelegate.onAdFailedToShowFullScreenContent(adError: JAdError);
+var
+  LError: TAdError;
+begin
+  LError.ErrorCode := adError.getCode;
+  LError.Message := JStringToString(adError.getMessage);
+  FPlatformRewardedInterstitialAd.DoAdFailedToShowFullScreenContent(LError);
+end;
+
+procedure TRewardedInterstitialAdLoadCallbackDelegate.onAdLoaded(rewardedInterstitialAd: JRewardedInterstitialAd);
+begin
+  FPlatformRewardedInterstitialAd.AdLoaded(rewardedInterstitialAd);
+end;
+
+procedure TRewardedInterstitialAdLoadCallbackDelegate.onAdShowedFullScreenContent;
+begin
+  FPlatformRewardedInterstitialAd.DoAdShowedFullScreenContent;
+end;
+
+{ TPlatformRewardedInterstitialAd }
+
+constructor TPlatformRewardedInterstitialAd.Create(const ARewardedInterstitialAd: TRewardedInterstitialAd);
+begin
+  inherited;
+  FCallbackDelegate := TRewardedInterstitialAdLoadCallbackDelegate.Create(Self);
+  FUserEarnedRewardListener := TUserEarnedRewardListener.Create(Self);
+end;
+
+destructor TPlatformRewardedInterstitialAd.Destroy;
+begin
+  FCallbackDelegate.Free;
+  inherited;
+end;
+
+procedure TPlatformRewardedInterstitialAd.AdLoaded(const ARewardedInterstitialAd: JRewardedInterstitialAd);
+begin
+  FAd := ARewardedInterstitialAd;
+  DoAdLoaded;
+  FAd.show(TAndroidHelper.Activity, FUserEarnedRewardListener);
+end;
+
+procedure TPlatformRewardedInterstitialAd.DoAdDismissedFullScreenContent;
+begin
+  inherited;
+end;
+
+procedure TPlatformRewardedInterstitialAd.DoAdFailedToShowFullScreenContent(const AError: TAdError);
+begin
+  inherited;
+end;
+
+procedure TPlatformRewardedInterstitialAd.DoAdShowedFullScreenContent;
+begin
+  inherited;
+end;
+
+procedure TPlatformRewardedInterstitialAd.DoUserEarnedReward(const AReward: TAdReward);
+begin
+  inherited;
+end;
+
+procedure TPlatformRewardedInterstitialAd.Load;
+begin
+  // TPlatformMobileAds.Start(LoadAd);
+  LoadAd;
+end;
+
+procedure TPlatformRewardedInterstitialAd.LoadAd;
+var
+  LRequest: JAdRequest;
+  LAdUnitId: JString;
+begin
+  if FAd = nil then
+  begin
+    LRequest := TJAdRequest_Builder.JavaClass.init.build;
+    LAdUnitId := StringToJString(AdUnitID);
+    TJRewardedInterstitialAd.JavaClass.load(TAndroidHelper.Context, LAdUnitId, LRequest, FCallbackDelegate.Callback);
+  end;
 end;
 
 { TAppOpenAdLoadCallbackDelegate }
@@ -526,14 +700,6 @@ end;
 procedure TPlatformAppOpenAd.DoAdShowedFullScreenContent;
 begin
   inherited;
-end;
-
-function TPlatformAppOpenAd.GetAdUnitID: string;
-begin
-  if TestMode then
-    Result := cTestAdUnitIdAppOpen
-  else
-    Result := FAdUnitId;
 end;
 
 function TPlatformAppOpenAd.GetOrientation: Integer;
