@@ -21,11 +21,23 @@ uses
   Androidapi.JNI.Os;
 
 type
+  {$IF CompilerVersion < 35}
+  JAdError = interface;
+  JAdLoadCallback = interface;
+  JAdValue = interface;
+  JFullScreenContentCallback = interface;
+  Jinterstitial_InterstitialAd = interface;
+  JInterstitialAdLoadCallback = interface;
+  JLoadAdError = interface;
+  JOnPaidEventListener = interface;
+  JResponseInfo = interface;
+  {$ENDIF}
   JAdManagerAdRequest = interface;
   JAdManagerAdRequest_Builder = interface;
   JAppOpenAd = interface;
   JAppOpenAd_AppOpenAdLoadCallback = interface;
   JOnAdMetadataChangedListener = interface;
+  JOnUserEarnedRewardListener = interface;
   JRewardedAd = interface;
   JRewardedAdLoadCallback = interface;
   JRewardedInterstitialAd = interface;
@@ -33,7 +45,147 @@ type
   JRewardItem = interface;
   JServerSideVerificationOptions = interface;
   JServerSideVerificationOptions_Builder = interface;
-  JOnUserEarnedRewardListener = interface;
+
+  {$IF CompilerVersion < 35}
+  JAdErrorClass = interface(JObjectClass)
+    ['{D4883F5C-159D-4A84-8A23-545A34C148FE}']
+    {class} function _GetUNDEFINED_DOMAIN: JString; cdecl;
+    {class} function init(i: Integer; string_: JString; string_1: JString): JAdError; cdecl; overload;
+    {class} function init(i: Integer; string_: JString; string_1: JString; adError: JAdError): JAdError; cdecl; overload;
+    {class} property UNDEFINED_DOMAIN: JString read _GetUNDEFINED_DOMAIN;
+  end;
+
+  [JavaSignature('com/google/android/gms/ads/AdError')]
+  JAdError = interface(JObject)
+    ['{2A3FE902-4585-42D1-A64D-0605C1B2BCCB}']
+    function getCause: JAdError; cdecl;
+    function getCode: Integer; cdecl;
+    function getDomain: JString; cdecl;
+    function getMessage: JString; cdecl;
+    function toString: JString; cdecl;
+  end;
+  TJAdError = class(TJavaGenericImport<JAdErrorClass, JAdError>) end;
+
+  JFullScreenContentCallbackClass = interface(JObjectClass)
+    ['{A9B15C8E-F075-4851-9DFA-69710D4FF3C0}']
+    {class} function _GetERROR_CODE_AD_REUSED: Integer; cdecl;
+    {class} function _GetERROR_CODE_APP_NOT_FOREGROUND: Integer; cdecl;
+    {class} function _GetERROR_CODE_INTERNAL_ERROR: Integer; cdecl;
+    {class} function _GetERROR_CODE_MEDIATION_SHOW_ERROR: Integer; cdecl;
+    {class} function _GetERROR_CODE_NOT_READY: Integer; cdecl;
+    {class} function init: JFullScreenContentCallback; cdecl;
+    {class} property ERROR_CODE_AD_REUSED: Integer read _GetERROR_CODE_AD_REUSED;
+    {class} property ERROR_CODE_APP_NOT_FOREGROUND: Integer read _GetERROR_CODE_APP_NOT_FOREGROUND;
+    {class} property ERROR_CODE_INTERNAL_ERROR: Integer read _GetERROR_CODE_INTERNAL_ERROR;
+    {class} property ERROR_CODE_MEDIATION_SHOW_ERROR: Integer read _GetERROR_CODE_MEDIATION_SHOW_ERROR;
+    {class} property ERROR_CODE_NOT_READY: Integer read _GetERROR_CODE_NOT_READY;
+  end;
+
+  [JavaSignature('com/google/android/gms/ads/FullScreenContentCallback')]
+  JFullScreenContentCallback = interface(JObject)
+    ['{C98A434C-DDAB-4DEC-B45F-1EB5F4388B5A}']
+    procedure onAdDismissedFullScreenContent; cdecl;
+    procedure onAdFailedToShowFullScreenContent(adError: JAdError); cdecl;
+    procedure onAdImpression; cdecl;
+    procedure onAdShowedFullScreenContent; cdecl;
+  end;
+  TJFullScreenContentCallback = class(TJavaGenericImport<JFullScreenContentCallbackClass, JFullScreenContentCallback>) end;
+
+  JOnPaidEventListenerClass = interface(IJavaClass)
+    ['{C843CA6F-265F-4FAD-92F2-C53EF38C11E6}']
+  end;
+
+  [JavaSignature('com/google/android/gms/ads/OnPaidEventListener')]
+  JOnPaidEventListener = interface(IJavaInstance)
+    ['{BFC46E7C-7DA3-429A-9FBA-38A99261B5F8}']
+    procedure onPaidEvent(adValue: JAdValue); cdecl;
+  end;
+  TJOnPaidEventListener = class(TJavaGenericImport<JOnPaidEventListenerClass, JOnPaidEventListener>) end;
+
+  JAdValueClass = interface(JObjectClass)
+    ['{BC8C0529-48A0-45D9-A518-8BC55B64785F}']
+    {class} function zza(i: Integer; string_: JString; l: Int64): JAdValue; cdecl;
+  end;
+
+  [JavaSignature('com/google/android/gms/ads/AdValue')]
+  JAdValue = interface(JObject)
+    ['{1609B647-B6F3-4275-8B89-3E695A6FA9CE}']
+    function getCurrencyCode: JString; cdecl;
+    function getPrecisionType: Integer; cdecl;
+    function getValueMicros: Int64; cdecl;
+  end;
+  TJAdValue = class(TJavaGenericImport<JAdValueClass, JAdValue>) end;
+
+  JResponseInfoClass = interface(JObjectClass)
+    ['{4127B4A8-80FB-4E07-A405-F0EBBEC5FBD3}']
+  end;
+
+  [JavaSignature('com/google/android/gms/ads/ResponseInfo')]
+  JResponseInfo = interface(JObject)
+    ['{2042F63E-E1DF-44DE-B596-01C28E3C603B}']
+    function getAdapterResponses: JList; cdecl;
+    function getMediationAdapterClassName: JString; cdecl;
+    function getResponseId: JString; cdecl;
+    function toString: JString; cdecl;
+  end;
+  TJResponseInfo = class(TJavaGenericImport<JResponseInfoClass, JResponseInfo>) end;
+
+  JAdLoadCallbackClass = interface(JObjectClass)
+    ['{6FFE75BA-C2E3-4ABC-8DE8-F49E0A3BAA98}']
+    {class} function init: JAdLoadCallback; cdecl;
+  end;
+
+  [JavaSignature('com/google/android/gms/ads/AdLoadCallback')]
+  JAdLoadCallback = interface(JObject)
+    ['{805DD34B-112E-4364-A026-0886C318B8C0}']
+    procedure onAdFailedToLoad(loadAdError: JLoadAdError); cdecl;
+  end;
+  TJAdLoadCallback = class(TJavaGenericImport<JAdLoadCallbackClass, JAdLoadCallback>) end;
+
+  JLoadAdErrorClass = interface(JAdErrorClass)
+    ['{7BDC9D6B-A9BF-4BA6-97EC-58E5DA6CC6AE}']
+    {class} function init(i: Integer; string_: JString; string_1: JString; adError: JAdError; responseInfo: JResponseInfo): JLoadAdError; cdecl;
+  end;
+
+  [JavaSignature('com/google/android/gms/ads/LoadAdError')]
+  JLoadAdError = interface(JAdError)
+    ['{5D61E232-CDDB-4DA1-8D01-EF23F3A469BD}']
+    function getResponseInfo: JResponseInfo; cdecl;
+    function toString: JString; cdecl;
+  end;
+  TJLoadAdError = class(TJavaGenericImport<JLoadAdErrorClass, JLoadAdError>) end;
+
+  JInterstitialAdLoadCallbackClass = interface(JAdLoadCallbackClass)
+    ['{3B052E52-8E13-4AFF-84CE-BDF8EAEA94F0}']
+    {class} function init: JInterstitialAdLoadCallback; cdecl;
+  end;
+
+  [JavaSignature('com/google/android/gms/ads/interstitial/InterstitialAdLoadCallback')]
+  JInterstitialAdLoadCallback = interface(JAdLoadCallback)
+    ['{EC68D59C-EC2D-4B6D-BE43-01CFE9D8553A}']
+  end;
+  TJInterstitialAdLoadCallback = class(TJavaGenericImport<JInterstitialAdLoadCallbackClass, JInterstitialAdLoadCallback>) end;
+
+  Jinterstitial_InterstitialAdClass = interface(JObjectClass)
+    ['{F6EE0193-3B01-4F77-B909-9B7E812C4F40}']
+    {class} function init: Jinterstitial_InterstitialAd; cdecl;
+    {class} procedure load(context: JContext; string_: JString; adRequest: JAdRequest; interstitialAdLoadCallback: JInterstitialAdLoadCallback); cdecl;
+  end;
+
+  [JavaSignature('com/google/android/gms/ads/interstitial/InterstitialAd')]
+  Jinterstitial_InterstitialAd = interface(JObject)
+    ['{7117C82F-1926-44A6-A3C5-3E0EA5612BEF}']
+    function getAdUnitId: JString; cdecl;
+    function getFullScreenContentCallback: JFullScreenContentCallback; cdecl;
+    function getOnPaidEventListener: JOnPaidEventListener; cdecl;
+    function getResponseInfo: JResponseInfo; cdecl;
+    procedure setFullScreenContentCallback(fullScreenContentCallback: JFullScreenContentCallback); cdecl;
+    procedure setImmersiveMode(b: Boolean); cdecl;
+    procedure setOnPaidEventListener(onPaidEventListener: JOnPaidEventListener); cdecl;
+    procedure show(activity: JActivity); cdecl;
+  end;
+  TJinterstitial_InterstitialAd = class(TJavaGenericImport<Jinterstitial_InterstitialAdClass, Jinterstitial_InterstitialAd>) end;
+  {$ENDIF}
 
   JAdManagerAdRequestClass = interface(JAdRequestClass)
     ['{8E42703E-BFF3-47D3-8F96-051881577F4F}']
@@ -59,7 +211,9 @@ type
     function addCustomTargeting(key: JString; value: JString): JAdManagerAdRequest_Builder; cdecl; overload;
     function addCustomTargeting(key: JString; values: JList): JAdManagerAdRequest_Builder; cdecl; overload;
     function build: JAdManagerAdRequest; cdecl;
+    {$IF CompilerVersion >= 35}
     function setAdInfo(adInfo: JAdInfo): JAdManagerAdRequest_Builder; cdecl; // Not documented at https://developers.google.com/android/reference/com/google/android/gms/ads/admanager/AdManagerAdRequest.Builder
+    {$ENDIF}
     function setPublisherProvidedId(publisherProvidedId: JString): JAdManagerAdRequest_Builder; cdecl;
   end;
   TJAdManagerAdRequest_Builder = class(TJavaGenericImport<JAdManagerAdRequest_BuilderClass, JAdManagerAdRequest_Builder>) end;
