@@ -27,7 +27,7 @@ uses
   FMX.Presentation.Android, FMX.Controls.Model, FMX.Controls.Presentation, FMX.Presentation.Messages, FMX.Presentation.Factory,
   FMX.Controls, FMX.Types,
   // DW
-  DW.AdMob, DW.AdMobBannerAd;
+  DW.Androidapi.JNI.AdMob, DW.AdMob, DW.AdMobBannerAd;
 
 type
   JDWAdListener = interface;
