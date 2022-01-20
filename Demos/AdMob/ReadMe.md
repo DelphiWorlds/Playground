@@ -20,6 +20,10 @@ The package can be found [here](https://github.com/DelphiWorlds/Playground/tree/
 
 If creating your own project, you will need to add the [`dw-admob.jar`](https://github.com/DelphiWorlds/Playground/blob/master/Lib/dw-admob.jar) file to the Libraries node under the Android platform in Project Manager
 
+When using Delphi 10.4.x, you will need to add other libraries and disable some default libraries, as per this screenshot:
+
+<img src="./Screenshots/D104ProjectManager.png" alt="PM" height="500">
+
 ### Android Entitlements
 
 Ensure your project has the `AdMob Service` enabled. This adds Google Play services metadata and the Ads activity to the manifest.
@@ -49,4 +53,5 @@ Implemented so far (Android and iOS):
 I'm hoping someone can explain why they are not :-)
 
 A [package has been created for Delphi 10.4.x](https://github.com/DelphiWorlds/Playground/tree/main/Packages/D104), as well as a [demo](https://github.com/DelphiWorlds/Playground/tree/main/Demos/AdMob/D104). Only RewardedAd has had very basic testing. **It is possible that something else might be broken, as some jars needed to be disabled.**
+
 
