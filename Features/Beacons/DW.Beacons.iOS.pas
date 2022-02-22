@@ -1,4 +1,4 @@
-unit DW.Template.iOS;
+unit DW.Beacons.iOS;
 
 {*******************************************************}
 {                                                       }
@@ -13,33 +13,34 @@ unit DW.Template.iOS;
 
 {$I DW.GlobalDefines.inc}
 
+
 interface
 
 uses
-  DW.Template;
+  DW.Beacons;
 
 type
-  TPlatformTemplate = class(TCustomPlatformTemplate)
+  TPlatformBeacons = class(TCustomPlatformBeacons)
   private
     //
   protected
     //
   public
-    constructor Create(const ATemplate: TTemplate); override;
+    constructor Create(const ABeacons: TBeacons); override;
     destructor Destroy; override;
   end;
 
 implementation
 
-{ TPlatformTemplate }
+{ TPlatformBeacons }
 
-constructor TPlatformTemplate.Create(const ATemplate: TTemplate);
+constructor TPlatformBeacons.Create(const ABeacons: TBeacons);
 begin
   inherited;
   //
 end;
 
-destructor TPlatformTemplate.Destroy;
+destructor TPlatformBeacons.Destroy;
 begin
   //
   inherited;
