@@ -1,0 +1,48 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{86B32F6A-67B0-4CF3-B18F-B7393ED41DCA}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="Application\BeaconsDemo.dproj">
+            <Dependencies>Service\BeaconsDemoService.dproj</Dependencies>
+        </Projects>
+        <Projects Include="Service\BeaconsDemoService.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="BeaconsDemo" DependsOnTargets="BeaconsDemoService">
+        <MSBuild Projects="Application\BeaconsDemo.dproj"/>
+    </Target>
+    <Target Name="BeaconsDemo:Clean" DependsOnTargets="BeaconsDemoService:Clean">
+        <MSBuild Projects="Application\BeaconsDemo.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="BeaconsDemo:Make" DependsOnTargets="BeaconsDemoService:Make">
+        <MSBuild Projects="Application\BeaconsDemo.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="BeaconsDemoService">
+        <MSBuild Projects="Service\BeaconsDemoService.dproj"/>
+    </Target>
+    <Target Name="BeaconsDemoService:Clean">
+        <MSBuild Projects="Service\BeaconsDemoService.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="BeaconsDemoService:Make">
+        <MSBuild Projects="Service\BeaconsDemoService.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="BeaconsDemo;BeaconsDemoService"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="BeaconsDemo:Clean;BeaconsDemoService:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="BeaconsDemo:Make;BeaconsDemoService:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>
