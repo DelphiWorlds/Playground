@@ -17,6 +17,7 @@ The demo consists of an application and a service. The application can be used t
 The code is based in part on information from these links:
 
 http://www.davidgyoungtech.com/2017/08/07/beacon-detection-with-android-8
+
 https://stackoverflow.com/questions/50248178/oreo-ble-scanner-startscan-with-pendingintent-not-working-on-samsung-device
 
 ## Feedback
