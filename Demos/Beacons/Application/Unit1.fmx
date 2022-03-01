@@ -2,8 +2,8 @@ object Form1: TForm1
   Left = 0
   Top = 0
   Caption = 'Form1'
-  ClientHeight = 589
-  ClientWidth = 431
+  ClientHeight = 590
+  ClientWidth = 430
   FormFactor.Width = 320
   FormFactor.Height = 480
   FormFactor.Devices = [Desktop]
@@ -16,12 +16,12 @@ object Form1: TForm1
     Margins.Top = 4.000000000000000000
     Margins.Right = 4.000000000000000000
     Margins.Bottom = 4.000000000000000000
-    Size.Width = 423.000000000000000000
-    Size.Height = 539.000000000000000000
+    Size.Width = 422.000000000000000000
+    Size.Height = 540.000000000000000000
     Size.PlatformDefault = False
     TabOrder = 2
-    Viewport.Width = 419.000000000000000000
-    Viewport.Height = 535.000000000000000000
+    Viewport.Width = 418.000000000000000000
+    Viewport.Height = 536.000000000000000000
   end
   object BottomLayout: TLayout
     Align = Bottom
@@ -29,14 +29,14 @@ object Form1: TForm1
     Padding.Top = 4.000000000000000000
     Padding.Right = 4.000000000000000000
     Padding.Bottom = 4.000000000000000000
-    Position.Y = 547.000000000000000000
-    Size.Width = 431.000000000000000000
+    Position.Y = 548.000000000000000000
+    Size.Width = 430.000000000000000000
     Size.Height = 42.000000000000000000
     Size.PlatformDefault = False
     TabOrder = 3
     object ScanButton: TButton
       Align = Right
-      Position.X = 328.000000000000000000
+      Position.X = 327.000000000000000000
       Position.Y = 4.000000000000000000
       Size.Width = 99.000000000000000000
       Size.Height = 34.000000000000000000
@@ -48,7 +48,7 @@ object Form1: TForm1
     object IntentButton: TButton
       Align = Right
       Margins.Right = 12.000000000000000000
-      Position.X = 217.000000000000000000
+      Position.X = 216.000000000000000000
       Position.Y = 4.000000000000000000
       Size.Width = 99.000000000000000000
       Size.Height = 34.000000000000000000

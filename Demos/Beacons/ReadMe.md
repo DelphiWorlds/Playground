@@ -26,7 +26,11 @@ Please provide feedback about this demo as per [the main ReadMe.](https://github
 
 ## Status 
 
-As at Feb 22nd, 2022
+As at March 2nd, 2022
+
+** CURRENT IMPLEMENTATION IS NON-FUNCTIONAL **
+
+Please refer to: https://quality.embarcadero.com/browse/RSP-36969. The underlying issue is with apps that use a Local Intent Service (JobIntentService is the underlying Android class). Once the OnHandleIntent method has executed a few times, the app crashes (on Android 9 devices it takes only a couple, on Android 12 it can take several minutes to happen)
 
 Support is for Android **only**. iOS may or may not come later, or just use Embarcadero's implementation on iOS, however bear in mind it [still has its own issues](https://quality.embarcadero.com/browse/RSP-21460).
 

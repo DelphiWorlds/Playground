@@ -16,58 +16,16 @@ unit DW.Beacons;
 interface
 
 uses
-  System.SysUtils, System.Generics.Collections, System.Classes;
+  System.Classes,
+  DW.BluetoothLE.Types;
 
 const
   cBeaconServiceUUIDBluecats = '{0000FEC4-0000-1000-8000-00805F9B34FB}';
-  cSignalPropagationConst = 0.5;
   cProximityImmediate = 0.5; // Metres
   cProximityNear = 3;
   cProximityFar = 30;
 
 type
-  TServiceDataRawData = record
-    Key: TGUID;
-    Value: TBytes;
-    //!!!! constructor create(const AKey: TGUID; const AValue: TBytes);
-  end;
-
-  TBluetoothLEScanFilter = record
-    LocalName: string;
-    DeviceAddress: string;
-    ManufacturerId: Integer;
-    ManufacturerData: TBytes;
-    ManufacturerDataMask: TBytes;
-    ServiceUUID: TGUID;
-    ServiceUUIDMask: TGUID;
-    ServiceData: TServiceDataRawData;
-    ServiceDataMask: TBytes;
-    constructor Create(const AServiceUUID: string);
-  end;
-
-  TBluetoothLEScanFilters = TArray<TBluetoothLEScanFilter>;
-
-  TCustomBluetoothLEDevice = class(TObject)
-  private
-    FAddress: string;
-    FDeviceType: Integer;
-    FName: string;
-    FRSSI: Integer;
-    FServiceUUIDs: TArray<TGUID>;
-    FTxPower: Integer;
-    function GetDistance: Double;
-  public
-    property Address: string read FAddress write FAddress;
-    property DeviceType: Integer read FDeviceType write FDeviceType;
-    property Distance: Double read GetDistance;
-    property Name: string read FName write FName;
-    property RSSI: Integer read FRSSI write FRSSI;
-    property ServiceUUIDs: TArray<TGUID> read FServiceUUIDs write FServiceUUIDs;
-    property TxPower: Integer read FTxPower write FTxPower;
-  end;
-
-  TBluetoothLEDevices = TObjectDictionary<string, TCustomBluetoothLEDevice>;
-
   TBeacons = class;
 
   TCustomPlatformBeacons = class(TObject)
@@ -124,7 +82,7 @@ type
 implementation
 
 uses
-  System.Math,
+  System.SysUtils, System.Generics.Collections,
   {$IF Defined(IOS)}
   DW.Beacons.iOS;
   {$ELSEIF Defined(ANDROID)}
@@ -132,21 +90,6 @@ uses
   {$ELSE}
   DW.Beacons.Default;
   {$ENDIF}
-
-{ TBluetoothLEScanFilter }
-
-constructor TBluetoothLEScanFilter.Create(const AServiceUUID: string);
-begin
-  ServiceUUID := TGUID.Create(AServiceUUID);
-  ServiceUUIDMask := TGUID.Create('{FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF}');
-end;
-
-{ TCustomBluetoothLEDevice }
-
-function TCustomBluetoothLEDevice.GetDistance: Double;
-begin
-  Result := Power(10, (RSSI - TxPower) / -10 * cSignalPropagationConst);
-end;
 
 { TCustomPlatformBeacons }
 

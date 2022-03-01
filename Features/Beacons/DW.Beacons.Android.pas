@@ -17,13 +17,30 @@ interface
 
 uses
   System.Generics.Collections, System.SysUtils,
-  Androidapi.JNI.JavaTypes, Androidapi.JNI.Bluetooth, Androidapi.JNIBridge,
-  DW.Beacons;
+  Androidapi.JNI.JavaTypes, Androidapi.JNI.Bluetooth, Androidapi.JNIBridge, Androidapi.JNI.GraphicsContentViewText,
+  DW.Beacons, DW.BluetoothLE.Types;
+
+const
+  cBeaconsReceiverActionAlarm = 'com.delphiworlds.kastri.DWBeaconsReceiver.ACTION_ALARM';
+  cBeaconsReceiverActionFound = 'com.delphiworlds.kastri.DWBeaconsReceiver.ACTION_FOUND';
 
 type
   // Move out to general Android bluetooth unit?
+  JDWBeaconsReceiver = interface;
   JDWScanCallback = interface;
   JDWScanCallbackDelegate = interface;
+
+  JDWBeaconsReceiverClass = interface(JBroadcastReceiverClass)
+    ['{30588A2E-1E07-4820-A3CB-15B69595397B}']
+    {class} procedure startAlarm(context: JContext; interval: Int64); cdecl;
+    {class} procedure cancelAlarm(context: JContext); cdecl;
+  end;
+
+  [JavaSignature('com/delphiworlds/kastri/DWBeaconsReceiver')]
+  JDWBeaconsReceiver = interface(JBroadcastReceiver)
+    ['{475C099F-8888-4F25-B20F-C154258E17CA}']
+  end;
+  TJDWBeaconsReceiver = class(TJavaGenericImport<JDWBeaconsReceiverClass, JDWBeaconsReceiver>) end;
 
   JDWScanCallbackClass = interface(JScanCallbackClass)
     ['{B07B8889-6ADE-4F00-B825-8037C3EDB6E8}']
@@ -97,7 +114,7 @@ implementation
 
 uses
   System.Permissions, System.Classes,
-  Androidapi.Helpers, Androidapi.JNI.GraphicsContentViewText, Androidapi.JNI.App, Androidapi.JNI.Os, Androidapi.JNI,
+  Androidapi.Helpers, Androidapi.JNI.App, Androidapi.JNI.Os, Androidapi.JNI,
   DW.OSLog,
   DW.Android.Helpers, DW.Consts.Android, DW.Permissions.Helpers;
 
@@ -214,6 +231,7 @@ var
   LUuids: JList;
   I: Integer;
   LGUID: TGUID;
+  LData: TJavaArray<Byte>;
 begin
   // TOSLog.d('TPlatformBeacons.ScanResult');
   LIsNew := False;
@@ -227,6 +245,7 @@ begin
     LDevice.Name := JStringToString(LBluetoothDevice.getName);
     if not LDevice.Name.IsEmpty then
       TOSLog.d('> Device Name: %s', [LDevice.Name]);
+    TOSLog.d('> Device Address: %s', [LDevice.Address]);
     LDevice.DeviceType := LBluetoothDevice.getType;
     LUuids := AScanResult.getScanRecord.getServiceUuids;
     if LUuids <> nil then
@@ -234,7 +253,7 @@ begin
       for I := 0 to LUuids.size - 1 do
       begin
         LGUID := JParcelUuidToGUID(TJParcelUuid.Wrap(LUuids.get(I)));
-        TOSLog.d('> Service UUID: %s', [LGUID.ToString]);
+        // TOSLog.d('> Service UUID: %s', [LGUID.ToString]);
         LDevice.ServiceUUIDs := LDevice.ServiceUUIDs + [LGUID];
       end;
     end;
@@ -244,9 +263,17 @@ begin
   end
   else
     LDevice := TPlatformBluetoothLEDevice(LCustomDevice);
+  LData := AScanResult.getScanRecord.getBytes;
+  if LData <> nil then
+  try
+    LDevice.Data := TJavaArrayToTBytes(LData);
+  finally
+    LData.Free;
+  end;
   LDevice.RSSI := AScanResult.getRssi;
-  LDevice.TxPower := AScanResult.getTxPower;
-  // LDevice.FAdvertisedData := ScanRecordToTScanResponse(result.getScanRecord.getBytes, LDevice.FAdvertisedData);
+  // LDevice.TxPower :=
+  TOSLog.d('> Device RSSI: %d, TxPower: %d', [LDevice.RSSI, LDevice.TxPower]);
+  TOSLog.d('> Device Distance: %.2f', [LDevice.Distance]);
   if LIsNew then
     DiscoveredDevice(LDevice);
   // TOSLog.d('-TPlatformBeacons.ScanResult');
@@ -388,7 +415,7 @@ var
   LIntent: JIntent;
   LPendingIntent: JPendingIntent;
 begin
-  LIntent := TJIntent.JavaClass.init(StringToJString('com.delphiworlds.kastri.DWBeaconsReceiver.ACTION_FOUND'));
+  LIntent := TJIntent.JavaClass.init(StringToJString(cBeaconsReceiverActionFound));
   LIntent.setClassName(TAndroidHelper.Context, StringToJString('com.delphiworlds.kastri.DWBeaconsReceiver'));
   // LIntent.putExtra(StringToJString('o-scan'), True); // <--- No idea what this is
   LPendingIntent := TJPendingIntent.JavaClass.getBroadcast(TAndroidHelper.Context, 0, LIntent, TJPendingIntent.JavaClass.FLAG_UPDATE_CURRENT);

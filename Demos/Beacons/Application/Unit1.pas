@@ -5,8 +5,8 @@ interface
 uses
   System.SysUtils, System.Types, System.UITypes, System.Classes, System.Variants,
   FMX.Types, FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Dialogs, FMX.Controls.Presentation, FMX.StdCtrls,
-  FMX.Memo.Types, FMX.ScrollBox, FMX.Memo,
-  DW.Beacons, FMX.Layouts;
+  FMX.Memo.Types, FMX.ScrollBox, FMX.Memo, FMX.Layouts,
+  DW.Beacons, DW.BluetoothLE.Types, DW.MonitoredDevice;
 
 type
   TForm1 = class(TForm)
@@ -18,6 +18,7 @@ type
     procedure IntentButtonClick(Sender: TObject);
   private
     FBeacons: TBeacons;
+    FStore: TMonitoredDevicesStore;
     procedure BeaconsDiscoveredDeviceHandler(Sender: TObject; const ADevice: TCustomBluetoothLEDevice);
     procedure BeaconsScanFinishHandler(Sender: TObject);
   public
@@ -31,18 +32,8 @@ implementation
 
 {$R *.fmx}
 
-type
-  TCustomBluetoothLEDeviceHelper = class helper for TCustomBluetoothLEDevice
-  public
-    function GetDisplayValue: string;
-  end;
-
-{ TCustomBluetoothLEDeviceHelper }
-
-function TCustomBluetoothLEDeviceHelper.GetDisplayValue: string;
-begin
-  Result := Format('Name: %s, Address: %s, Type: %d', [Name, Address, DeviceType]);
-end;
+uses
+  System.IOUtils;
 
 { TForm1 }
 
@@ -57,6 +48,8 @@ end;
 
 procedure TForm1.IntentButtonClick(Sender: TObject);
 begin
+  FStore.Filters := Copy(FBeacons.Filters);
+  TFile.WriteAllText(TPath.Combine(TPath.GetDocumentsPath, 'devices.json'), FStore.ToJSON);
   FBeacons.ScanWithIntent;
   Memo1.Lines.Add('Created intent');
 end;
@@ -68,12 +61,12 @@ end;
 
 procedure TForm1.BeaconsDiscoveredDeviceHandler(Sender: TObject; const ADevice: TCustomBluetoothLEDevice);
 begin
-  // Memo1.Lines.Add(ADevice.GetDisplayValue);
+  //
 end;
 
 procedure TForm1.BeaconsScanFinishHandler(Sender: TObject);
 begin
-  // Memo1.Lines.Add('Scan done');
+  //
 end;
 
 end.
