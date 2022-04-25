@@ -19,6 +19,7 @@ const
   cPermissionAccessBackgroundLocation = 'android.permission.ACCESS_BACKGROUND_LOCATION';
   cPermissionAccessCoarseLocation = 'android.permission.ACCESS_COARSE_LOCATION';
   cPermissionAccessFineLocation = 'android.permission.ACCESS_FINE_LOCATION';
+  cPermissionBluetooth = 'android.permission.BLUETOOTH';
   cPermissionCamera = 'android.permission.CAMERA';
   cPermissionReadCallLog = 'android.permission.READ_CALL_LOG';
   cPermissionReadContacts = 'android.permission.READ_CONTACTS';
@@ -57,9 +58,9 @@ const
   cDWBroadcastReceiverActionStartAlarm = cDWBroadcastReceiverName + '.ACTION_START_ALARM';
   cDWBroadcastReceiverActionServiceAlarm = cDWBroadcastReceiverName + '.ACTION_SERVICE_ALARM';
   cDWBroadcastReceiverActionServiceRestart = cDWBroadcastReceiverName + '.ACTION_SERVICE_RESTART';
+  cDWBroadcastReceiverExtraJobId = cDWBroadcastReceiverName + '.EXTRA_JOB_ID';
   cDWBroadcastReceiverExtraServiceRestart = cDWBroadcastReceiverName + '.EXTRA_SERVICE_RESTART';
-  cDWBroadcastReceiverExtraServiceName = cDWBroadcastReceiverName + '.EXTRA_SERVICE_NAME';
-  cDWBroadcastReceiverExtraServiceJobId = cDWBroadcastReceiverName + '.EXTRA_SERVICE_JOBID';
+  cDWBroadcastReceiverExtraServiceClassName = cDWBroadcastReceiverName + '.EXTRA_SERVICE_CLASS_NAME';
   cDWBroadcastReceiverExtraStartUnlock = cDWBroadcastReceiverName + '.EXTRA_START_UNLOCK';
 
   cDWFusedLocationClientName = 'com.delphiworlds.kastri.DWFusedLocationClient';
