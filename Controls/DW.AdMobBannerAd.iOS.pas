@@ -220,6 +220,8 @@ begin
       Result := kGADAdSizeLeaderboard;
     TAdMobBannerAdSize.MediumRectangle:
       Result := kGADAdSizeMediumRectangle;
+    TAdMobBannerAdSize.Adaptive:
+      Result := GADCurrentOrientationAnchoredAdaptiveBannerAdSizeWithWidth(ParentView.frame.Size.Width);
   else
     Result := kGADAdSizeBanner;
   end;
