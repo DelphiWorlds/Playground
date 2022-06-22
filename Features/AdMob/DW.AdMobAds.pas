@@ -55,7 +55,7 @@ type
   protected
     procedure DoAdDismissedFullScreenContent; virtual;
     procedure DoAdFailedToShowFullScreenContent(const AError: TAdError); virtual;
-    procedure DoAdShowedFullScreenContent; virtual;
+    procedure DoAdWillPresentFullScreenContent; virtual;
   public
     constructor Create(const AFullScreenAd: TFullScreenAd);
   end;
@@ -149,15 +149,15 @@ type
   private
     FOnAdDismissedFullScreenContent: TNotifyEvent;
     FOnAdFailedToShowFullScreenContent: TAdErrorEvent;
-    FOnAdShowedFullScreenContent: TNotifyEvent;
+    FOnAdWillPresentFullScreenContent: TNotifyEvent;
   protected
     procedure DoAdDismissedFullScreenContent;
     procedure DoAdFailedToShowFullScreenContent(const AError: TAdError);
-    procedure DoAdShowedFullScreenContent;
+    procedure DoAdWillPresentFullScreenContent;
   public
     property OnAdDismissedFullScreenContent: TNotifyEvent read FOnAdDismissedFullScreenContent write FOnAdDismissedFullScreenContent;
     property OnAdFailedToShowFullScreenContent: TAdErrorEvent read FOnAdFailedToShowFullScreenContent write FOnAdFailedToShowFullScreenContent;
-    property OnAdShowedFullScreenContent: TNotifyEvent read FOnAdShowedFullScreenContent write FOnAdShowedFullScreenContent;
+    property OnAdWillPresentFullScreenContent: TNotifyEvent read FOnAdWillPresentFullScreenContent write FOnAdWillPresentFullScreenContent;
   end;
 
   TInterstitialAd = class(TFullScreenAd)
@@ -318,9 +318,9 @@ begin
   FFullScreenAd.DoAdFailedToShowFullScreenContent(AError);
 end;
 
-procedure TCustomPlatformFullScreenAd.DoAdShowedFullScreenContent;
+procedure TCustomPlatformFullScreenAd.DoAdWillPresentFullScreenContent;
 begin
-  FFullScreenAd.DoAdShowedFullScreenContent;
+  FFullScreenAd.DoAdWillPresentFullScreenContent;
 end;
 
 { TCustomPlatformInterstitialAd }
@@ -455,10 +455,10 @@ begin
     FOnAdFailedToShowFullScreenContent(Self, AError);
 end;
 
-procedure TFullScreenAd.DoAdShowedFullScreenContent;
+procedure TFullScreenAd.DoAdWillPresentFullScreenContent;
 begin
-  if Assigned(FOnAdShowedFullScreenContent) then
-    FOnAdShowedFullScreenContent(Self);
+  if Assigned(FOnAdWillPresentFullScreenContent) then
+    FOnAdWillPresentFullScreenContent(Self);
 end;
 
 { TInterstitialAd }

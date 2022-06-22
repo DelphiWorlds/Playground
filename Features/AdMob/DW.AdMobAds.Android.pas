@@ -165,7 +165,7 @@ type
     procedure AdLoaded(const AInterstitialAd: JInterstitial_InterstitialAd);
     procedure DoAdDismissedFullScreenContent; override;
     procedure DoAdFailedToShowFullScreenContent(const AError: TAdError); override;
-    procedure DoAdShowedFullScreenContent; override;
+    procedure DoAdWillPresentFullScreenContent; override;
     procedure Load; override;
   public
     constructor Create(const AInterstitialAd: TInterstitialAd); override;
@@ -212,7 +212,7 @@ type
     procedure AdLoaded(const ARewardedAd: JRewardedAd);
     procedure DoAdDismissedFullScreenContent; override;
     procedure DoAdFailedToShowFullScreenContent(const AError: TAdError); override;
-    procedure DoAdShowedFullScreenContent; override;
+    procedure DoAdWillPresentFullScreenContent; override;
     procedure DoUserEarnedReward(const AReward: TAdReward); override;
     procedure Load; override;
   public
@@ -249,7 +249,7 @@ type
     procedure AdLoaded(const ARewardedInterstitialAd: JRewardedInterstitialAd);
     procedure DoAdDismissedFullScreenContent; override;
     procedure DoAdFailedToShowFullScreenContent(const AError: TAdError); override;
-    procedure DoAdShowedFullScreenContent; override;
+    procedure DoAdWillPresentFullScreenContent; override;
     procedure DoUserEarnedReward(const AReward: TAdReward); override;
     procedure Load; override;
   public
@@ -291,7 +291,7 @@ type
     procedure DoAdFailedToLoad(const AError: TAdError); override;
     procedure DoAdFailedToShowFullScreenContent(const AError: TAdError); override;
     procedure DoAdLoaded; override;
-    procedure DoAdShowedFullScreenContent; override;
+    procedure DoAdWillPresentFullScreenContent; override;
   public
     constructor Create(const AAppOpenAd: TAppOpenAd); override;
     destructor Destroy; override;
@@ -332,7 +332,7 @@ end;
 
 procedure TInterstitialAdCallbackDelegate.onAdShowedFullScreenContent;
 begin
-  FPlatformInterstitialAd.DoAdShowedFullScreenContent;
+  FPlatformInterstitialAd.DoAdWillPresentFullScreenContent;
 end;
 
 { TPlatformInterstitialAd }
@@ -367,7 +367,7 @@ begin
   FAd.show(TAndroidHelper.Activity);
 end;
 
-procedure TPlatformInterstitialAd.DoAdShowedFullScreenContent;
+procedure TPlatformInterstitialAd.DoAdWillPresentFullScreenContent;
 begin
   inherited;
 end;
@@ -442,7 +442,7 @@ end;
 
 procedure TRewardedAdLoadCallbackDelegate.onAdShowedFullScreenContent;
 begin
-  FPlatformRewardedAd.DoAdShowedFullScreenContent;
+  FPlatformRewardedAd.DoAdWillPresentFullScreenContent;
 end;
 
 { TPlatformRewardedAd }
@@ -477,7 +477,7 @@ begin
   inherited;
 end;
 
-procedure TPlatformRewardedAd.DoAdShowedFullScreenContent;
+procedure TPlatformRewardedAd.DoAdWillPresentFullScreenContent;
 begin
   inherited;
 end;
@@ -540,7 +540,7 @@ end;
 
 procedure TRewardedInterstitialAdLoadCallbackDelegate.onAdShowedFullScreenContent;
 begin
-  FPlatformRewardedInterstitialAd.DoAdShowedFullScreenContent;
+  FPlatformRewardedInterstitialAd.DoAdWillPresentFullScreenContent;
 end;
 
 { TPlatformRewardedInterstitialAd }
@@ -575,7 +575,7 @@ begin
   inherited;
 end;
 
-procedure TPlatformRewardedInterstitialAd.DoAdShowedFullScreenContent;
+procedure TPlatformRewardedInterstitialAd.DoAdWillPresentFullScreenContent;
 begin
   inherited;
 end;
@@ -643,7 +643,7 @@ end;
 
 procedure TAppOpenAdLoadCallbackDelegate.onAdShowedFullScreenContent;
 begin
-  FAppOpenAd.DoAdShowedFullScreenContent;
+  FAppOpenAd.DoAdWillPresentFullScreenContent;
 end;
 
 { TPlatformAppOpenAd }
@@ -697,7 +697,7 @@ begin
   inherited;
 end;
 
-procedure TPlatformAppOpenAd.DoAdShowedFullScreenContent;
+procedure TPlatformAppOpenAd.DoAdWillPresentFullScreenContent;
 begin
   inherited;
 end;

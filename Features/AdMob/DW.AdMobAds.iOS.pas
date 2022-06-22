@@ -37,6 +37,7 @@ type
     procedure adDidRecordClick(ad: Pointer); cdecl;
     procedure adDidRecordImpression(ad: Pointer); cdecl;
     procedure adWillDismissFullScreenContent(ad: Pointer); cdecl;
+    procedure adWillPresentFullScreenContent(ad: Pointer); cdecl;
   public
     constructor Create(const ACustomPlatformFullScreenAd: TCustomPlatformFullScreenAd);
   end;
@@ -162,8 +163,7 @@ end;
 
 procedure TFullScreenContentDelegate.adDidPresentFullScreenContent(ad: Pointer);
 begin
-  TOSLog.d('TFullScreenContentDelegate.adDidPresentFullScreenContent');
-  FCustomPlatformFullScreenAd.DoAdShowedFullScreenContent;
+  // Deprecated
 end;
 
 procedure TFullScreenContentDelegate.adDidRecordClick(ad: Pointer);
@@ -179,6 +179,11 @@ end;
 procedure TFullScreenContentDelegate.adWillDismissFullScreenContent(ad: Pointer);
 begin
   // Not implemented
+end;
+
+procedure TFullScreenContentDelegate.adWillPresentFullScreenContent(ad: Pointer);
+begin
+  FCustomPlatformFullScreenAd.DoAdWillPresentFullScreenContent;
 end;
 
 { TPlatformInterstitialAd }
@@ -199,18 +204,25 @@ procedure TPlatformInterstitialAd.AdLoadCompletionHandler(interstitialAd: GADInt
 begin
   if error = nil then
   begin
+    TOSLog.d('TPlatformInterstitialAd.AdLoadCompletionHandler(ok)');
     FAd := interstitialAd;
+    FAd.retain;
     FAd.setFullScreenContentDelegate(FDelegate.GetObjectID);
     FAd.setPaidEventHandler(PaidEventHandler);
     DoAdLoaded;
     FAd.presentFromRootViewController(TiOSHelper.SharedApplication.keyWindow.rootViewController);
   end
   else
+  begin
+    TOSLog.d('TPlatformInterstitialAd.AdLoadCompletionHandler(error)');
     DoAdFailedToLoad(TGADHelper.GetAdError(error));
+  end;
 end;
 
 procedure TPlatformInterstitialAd.DoAdDismissedFullScreenContent;
 begin
+  TOSLog.d('TPlatformInterstitialAd.DoAdDismissedFullScreenContent');
+  FAd.release;
   FAd := nil;
   inherited;
 end;
@@ -222,6 +234,7 @@ end;
 
 procedure TPlatformInterstitialAd.PaidEventHandler(value: GADAdValue);
 begin
+  TOSLog.d('TPlatformInterstitialAd.PaidEventHandler');
   // Future implementation
 end;
 
@@ -244,6 +257,7 @@ begin
   if error = nil then
   begin
     FAd := rewardedAd;
+    FAd.retain;
     FAd.setFullScreenContentDelegate(FDelegate.GetObjectID);
     FAd.setPaidEventHandler(PaidEventHandler);
     DoAdLoaded;
@@ -255,6 +269,7 @@ end;
 
 procedure TPlatformRewardedAd.DoAdDismissedFullScreenContent;
 begin
+  FAd.release;
   FAd := nil;
   inherited;
 end;
@@ -291,6 +306,7 @@ end;
 
 procedure TPlatformRewardedInterstitialAd.DoAdDismissedFullScreenContent;
 begin
+  FAd.release;
   FAd := nil;
   inherited;
 end;
@@ -300,6 +316,7 @@ begin
   if error = nil then
   begin
     FAd := rewardedInterstitialAd;
+    FAd.retain;
     FAd.setFullScreenContentDelegate(FDelegate.GetObjectID);
     FAd.setPaidEventHandler(PaidEventHandler);
     DoAdLoaded;
@@ -372,6 +389,7 @@ begin
   if error = nil then
   begin
     FAd := appOpenAd;
+    FAd.retain;
     FAd.setFullScreenContentDelegate(FDelegate.GetObjectID);
     FAd.setPaidEventHandler(PaidEventHandler);
     DoAdLoaded;
