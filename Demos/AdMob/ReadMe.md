@@ -38,7 +38,7 @@ Please provide feedback about this demo as per [the main ReadMe.](https://github
 
 ## Status
 
-Jan 19th, 2022
+June 22nd, 2022
 
 Implemented so far (Android and iOS):
 
@@ -47,10 +47,10 @@ Implemented so far (Android and iOS):
 * TInterstitialAd: [Interstitial Ad](https://developers.google.com/admob/android/interstitial) - basic testing
 * TRewardedAd: [Rewarded Ad](https://developers.google.com/admob/android/rewarded) - basic testing
 * TRewardedInterstitialAd: [Rewarded Interstitial Ad] - basic testing
-  
-**NOTE: On iOS, events are not working on TAppOpenAd, TRewardedAd, TRewardedInterstitialAd, TInterstitialAd**
 
-I'm hoping someone can explain why they are not :-)
+**NOTE: Thanks to some prodding from Chris Pimlott of MyBuzz Technologies, the events issue on iOS has been resolved**
+
+Chris has also contributed a change to TAdMobBannerAd on iOS to support adaptive ad sizes, so please give that a test
 
 A [package has been created for Delphi 10.4.x](https://github.com/DelphiWorlds/Playground/tree/main/Packages/D104), as well as a [demo](https://github.com/DelphiWorlds/Playground/tree/main/Demos/AdMob/D104). Only RewardedAd has had very basic testing. **It is possible that something else might be broken, as some jars needed to be disabled.**
 
