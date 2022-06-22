@@ -30,7 +30,7 @@ const
   MM_BANNER_TESTMODE_CHANGED = MM_USER + 4;
 
 type
-  TAdMobBannerAdSize = (Banner, LargeBanner, MediumRectangle, FullBanner, Leaderboard);
+  TAdMobBannerAdSize = (Banner, LargeBanner, MediumRectangle, FullBanner, Leaderboard, Adaptive);
 
   TCustomAdMobBannerAdModel = class(TDataModel)
   private
