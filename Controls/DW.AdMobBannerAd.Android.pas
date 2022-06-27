@@ -19,10 +19,10 @@ implementation
 
 uses
   // RTL
-  System.Types,
+  System.Types, System.SysUtils,
   // Android
   Androidapi.JNIBridge, Androidapi.JNI.AdMob, Androidapi.JNI.GraphicsContentViewText, Androidapi.JNI.Widget, Androidapi.Helpers,
-  Androidapi.JNI.JavaTypes,
+  Androidapi.JNI.JavaTypes, Androidapi.JNI.Util,
   // FMX
   FMX.Presentation.Android, FMX.Controls.Model, FMX.Controls.Presentation, FMX.Presentation.Messages, FMX.Presentation.Factory,
   FMX.Controls, FMX.Types,
@@ -91,6 +91,7 @@ type
     function AdControl: TOpenAdMobBannerAd;
     procedure CreateAdView;
     procedure DestroyAdView;
+    function GetAdaptiveAdSize: JAdSize;
     function GetAdSize: JAdSize;
     function GetModel: TCustomAdMobBannerAdModel;
   protected
@@ -215,6 +216,17 @@ begin
   Result := inherited GetModel<TCustomAdMobBannerAdModel>;
 end;
 
+function TAndroidAdMobBannerAd.GetAdaptiveAdSize: JAdSize;
+var
+  LMetrics: JDisplayMetrics;
+  LAdWidth: Integer;
+begin
+  LMetrics := TJDisplayMetrics.JavaClass.init;
+  TAndroidHelper.Activity.getWindowManager.getDefaultDisplay.getMetrics(LMetrics);
+  LAdWidth := Trunc(LMetrics.widthPixels / LMetrics.density);
+  Result := TJAdSize.JavaClass.getCurrentOrientationAnchoredAdaptiveBannerAdSize(TAndroidHelper.Context, LAdWidth);
+end;
+
 function TAndroidAdMobBannerAd.GetAdSize: JAdSize;
 begin
   case Model.AdSize of
@@ -228,6 +240,8 @@ begin
       Result := TJAdSize.JavaClass.FULL_BANNER;
     TAdMobBannerAdSize.LeaderBoard:
       Result := TJAdSize.JavaClass.LEADERBOARD;
+    TAdMobBannerAdSize.Adaptive:
+      Result := GetAdaptiveAdSize;
   else
     Result := TJAdSize.JavaClass.BANNER;
   end;
