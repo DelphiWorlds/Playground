@@ -50,7 +50,7 @@ Implemented so far (Android and iOS):
 
 **NOTE: Thanks to some prodding from Chris Pimlott of MyBuzz Technologies, the events issue on iOS has been resolved**
 
-Chris has also contributed a change to TAdMobBannerAd on iOS to support adaptive ad sizes, so please give that a test
+Chris has also contributed a change to TAdMobBannerAd to support adaptive ad sizes, so please give that a test
 
 A [package has been created for Delphi 10.4.x](https://github.com/DelphiWorlds/Playground/tree/main/Packages/D104), as well as a [demo](https://github.com/DelphiWorlds/Playground/tree/main/Demos/AdMob/D104). Only RewardedAd has had very basic testing. **It is possible that something else might be broken, as some jars needed to be disabled.**
 
