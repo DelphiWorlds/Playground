@@ -232,9 +232,10 @@ uses
 
 {$IF not Defined(ANDROID) and not Defined(IOS)}
 type
+  TPlatformAppOpenAd = class(TCustomPlatformAppOpenAd);
   TPlatformInterstitialAd = class(TCustomPlatformInterstitialAd);
   TPlatformRewardedAd = class(TCustomPlatformRewardedAd);
-  TPlatformAppOpenAd = class(TCustomPlatformAppOpenAd);
+  TPlatformRewardedInterstitialAd = class(TCustomPlatformRewardedInterstitialAd);
 {$ENDIF}
 
 { TCustomPlatformBaseAd }
