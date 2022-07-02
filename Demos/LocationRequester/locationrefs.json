@@ -1,0 +1,24 @@
+{
+	"Refs": [
+  		{ 
+	  		"Name": "DP Cemetery",
+		  	"Latitude": -34.883165,
+			  "Longitude": 138.581869
+  		},
+		  { 
+				"Name": "Parndo Yerta",
+				"Latitude": -34.888863,
+				"Longitude": 138.584424
+			},
+			{ 
+				"Name": "Sam Johnston Sports",
+				"Latitude": -34.890997,
+				"Longitude": 138.579710
+			},
+			{ 
+				"Name": "Albert G Reserve",
+				"Latitude": -34.891458,
+				"Longitude":  138.573082
+			}
+	]
+}

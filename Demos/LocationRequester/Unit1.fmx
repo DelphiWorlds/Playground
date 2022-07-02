@@ -1,0 +1,133 @@
+object Form1: TForm1
+  Left = 0
+  Top = 0
+  Caption = 'Form1'
+  ClientHeight = 772
+  ClientWidth = 522
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [Desktop]
+  DesignerMasterStyle = 0
+  object BottomLayout: TLayout
+    Align = Bottom
+    Position.Y = 656.000000000000000000
+    Size.Width = 522.000000000000000000
+    Size.Height = 92.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 0
+    object MultipleLayout: TLayout
+      Align = Top
+      Padding.Left = 4.000000000000000000
+      Padding.Top = 4.000000000000000000
+      Padding.Right = 4.000000000000000000
+      Padding.Bottom = 4.000000000000000000
+      Position.Y = 44.000000000000000000
+      Size.Width = 522.000000000000000000
+      Size.Height = 44.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 0
+      object LocationMultipleButton: TButton
+        Align = Left
+        Position.X = 4.000000000000000000
+        Position.Y = 4.000000000000000000
+        Size.Width = 97.000000000000000000
+        Size.Height = 36.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 0
+        Text = 'Multiple'
+        OnClick = LocationMultipleButtonClick
+      end
+      object SamplesSpinBox: TSpinBox
+        Touch.InteractiveGestures = [LongTap, DoubleTap]
+        Align = Center
+        TabOrder = 1
+        Cursor = crIBeam
+        Min = 2.000000000000000000
+        Max = 10.000000000000000000
+        Value = 5.000000000000000000
+        Size.Width = 100.000000000000000000
+        Size.Height = 32.000000000000000000
+        Size.PlatformDefault = False
+      end
+    end
+    object SingleLayout: TLayout
+      Align = Top
+      Padding.Left = 4.000000000000000000
+      Padding.Top = 4.000000000000000000
+      Padding.Right = 4.000000000000000000
+      Padding.Bottom = 4.000000000000000000
+      Size.Width = 522.000000000000000000
+      Size.Height = 44.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 1
+      object LocationSingleButton: TButton
+        Align = Left
+        Position.X = 4.000000000000000000
+        Position.Y = 4.000000000000000000
+        Size.Width = 97.000000000000000000
+        Size.Height = 36.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 0
+        Text = 'Single'
+        OnClick = LocationSingleButtonClick
+      end
+    end
+  end
+  object ListBox: TListBox
+    Align = Client
+    Margins.Left = 4.000000000000000000
+    Margins.Top = 4.000000000000000000
+    Margins.Right = 4.000000000000000000
+    Margins.Bottom = 4.000000000000000000
+    Size.Width = 514.000000000000000000
+    Size.Height = 342.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 1
+    DisableFocusEffect = True
+    DefaultItemStyles.ItemStyle = ''
+    DefaultItemStyles.GroupHeaderStyle = ''
+    DefaultItemStyles.GroupFooterStyle = ''
+    Viewport.Width = 510.000000000000000000
+    Viewport.Height = 338.000000000000000000
+  end
+  object VersionLabel: TLabel
+    Align = Bottom
+    Position.Y = 748.000000000000000000
+    Size.Width = 522.000000000000000000
+    Size.Height = 24.000000000000000000
+    Size.PlatformDefault = False
+    TextSettings.HorzAlign = Center
+    Text = 'VersionLabel'
+    TabOrder = 3
+  end
+  object Memo: TMemo
+    Touch.InteractiveGestures = [Pan, LongTap, DoubleTap]
+    DataDetectorTypes = []
+    Align = Bottom
+    Margins.Left = 4.000000000000000000
+    Margins.Right = 4.000000000000000000
+    Margins.Bottom = 4.000000000000000000
+    Position.X = 4.000000000000000000
+    Position.Y = 350.000000000000000000
+    Size.Width = 514.000000000000000000
+    Size.Height = 250.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 4
+    Viewport.Width = 510.000000000000000000
+    Viewport.Height = 246.000000000000000000
+  end
+  object ClearButton: TButton
+    Align = Bottom
+    Margins.Left = 4.000000000000000000
+    Margins.Right = 4.000000000000000000
+    Margins.Bottom = 8.000000000000000000
+    Position.X = 4.000000000000000000
+    Position.Y = 604.000000000000000000
+    Size.Width = 514.000000000000000000
+    Size.Height = 44.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 5
+    Text = 'Clear'
+    OnClick = ClearButtonClick
+  end
+end
