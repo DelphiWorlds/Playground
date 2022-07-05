@@ -217,8 +217,8 @@ type
 implementation
 
 uses
-  DW.OSLog,
   // DW
+  DW.OSLog,
 {$IF Defined(ANDROID)}
   DW.AdMobAds.Android,
 {$ENDIF}
@@ -350,7 +350,6 @@ end;
 
 procedure TCustomPlatformBaseRewardedAd.DoUserEarnedReward(const AReward: TAdReward);
 begin
-  TOSLog.d('TCustomPlatformBaseRewardedAd.DoUserEarnedReward');
   FBaseRewardedAd.DoUserEarnedReward(AReward);
 end;
 
@@ -406,6 +405,7 @@ end;
 
 procedure TBaseAd.DoAdFailedToLoad(const AError: TAdError);
 begin
+  TOSLog.d('DoAdFailedToLoad (%s) - %d: %s', [ClassName, AError.ErrorCode, AError.Message]);
   if Assigned(FOnAdFailedToLoad) then
     FOnAdFailedToLoad(Self, AError);
 end;
@@ -452,6 +452,7 @@ end;
 
 procedure TFullScreenAd.DoAdFailedToShowFullScreenContent(const AError: TAdError);
 begin
+  TOSLog.d('DoAdFailedToShowFullScreenContent (%s) - %d: %s', [ClassName, AError.ErrorCode, AError.Message]);
   if Assigned(FOnAdFailedToShowFullScreenContent) then
     FOnAdFailedToShowFullScreenContent(Self, AError);
 end;
