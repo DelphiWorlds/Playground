@@ -28,13 +28,13 @@ type
   private
     FIntAd: TInterstitialAd;
     FRewAd: TRewardedAd;
-    FAd: TRewardedAd;
-    // FAd: TRewardedInterstitialAd;
-    FOpenAd: TAppOpenAd;
-    procedure AdLoadedHander(Sender: TObject);
+    // FOpenAd: TAppOpenAd;
     procedure AdDismissedFullScreenContentHandler(Sender: TObject);
+    procedure AdFailedToLoadHandler(Sender: TObject; const AError: TAdError);
     procedure AdFailedToShowFullScreenContentHandler(Sender: TObject; const AError: TAdError);
+    procedure AdLoadedHander(Sender: TObject);
     procedure AdWillPresentFullScreenContentHandler(Sender: TObject);
+    function GetErrorMessage(const AEvent: string; const ASender: TObject; const AError: TAdError): string;
     procedure UserEarnedRewardHandler(Sender: TObject; const AReward: TAdReward);
   public
     constructor Create(AOwner: TComponent); override;
@@ -53,15 +53,14 @@ constructor TForm1.Create(AOwner: TComponent);
 begin
   inherited;
   FIntAd := TInterstitialAd.Create;
-  FIntAd.TestMode:=True;
+  FIntAd.TestMode := True;
   FIntAd.OnAdDismissedFullScreenContent := AdDismissedFullScreenContentHandler;
   FIntAd.OnAdFailedToShowFullScreenContent := AdFailedToShowFullScreenContentHandler;
   FIntAd.OnAdWillPresentFullScreenContent := AdWillPresentFullScreenContentHandler;
   FIntAd.OnAdLoaded := AdLoadedHander;
+  FIntAd.OnAdFailedToLoad := AdFailedToLoadHandler;
 
   FRewAd := TRewardedAd.Create;
-  // FAd := TRewardedInterstitialAd.Create;
-  // FAd := TAppOpenAd.Create;
   FRewAd.TestMode := True;
   FRewAd.OnAdDismissedFullScreenContent := AdDismissedFullScreenContentHandler;
   FRewAd.OnAdFailedToShowFullScreenContent := AdFailedToShowFullScreenContentHandler;
@@ -77,9 +76,13 @@ begin
 //  FOpenAd.Load;
 end;
 
+function TForm1.GetErrorMessage(const AEvent: string; const ASender: TObject; const AError: TAdError): string;
+begin
+  Result := Format('%s (%s)'#13#10'%d: %s ', [AEvent, ASender.ClassName, AError.ErrorCode, AError.Message]);
+end;
+
 procedure TForm1.ShowBannerClick(Sender: TObject);
 begin
-  // FAd.Load; // Not required for TAppOpenAd
   AdMobBannerAd1.AdSize := TAdMobBannerAdSize.Adaptive;
   AdMobBannerAd1.LoadAd;
 end;
@@ -104,9 +107,14 @@ begin
   Memo.Lines.Add('Fullscreen Ad Dismissed '+Sender.ClassName);
 end;
 
+procedure TForm1.AdFailedToLoadHandler(Sender: TObject; const AError: TAdError);
+begin
+  Memo.Lines.Add(GetErrorMessage('Ad Failed To Load', Sender, AError));
+end;
+
 procedure TForm1.AdFailedToShowFullScreenContentHandler(Sender: TObject; const AError: TAdError);
 begin
-  Memo.Lines.Add('Fullscreen Ad Failed - ' + AError.ErrorCode.ToString + ': ' + AError.Message);
+  Memo.Lines.Add(GetErrorMessage('Fullscreen Ad Failed', Sender, AError));
 end;
 
 procedure TForm1.AdLoadedHander(Sender: TObject);
@@ -131,7 +139,7 @@ end;
 
 procedure TForm1.AdMobBannerAd1AdFailedToLoad(Sender: TObject; const Error: TAdError);
 begin
-  Memo.Lines.Add('Ad Failed To Load ' + Sender.ClassName);
+  Memo.Lines.Add(GetErrorMessage('Ad Failed To Load', Sender, Error));
 end;
 
 procedure TForm1.AdMobBannerAd1AdImpression(Sender: TObject);
