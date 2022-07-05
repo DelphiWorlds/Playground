@@ -32,13 +32,27 @@ Ensure your project has the `AdMob Service` enabled. This adds Google Play servi
 
 Ensure your project has the `Access Network State` permission in Project Options
 
+### Using non-test Ad UnitIds
+
+When configuring your app for non-test Ad UnitIds, you will need to:
+
+* For Android: modify `AndroidManifest.template.xml` to add meta-data that includes your AdMob Application ID, as per part 3 of [these instructions](https://developers.google.com/admob/android/quick-start?hl=en-US#import_the_mobile_ads_sdk). Please refer to the image below for an example of where to put the meta-data. 
+  
+<img style="margin-left: 3em;" src="./Screenshots/AndroidManifestTemplateAppId.png" alt="PM" height="300"/>
+
+* For iOS: modify `info.plist.TemplateiOS.xml` to change the value for the `GADApplicationIdentifier` key. Please refer to the image below for an example of what to change. 
+  
+<img style="margin-left: 3em;" src="./Screenshots/iOSInfoPListTemplateAppId.png" alt="PM" height="150"/>
+
+* Ensure that the `TestMode` property of the instances of AdMob classes is set to False, and the AdUnitId is set to a valid AdUnitId for your application.
+
 ## Feedback
 
 Please provide feedback about this demo as per [the main ReadMe.](https://github.com/DelphiWorlds/Playground/blob/main/Readme.md)
 
 ## Status
 
-June 22nd, 2022
+July 5th, 2022
 
 Implemented so far (Android and iOS):
 
