@@ -52,6 +52,7 @@ type
   [JavaSignature('com/delphiworlds/kastri/DWInterstitialAdCallbackDelegate')]
   JDWInterstitialAdCallbackDelegate = interface(IJavaInstance)
     ['{11DEBF75-98FA-42B8-B9DE-5661D0CEC5AF}']
+    procedure onAdFailedToLoad(loadAdError: JLoadAdError); cdecl;
     procedure onAdLoaded(interstitialAd: JInterstitial_InterstitialAd); cdecl;
     procedure onAdDismissedFullScreenContent; cdecl;
     procedure onAdFailedToShowFullScreenContent(adError: JAdError); cdecl;
@@ -149,6 +150,7 @@ type
     property Callback: JDWInterstitialAdCallback read FCallback;
   public
     { JDWInterstitialAdCallbackDelegate }
+    procedure onAdFailedToLoad(loadAdError: JLoadAdError); cdecl;
     procedure onAdLoaded(interstitialAd: JInterstitial_InterstitialAd); cdecl;
     procedure onAdDismissedFullScreenContent; cdecl;
     procedure onAdFailedToShowFullScreenContent(adError: JAdError); cdecl;
@@ -300,7 +302,14 @@ type
 implementation
 
 uses
+  // Android
   Androidapi.Helpers;
+
+function GetAdError(const adError: JAdError): TAdError;
+begin
+  Result.ErrorCode := adError.getCode;
+  Result.Message := JStringToString(adError.getMessage);
+end;
 
 { TInterstitialAdCallbackDelegate }
 
@@ -316,13 +325,14 @@ begin
   FPlatformInterstitialAd.DoAdDismissedFullScreenContent;
 end;
 
-procedure TInterstitialAdCallbackDelegate.onAdFailedToShowFullScreenContent(adError: JAdError);
-var
-  LError: TAdError;
+procedure TInterstitialAdCallbackDelegate.onAdFailedToLoad(loadAdError: JLoadAdError);
 begin
-  LError.ErrorCode := adError.getCode;
-  LError.Message := JStringToString(adError.getMessage);
-  FPlatformInterstitialAd.DoAdFailedToShowFullScreenContent(LError);
+  FPlatformInterstitialAd.DoAdFailedToLoad(GetAdError(loadAdError));
+end;
+
+procedure TInterstitialAdCallbackDelegate.onAdFailedToShowFullScreenContent(adError: JAdError);
+begin
+  FPlatformInterstitialAd.DoAdFailedToShowFullScreenContent(GetAdError(adError));
 end;
 
 procedure TInterstitialAdCallbackDelegate.onAdLoaded(interstitialAd: JInterstitial_InterstitialAd);
@@ -357,7 +367,7 @@ end;
 
 procedure TPlatformInterstitialAd.DoAdFailedToShowFullScreenContent(const AError: TAdError);
 begin
-  //!!!!
+  inherited;
 end;
 
 procedure TPlatformInterstitialAd.AdLoaded(const AInterstitialAd: JInterstitial_InterstitialAd);
@@ -418,21 +428,13 @@ begin
 end;
 
 procedure TRewardedAdLoadCallbackDelegate.onAdFailedToLoad(loadAdError: JLoadAdError);
-var
-  LError: TAdError;
 begin
-  LError.ErrorCode := loadAdError.getCode;
-  LError.Message := JStringToString(loadAdError.getMessage);
-  FPlatformRewardedAd.DoAdFailedToLoad(LError);
+  FPlatformRewardedAd.DoAdFailedToLoad(GetAdError(loadAdError));
 end;
 
 procedure TRewardedAdLoadCallbackDelegate.onAdFailedToShowFullScreenContent(adError: JAdError);
-var
-  LError: TAdError;
 begin
-  LError.ErrorCode := adError.getCode;
-  LError.Message := JStringToString(adError.getMessage);
-  FPlatformRewardedAd.DoAdFailedToShowFullScreenContent(LError);
+  FPlatformRewardedAd.DoAdFailedToShowFullScreenContent(GetAdError(adError));
 end;
 
 procedure TRewardedAdLoadCallbackDelegate.onAdLoaded(rewardedAd: JRewardedAd);
@@ -525,12 +527,8 @@ begin
 end;
 
 procedure TRewardedInterstitialAdLoadCallbackDelegate.onAdFailedToShowFullScreenContent(adError: JAdError);
-var
-  LError: TAdError;
 begin
-  LError.ErrorCode := adError.getCode;
-  LError.Message := JStringToString(adError.getMessage);
-  FPlatformRewardedInterstitialAd.DoAdFailedToShowFullScreenContent(LError);
+  FPlatformRewardedInterstitialAd.DoAdFailedToShowFullScreenContent(GetAdError(adError));
 end;
 
 procedure TRewardedInterstitialAdLoadCallbackDelegate.onAdLoaded(rewardedInterstitialAd: JRewardedInterstitialAd);
@@ -619,21 +617,13 @@ begin
 end;
 
 procedure TAppOpenAdLoadCallbackDelegate.onAdFailedToLoad(loadAdError: JLoadAdError);
-var
-  LError: TAdError;
 begin
-  LError.ErrorCode := loadAdError.getCode;
-  LError.Message := JStringToString(loadAdError.getMessage);
-  FAppOpenAd.DoAdFailedToLoad(LError);
+  FAppOpenAd.DoAdFailedToLoad(GetAdError(loadAdError));
 end;
 
 procedure TAppOpenAdLoadCallbackDelegate.onAdFailedToShowFullScreenContent(adError: JAdError);
-var
-  LError: TAdError;
 begin
-  LError.ErrorCode := adError.getCode;
-  LError.Message := JStringToString(adError.getMessage);
-  FAppOpenAd.DoAdFailedToShowFullScreenContent(LError);
+  FAppOpenAd.DoAdFailedToShowFullScreenContent(GetAdError(adError));
 end;
 
 procedure TAppOpenAdLoadCallbackDelegate.onAdLoaded(ad: JAppOpenAd);
