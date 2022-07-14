@@ -41,7 +41,7 @@ constructor TForm1.Create(AOwner: TComponent);
 begin
   inherited;
   FBeacons := TBeacons.Create;
-  FBeacons.AddFilter(TBluetoothLEScanFilter.Create(cBeaconServiceUUIDBluecats));
+  // FBeacons.AddFilter(TBluetoothLEScanFilter.Create(cBeaconServiceUUIDBluecats));
   FBeacons.OnDiscoveredDevice := BeaconsDiscoveredDeviceHandler;
   FBeacons.OnScanFinish := BeaconsScanFinishHandler;
 end;
