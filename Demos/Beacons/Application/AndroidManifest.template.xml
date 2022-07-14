@@ -31,6 +31,7 @@
              This will take care of integrating with our NDK code. -->
         <activity
             android:name="com.embarcadero.firemonkey.FMXNativeActivity"
+            android:exported="true"
             android:label="%activityLabel%"
             android:configChanges="orientation|keyboard|keyboardHidden|screenSize"
             android:launchMode="singleTask">
@@ -45,7 +46,7 @@
         </activity>
 <%activity%>
 <%receivers%>
-        <receiver android:name="com.delphiworlds.kastri.DWBeaconsReceiver">
+        <receiver android:name="com.delphiworlds.kastri.DWBeaconsReceiver" android:exported="true">
             <intent-filter>
                 <action android:name="com.delphiworlds.kastri.DWBeaconsReceiver.ACTION_FOUND" />
             </intent-filter>
