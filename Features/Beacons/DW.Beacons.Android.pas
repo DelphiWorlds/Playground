@@ -91,6 +91,7 @@ type
     FScanCallbackDelegate: TBeaconsScanCallbackDelegate;
     FScanTimer: JRunnable;
     function GetFilters: JList;
+    function GetRequiredPermissions: TArray<string>;
     function GetScanSettings: JScanSettings;
     procedure InternalScan;
     procedure InternalScanWithIntent;
@@ -98,8 +99,6 @@ type
     procedure ScanWithPermission(const AScanMethod: TProc);
   protected
     procedure HandleIntent(const AIntentID: Pointer); override;
-    function HasBluetoothPermission: Boolean; override;
-    function HasLocationPermission: Boolean;
     function IsBluetoothEnabled: Boolean; override;
     procedure ScanFailed(const AErrorCode: Integer);
     procedure Scan; override;
@@ -379,25 +378,31 @@ begin
   end;
 end;
 
-function TPlatformBeacons.HasBluetoothPermission: Boolean;
+function TPlatformBeacons.GetRequiredPermissions: TArray<string>;
 begin
-  Result := PermissionsService.IsPermissionGranted(cPermissionBluetooth);
-end;
-
-function TPlatformBeacons.HasLocationPermission: Boolean;
-begin
-  Result := PermissionsService.IsPermissionGranted(cPermissionAccessFineLocation);
+  if not PermissionsService.IsPermissionGranted(cPermissionAccessFineLocation) then
+    Result := Result + [cPermissionAccessFineLocation];
+  if not PermissionsService.IsPermissionGranted(cPermissionBluetooth) then
+    Result := Result + [cPermissionBluetooth];
+  if TJBuild_VERSION.JavaClass.SDK_INT > 31 then
+  begin
+    if not PermissionsService.IsPermissionGranted(cPermissionBluetoothConnect) then
+      Result := Result + [cPermissionBluetoothConnect];
+    if not PermissionsService.IsPermissionGranted(cPermissionBluetoothScan) then
+      Result := Result + [cPermissionBluetoothScan];
+  end;
 end;
 
 function TPlatformBeacons.IsBluetoothEnabled: Boolean;
 begin
-  Result := HasBluetoothPermission and TJBluetoothAdapter.JavaClass.getDefaultAdapter.isEnabled;
+  Result := TJBluetoothAdapter.JavaClass.getDefaultAdapter.isEnabled;
 end;
 
 procedure TPlatformBeacons.InternalScan;
 var
   LScanner: JBluetoothLeScannerEx;
 begin
+  TOSLog.d('Starting plain scan..');
   LScanner := TJBluetoothLeScannerEx.Wrap(FBluetoothManager.getAdapter.getBluetoothLeScanner);
   LScanner.startScan(GetFilters, GetScanSettings, FScanCallbackDelegate.Callback);
   // LScanner.startScan(nil, GetScanSettings, FScanCallbackDelegate.Callback);
@@ -414,12 +419,16 @@ var
   LScanner: JBluetoothLeScannerEx;
   LIntent: JIntent;
   LPendingIntent: JPendingIntent;
+  LFlags: Integer;
 begin
   LIntent := TJIntent.JavaClass.init(StringToJString(cBeaconsReceiverActionFound));
   LIntent.setClassName(TAndroidHelper.Context, StringToJString('com.delphiworlds.kastri.DWBeaconsReceiver'));
-  // LIntent.putExtra(StringToJString('o-scan'), True); // <--- No idea what this is
-  LPendingIntent := TJPendingIntent.JavaClass.getBroadcast(TAndroidHelper.Context, 0, LIntent, TJPendingIntent.JavaClass.FLAG_UPDATE_CURRENT);
+  LFlags := TJPendingIntent.JavaClass.FLAG_UPDATE_CURRENT;
+  if TJBuild_VERSION.JavaClass.SDK_INT > 31 then
+    LFlags := LFlags or $02000000; // https://developer.android.com/reference/android/app/PendingIntent#FLAG_MUTABLE
+  LPendingIntent := TJPendingIntent.JavaClass.getBroadcast(TAndroidHelper.Context, 0, LIntent, LFlags);
   LScanner := TJBluetoothLeScannerEx.Wrap(FBluetoothManager.getAdapter.getBluetoothLeScanner);
+  TOSLog.d('Starting intent scan..');
   LScanner.startScan(GetFilters, GetScanSettings, LPendingIntent);
 end;
 
@@ -429,22 +438,29 @@ begin
 end;
 
 procedure TPlatformBeacons.ScanWithPermission(const AScanMethod: TProc);
+var
+  LPermissions: TArray<string>;
 begin
   if IsBluetoothEnabled then
   begin
-    if not HasLocationPermission then
+    LPermissions := GetRequiredPermissions;
+    if Length(LPermissions) > 0 then
     begin
-      PermissionsService.RequestPermissions([cPermissionAccessFineLocation],
+      PermissionsService.RequestPermissions(LPermissions,
         procedure(const APermissions: TPermissionArray; const AGrantResults: TPermissionStatusArray)
         begin
           if AGrantResults.AreAllGranted then
-            AScanMethod;
+            AScanMethod
+          else
+            TOSLog.d('Has not granted all required permissions');
         end
       );
     end
     else
       AScanMethod;
-  end;
+  end
+  else
+    TOSLog.d('Bluetooth NOT enabled');
 end;
 
 end.
