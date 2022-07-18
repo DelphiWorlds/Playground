@@ -13,6 +13,10 @@ unit DW.AdMob;
 
 {$I DW.GlobalDefines.inc}
 
+AdMob support has been moved to the Kastri repo! https://github.com/DelphiWorlds/Kastri
+
+The demo is located here: https://github.com/DelphiWorlds/Kastri/tree/master/Demos/AdMob
+
 interface
 
 const
