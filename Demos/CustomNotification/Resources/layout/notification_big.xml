@@ -9,7 +9,7 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:text="Title"
-        android:textColor="?android:attr/textColorPrimaryInverse"
+        android:textStyle="bold"
         style="@android:style/TextAppearance.Material.Notification.Title" />
     <ImageView android:id="@+id/notification_big_image"
         android:layout_width="match_parent"
