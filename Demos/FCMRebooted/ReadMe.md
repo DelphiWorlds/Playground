@@ -12,6 +12,8 @@ In this implementation, support has been added for a customised notification on 
 
 There is now a single unit: `DW.FCMManager`, that handles management of FCM, and is exposed as a reference to an interface: `IFCMManager`. Now you do not need to create any classes; just assign event handlers, and call the `Start` method on the `FCM` reference.
 
+**In order for messages to be received properly on Android, FCM message payloads will need to omit `notification` elements, and include `title`, `body` and `imageUrl` (if needed) properties in the `data` element.** Please refer to the [Sending test messages](#sending-test-messages) section.
+
 ## Supported Versions
 
 At present, the only supported version is Delphi 11.x. Support for 10.4.x may come later, however it is unlikely.
