@@ -1,0 +1,193 @@
+object Form1: TForm1
+  Left = 0
+  Top = 0
+  Caption = 'Form1'
+  ClientHeight = 678
+  ClientWidth = 490
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [Desktop]
+  DesignerMasterStyle = 0
+  object DetectedDevicesLabel: TLabel
+    Align = Top
+    Margins.Left = 6.000000000000000000
+    Margins.Top = 4.000000000000000000
+    Margins.Right = 6.000000000000000000
+    Position.X = 6.000000000000000000
+    Position.Y = 4.000000000000000000
+    Size.Width = 478.000000000000000000
+    Size.Height = 25.000000000000000000
+    Size.PlatformDefault = False
+    Text = 'Detected devices:'
+    TabOrder = 1
+  end
+  object DevicesListBox: TListBox
+    Align = Client
+    Margins.Left = 6.000000000000000000
+    Margins.Right = 6.000000000000000000
+    Size.Width = 478.000000000000000000
+    Size.Height = 485.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 2
+    DisableFocusEffect = True
+    DefaultItemStyles.ItemStyle = ''
+    DefaultItemStyles.GroupHeaderStyle = ''
+    DefaultItemStyles.GroupFooterStyle = ''
+    OnItemClick = DevicesListBoxItemClick
+    Viewport.Width = 474.000000000000000000
+    Viewport.Height = 481.000000000000000000
+  end
+  object BottomLayout: TLayout
+    Align = Bottom
+    Padding.Left = 6.000000000000000000
+    Padding.Top = 6.000000000000000000
+    Padding.Right = 6.000000000000000000
+    Padding.Bottom = 6.000000000000000000
+    Position.Y = 624.000000000000000000
+    Size.Width = 490.000000000000000000
+    Size.Height = 54.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 3
+    object ScanButton: TButton
+      Align = Left
+      Position.X = 6.000000000000000000
+      Position.Y = 6.000000000000000000
+      Size.Width = 140.000000000000000000
+      Size.Height = 42.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 0
+      Text = 'Scan'
+      OnClick = ScanButtonClick
+    end
+    object SwitchLayout: TLayout
+      Align = Right
+      Position.X = 404.000000000000000000
+      Position.Y = 6.000000000000000000
+      Size.Width = 80.000000000000000000
+      Size.Height = 42.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 1
+      object ActiveSwitch: TSwitch
+        Align = VertCenter
+        IsChecked = False
+        Position.Y = 7.000000000000000000
+        Size.Width = 80.000000000000000000
+        Size.Height = 27.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 0
+        OnSwitch = ActiveSwitchSwitch
+      end
+    end
+  end
+  object DeviceGridPanelLayout: TGridPanelLayout
+    Align = Bottom
+    Margins.Left = 6.000000000000000000
+    Margins.Top = 6.000000000000000000
+    Margins.Right = 6.000000000000000000
+    Margins.Bottom = 6.000000000000000000
+    Position.X = 6.000000000000000000
+    Position.Y = 520.000000000000000000
+    Size.Width = 478.000000000000000000
+    Size.Height = 98.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 0
+    ColumnCollection = <
+      item
+        Value = 33.369191688118820000
+      end
+      item
+        Value = 66.630808311881180000
+      end>
+    ControlCollection = <
+      item
+        Column = 0
+        Control = DeviceIDLabel
+        Row = 0
+      end
+      item
+        Column = 1
+        Control = DeviceIDValueLabel
+        Row = 0
+      end
+      item
+        Column = 0
+        Control = DeviceRSSILabel
+        Row = 1
+      end
+      item
+        Column = 1
+        Control = DeviceRSSIValueLabel
+        Row = 1
+      end
+      item
+        Column = 0
+        Control = DeviceDistanceLabel
+        Row = 2
+      end
+      item
+        Column = 1
+        Control = DeviceDistanceValueLabel
+        Row = 2
+      end>
+    RowCollection = <
+      item
+        Value = 33.333333333333340000
+      end
+      item
+        Value = 33.333333333333340000
+      end
+      item
+        Value = 33.333333333333340000
+      end>
+    object DeviceIDLabel: TLabel
+      Align = Client
+      Size.Width = 159.504730224609400000
+      Size.Height = 32.666667938232420000
+      Size.PlatformDefault = False
+      Text = 'ID'
+      TabOrder = 5
+    end
+    object DeviceIDValueLabel: TLabel
+      Align = Client
+      Size.Width = 318.495269775390600000
+      Size.Height = 32.666667938232420000
+      Size.PlatformDefault = False
+      Text = 'YYYYYYY'
+      TabOrder = 0
+    end
+    object DeviceRSSILabel: TLabel
+      Align = Client
+      Size.Width = 159.504730224609400000
+      Size.Height = 32.666667938232420000
+      Size.PlatformDefault = False
+      Text = 'RSSI'
+      TabOrder = 4
+    end
+    object DeviceRSSIValueLabel: TLabel
+      Align = Client
+      Size.Width = 318.495269775390600000
+      Size.Height = 32.666667938232420000
+      Size.PlatformDefault = False
+      Text = '0'
+      TabOrder = 2
+    end
+    object DeviceDistanceLabel: TLabel
+      Align = Client
+      Size.Width = 159.504730224609400000
+      Size.Height = 32.666664123535160000
+      Size.PlatformDefault = False
+      Text = 'Distance'
+      Visible = False
+      TabOrder = 3
+    end
+    object DeviceDistanceValueLabel: TLabel
+      Align = Client
+      Size.Width = 318.495269775390600000
+      Size.Height = 32.666664123535160000
+      Size.PlatformDefault = False
+      Text = '0'
+      Visible = False
+      TabOrder = 1
+    end
+  end
+end
