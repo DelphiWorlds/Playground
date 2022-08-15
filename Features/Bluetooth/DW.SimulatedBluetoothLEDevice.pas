@@ -1,4 +1,4 @@
-unit DW.SimulatedBluetoothDevice;
+unit DW.SimulatedBluetoothLEDevice;
 
 {*******************************************************}
 {                                                       }
@@ -19,7 +19,7 @@ const
   cUUIDWith16Bit = '0000%s-0000-1000-8000-00805F9B34FB';
 
 type
-  TCustomPlatformSimulatedBluetoothDevice = class(TObject)
+  TCustomPlatformSimulatedBluetoothLEDevice = class(TObject)
   private
     procedure SetIsActive(const Value: Boolean);
   protected
@@ -37,7 +37,7 @@ type
     property IsActive: Boolean read FIsActive write SetIsActive;
   end;
 
-function StringToServiceUUID(const AValue: string): string;
+function StringToUUID(const AValue: string): string;
 
 implementation
 
@@ -45,59 +45,59 @@ uses
   // RTL
   System.SysUtils;
 
-function StringToServiceUUID(const AValue: string): string;
+function StringToUUID(const AValue: string): string;
 begin
   Result := AValue;
   if Length(Result) = 4 then
     Result := Format(cUUIDWith16Bit, [Result]);
 end;
 
-{ TCustomPlatformSimulatedBluetoothDevice }
+{ TCustomPlatformSimulatedBluetoothLEDevice }
 
-constructor TCustomPlatformSimulatedBluetoothDevice.Create;
+constructor TCustomPlatformSimulatedBluetoothLEDevice.Create;
 begin
   inherited;
   //
 end;
 
-destructor TCustomPlatformSimulatedBluetoothDevice.Destroy;
+destructor TCustomPlatformSimulatedBluetoothLEDevice.Destroy;
 begin
   StopServer;
   inherited;
 end;
 
-procedure TCustomPlatformSimulatedBluetoothDevice.ServicesAdded;
+procedure TCustomPlatformSimulatedBluetoothLEDevice.ServicesAdded;
 begin
   StartAdvertising;
 end;
 
-procedure TCustomPlatformSimulatedBluetoothDevice.SetIsActive(const Value: Boolean);
+procedure TCustomPlatformSimulatedBluetoothLEDevice.SetIsActive(const Value: Boolean);
 begin
   if FIsActive <> Value then
     ActiveChanging(Value);
 end;
 
-procedure TCustomPlatformSimulatedBluetoothDevice.ActiveChanging(const Value: Boolean);
+procedure TCustomPlatformSimulatedBluetoothLEDevice.ActiveChanging(const Value: Boolean);
 begin
   FIsActive := Value;
 end;
 
-procedure TCustomPlatformSimulatedBluetoothDevice.StartAdvertising;
+procedure TCustomPlatformSimulatedBluetoothLEDevice.StartAdvertising;
 begin
   //
 end;
 
-procedure TCustomPlatformSimulatedBluetoothDevice.StartServer;
+procedure TCustomPlatformSimulatedBluetoothLEDevice.StartServer;
 begin
   //
 end;
 
-procedure TCustomPlatformSimulatedBluetoothDevice.StopAdvertising;
+procedure TCustomPlatformSimulatedBluetoothLEDevice.StopAdvertising;
 begin
   //
 end;
 
-procedure TCustomPlatformSimulatedBluetoothDevice.StopServer;
+procedure TCustomPlatformSimulatedBluetoothLEDevice.StopServer;
 begin
   //
 end;

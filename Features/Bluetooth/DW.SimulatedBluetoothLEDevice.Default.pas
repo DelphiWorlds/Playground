@@ -1,4 +1,4 @@
-unit DW.SimulatedBluetoothDevice.Default;
+unit DW.SimulatedBluetoothLEDevice.Default;
 
 {*******************************************************}
 {                                                       }
@@ -17,10 +17,10 @@ interface
 
 uses
   // DW
-  DW.SimulatedBluetoothDevice;
+  DW.SimulatedBluetoothLEDevice;
 
 type
-  TPlatformSimulatedBluetoothDevice = class(TCustomPlatformSimulatedBluetoothDevice);
+  TPlatformSimulatedBluetoothLEDevice = class(TCustomPlatformSimulatedBluetoothLEDevice);
 
 implementation
 

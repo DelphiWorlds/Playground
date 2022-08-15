@@ -1,4 +1,4 @@
-unit DW.SimulatedBluetoothDevice.Android;
+unit DW.SimulatedBluetoothLEDevice.Android;
 
 {*******************************************************}
 {                                                       }
@@ -21,25 +21,25 @@ uses
   // Android
   Androidapi.JNI.Bluetooth, Androidapi.JNIBridge,
   // DW
-  DW.Androidapi.JNI.DWBluetooth, DW.SimulatedBluetoothDevice;
+  DW.Androidapi.JNI.DWBluetooth, DW.SimulatedBluetoothLEDevice;
 
 type
-  TPlatformSimulatedBluetoothDevice = class;
+  TPlatformSimulatedBluetoothLEDevice = class;
 
   TAdvertiseCallbackDelegate = class(TJavaLocal, JDWAdvertiseCallbackDelegate)
   private
-    FDevice: TPlatformSimulatedBluetoothDevice;
+    FDevice: TPlatformSimulatedBluetoothLEDevice;
   public
     { JDWAdvertiseCallbackDelegate }
     procedure onStartFailure(errorCode: Integer); cdecl;
     procedure onStartSuccess(settingsInEffect: JAdvertiseSettings); cdecl;
   public
-    constructor Create(const ADevice: TPlatformSimulatedBluetoothDevice);
+    constructor Create(const ADevice: TPlatformSimulatedBluetoothLEDevice);
   end;
 
   TBluetoothGattServerCallbackDelegate = class(TJavaLocal, JDWBluetoothGattServerCallbackDelegate)
   private
-    FDevice: TPlatformSimulatedBluetoothDevice;
+    FDevice: TPlatformSimulatedBluetoothLEDevice;
   public
     { JDWBluetoothGattServerCallbackDelegate }
     procedure onCharacteristicReadRequest(device: JBluetoothDevice; requestId: Integer; offset: Integer;
@@ -53,7 +53,7 @@ type
     procedure onExecuteWrite(device: JBluetoothDevice; requestId: Integer; execute: Boolean); cdecl;
     procedure onServiceAdded(status: Integer; service: JBluetoothGattService); cdecl;
   public
-    constructor Create(const ADevice: TPlatformSimulatedBluetoothDevice);
+    constructor Create(const ADevice: TPlatformSimulatedBluetoothLEDevice);
   end;
 
   TServiceItem = record
@@ -69,7 +69,7 @@ type
     procedure AddService(const AService: JBluetoothGattService; const AAdvertisingData: TBytes);
   end;
 
-  TPlatformSimulatedBluetoothDevice = class(TCustomPlatformSimulatedBluetoothDevice)
+  TPlatformSimulatedBluetoothLEDevice = class(TCustomPlatformSimulatedBluetoothLEDevice)
   private
     FAdapter: JBluetoothAdapter;
     FAdvertiser: JBluetoothLeAdvertiser;
@@ -84,6 +84,7 @@ type
     procedure AddNextServerService;
     procedure AddServerService;
   protected
+    FCanIncludeName: Boolean;
     procedure AdvertiserStartFailure(const AErrorCode: Integer);
     procedure AdvertiserStartSuccess(const ASettingsInEffect: JAdvertiseSettings);
     procedure CharacteristicReadRequest(const ADevice: JBluetoothDevice; const ARequestId, AOffset: Integer;
@@ -100,10 +101,18 @@ type
     procedure ActiveChanging(const Value: Boolean); override;
     procedure AddService(const AUUID: string; const ACharacteristics: TArray<JBluetoothGattCharacteristic>; const AAdvertisingData: TBytes;
       const AIsPrimary: Boolean);
+    function CreateCharacteristic(const AUUID, AName: string; const AProperties: Integer): JBluetoothGattCharacteristic;
+    function GetCharacteristicValue(const ACharacteristic: JBluetoothGattCharacteristic): TBytes;
+    function GetDescriptorValue(const ADescriptor: JBluetoothGattDescriptor): TBytes;
+    procedure NotifyCharacteristicChanged(const ACharacteristic: JBluetoothGattCharacteristic);
+    function SendResponse(const ADevice: JBluetoothDevice; const ARequestId, AStatus, AOffset: Integer; const AValue: TBytes): Boolean;
+    procedure SetCharacteristicValue(const ACharacteristic: JBluetoothGattCharacteristic; const AValue: TBytes);
+    procedure SetDescriptorValue(const ADescriptor: JBluetoothGattDescriptor; const AValue: TBytes);
     procedure StartAdvertising; override;
     procedure StartServer; override;
     procedure StopAdvertising; override;
     procedure StopServer; override;
+    property Server: JBluetoothGattServer read FGattServer;
   public
     constructor Create; override;
     destructor Destroy; override;
@@ -117,21 +126,16 @@ uses
   // DW
   DW.OSLog;
 
-function StringToJUUID(const AValue: string): JUUID;
-begin
-  Result := TJUUID.JavaClass.fromString(StringToJString(AValue));
-end;
-
-function StringToServiceUUID(const AValue: string): string;
+function StringToUUID(const AValue: string): string;
 begin
   Result := AValue;
   if Length(Result) = 4 then
     Result := Format(cUUIDWith16Bit, [Result]);
 end;
 
-function StringToServiceJUUID(const AValue: string): JUUID;
+function StringToJUUID(const AValue: string): JUUID;
 begin
-  Result := TJUUID.JavaClass.fromString(StringToJString(StringToServiceUUID(AValue)));
+  Result := TJUUID.JavaClass.fromString(StringToJString(StringToUUID(AValue)));
 end;
 
 { TServiceItem }
@@ -151,7 +155,7 @@ end;
 
 { TAdvertiseCallbackDelegate }
 
-constructor TAdvertiseCallbackDelegate.Create(const ADevice: TPlatformSimulatedBluetoothDevice);
+constructor TAdvertiseCallbackDelegate.Create(const ADevice: TPlatformSimulatedBluetoothLEDevice);
 begin
   inherited Create;
   FDevice := ADevice;
@@ -169,7 +173,7 @@ end;
 
 { TBluetoothGattServerCallbackDelegate }
 
-constructor TBluetoothGattServerCallbackDelegate.Create(const ADevice: TPlatformSimulatedBluetoothDevice);
+constructor TBluetoothGattServerCallbackDelegate.Create(const ADevice: TPlatformSimulatedBluetoothLEDevice);
 begin
   inherited Create;
   FDevice := ADevice;
@@ -214,9 +218,9 @@ begin
   FDevice.ServiceAdded(status, service);
 end;
 
-{ TPlatformSimulatedBluetoothDevice }
+{ TPlatformSimulatedBluetoothLEDevice }
 
-constructor TPlatformSimulatedBluetoothDevice.Create;
+constructor TPlatformSimulatedBluetoothLEDevice.Create;
 begin
   inherited;
   FManager := TJBluetoothManager.Wrap(TAndroidHelper.Context.getSystemService(TJContext.JavaClass.BLUETOOTH_SERVICE));
@@ -228,13 +232,29 @@ begin
   end;
 end;
 
-destructor TPlatformSimulatedBluetoothDevice.Destroy;
+destructor TPlatformSimulatedBluetoothLEDevice.Destroy;
 begin
   //
   inherited;
 end;
 
-procedure TPlatformSimulatedBluetoothDevice.StartAdvertising;
+procedure TPlatformSimulatedBluetoothLEDevice.NotifyCharacteristicChanged(const ACharacteristic: JBluetoothGattCharacteristic);
+var
+  I: Integer;
+  LDevices: JList;
+begin
+  LDevices := FManager.getConnectedDevices(TJBluetoothProfile.JavaClass.GATT);
+  for I := 0 to LDevices.size -1 do
+    FGattServer.notifyCharacteristicChanged(TJBluetoothDevice.Wrap(LDevices.get(I)), ACharacteristic, False);
+end;
+
+function TPlatformSimulatedBluetoothLEDevice.CreateCharacteristic(const AUUID, AName: string; const AProperties: Integer): JBluetoothGattCharacteristic;
+begin
+  Result := TJBluetoothGattCharacteristic.JavaClass.init(StringToJUUID(AUUID), AProperties,
+    TJBluetoothGattCharacteristic.JavaClass.PERMISSION_READ or TJBluetoothGattCharacteristic.JavaClass.PERMISSION_WRITE);
+end;
+
+procedure TPlatformSimulatedBluetoothLEDevice.StartAdvertising;
 var
   LServiceDataBytes: TJavaArray<Byte>;
   LDataBuilder: JAdvertiseData_Builder;
@@ -242,7 +262,7 @@ var
   LUuid: JParcelUuid;
   LServiceItem: TServiceItem;
 begin
-  TOSLog.d('TPlatformSimulatedBluetoothDevice.StartAdvertising');
+  TOSLog.d('TPlatformSimulatedBluetoothLEDevice.StartAdvertising');
   if FAdvertiser <> nil then
   begin
     if FAdvertiseCallbackDelegate = nil then
@@ -264,25 +284,25 @@ begin
       end;
       LDataBuilder.addServiceUuid(LUuid);
     end;
-    LDataBuilder.setIncludeDeviceName(False)
+    LDataBuilder.setIncludeDeviceName(FCanIncludeName)
       .setIncludeTxPowerLevel(False);
     LSettingsBuilder := TJAdvertiseSettings_Builder.JavaClass.init
      .setAdvertiseMode(TJAdvertiseSettings.JavaClass.ADVERTISE_MODE_LOW_LATENCY)
      .setTxPowerLevel(TJAdvertiseSettings.JavaClass.ADVERTISE_TX_POWER_HIGH)
-     .setConnectable(False);
+     .setConnectable(True);
     FAdvertiser.startAdvertising(LSettingsBuilder.build, LDataBuilder.build, FAdvertiseCallback);
   end;
   // else cannot advertise
 end;
 
-procedure TPlatformSimulatedBluetoothDevice.StopAdvertising;
+procedure TPlatformSimulatedBluetoothLEDevice.StopAdvertising;
 begin
-  TOSLog.d('TPlatformSimulatedBluetoothDevice.StopAdvertising');
+  TOSLog.d('TPlatformSimulatedBluetoothLEDevice.StopAdvertising');
   if FAdvertiseCallback <> nil then
     FAdvertiser.stopAdvertising(FAdvertiseCallback);
 end;
 
-procedure TPlatformSimulatedBluetoothDevice.ActiveChanging(const Value: Boolean);
+procedure TPlatformSimulatedBluetoothLEDevice.ActiveChanging(const Value: Boolean);
 begin
   if Value then
     StartServer
@@ -290,26 +310,26 @@ begin
     StopServer;
 end;
 
-procedure TPlatformSimulatedBluetoothDevice.AdvertiserStartFailure(const AErrorCode: Integer);
+procedure TPlatformSimulatedBluetoothLEDevice.AdvertiserStartFailure(const AErrorCode: Integer);
 begin
   FIsAdvertising := False;
-  TOSLog.d('TBluetoothGattServer.AdvertiserStartFailure > errorCode: %d', [AErrorCode]);
+  TOSLog.d('TPlatformSimulatedBluetoothLEDevice.AdvertiserStartFailure > errorCode: %d', [AErrorCode]);
 end;
 
-procedure TPlatformSimulatedBluetoothDevice.AdvertiserStartSuccess(const ASettingsInEffect: JAdvertiseSettings);
+procedure TPlatformSimulatedBluetoothLEDevice.AdvertiserStartSuccess(const ASettingsInEffect: JAdvertiseSettings);
 begin
   FIsAdvertising := True;
-  TOSLog.d('TBluetoothGattServer.AdvertiserStartSuccess > settings: %s', [JStringToString(ASettingsInEffect.toString)]);
+  TOSLog.d('TPlatformSimulatedBluetoothLEDevice.AdvertiserStartSuccess > settings: %s', [JStringToString(ASettingsInEffect.toString)]);
 end;
 
-procedure TPlatformSimulatedBluetoothDevice.ServiceAdded(const status: Integer; const service: JBluetoothGattService);
+procedure TPlatformSimulatedBluetoothLEDevice.ServiceAdded(const status: Integer; const service: JBluetoothGattService);
 begin
   AddServerService;
 end;
 
-procedure TPlatformSimulatedBluetoothDevice.StartServer;
+procedure TPlatformSimulatedBluetoothLEDevice.StartServer;
 begin
-  TOSLog.d('TPlatformSimulatedBluetoothDevice.StartServer');
+  TOSLog.d('TPlatformSimulatedBluetoothLEDevice.StartServer');
   if FGattServerCallbackDelegate = nil then
     FGattServerCallbackDelegate := TBluetoothGattServerCallbackDelegate.Create(Self);
   if FGattServerCallback = nil then
@@ -319,7 +339,7 @@ begin
   AddServerService;
 end;
 
-procedure TPlatformSimulatedBluetoothDevice.AddServerService;
+procedure TPlatformSimulatedBluetoothLEDevice.AddServerService;
 begin
   if FServicesIndex = Length(FServices.Items) - 1 then
   begin
@@ -330,13 +350,13 @@ begin
     AddNextServerService;
 end;
 
-procedure TPlatformSimulatedBluetoothDevice.AddNextServerService;
+procedure TPlatformSimulatedBluetoothLEDevice.AddNextServerService;
 begin
   Inc(FServicesIndex);
   FGattServer.addService(FServices.Items[FServicesIndex].Service);
 end;
 
-procedure TPlatformSimulatedBluetoothDevice.AddService(const AUUID: string; const ACharacteristics: TArray<JBluetoothGattCharacteristic>;
+procedure TPlatformSimulatedBluetoothLEDevice.AddService(const AUUID: string; const ACharacteristics: TArray<JBluetoothGattCharacteristic>;
   const AAdvertisingData: TBytes; const AIsPrimary: Boolean);
 var
   LServiceType: Integer;
@@ -347,49 +367,195 @@ begin
     LServiceType := TJBluetoothGattService.JavaClass.SERVICE_TYPE_PRIMARY
   else
     LServiceType := TJBluetoothGattService.JavaClass.SERVICE_TYPE_SECONDARY;
-  LService := TJBluetoothGattService.JavaClass.init(StringToServiceJUUID(AUUID), LServiceType);
+  LService := TJBluetoothGattService.JavaClass.init(StringToJUUID(AUUID), LServiceType);
   for LCharacteristic in ACharacteristics do
     LService.addCharacteristic(LCharacteristic);
   FServices.AddService(LService, AAdvertisingData);
 end;
 
-procedure TPlatformSimulatedBluetoothDevice.StopServer;
+procedure TPlatformSimulatedBluetoothLEDevice.StopServer;
 begin
-  TOSLog.d('TBluetoothGattServer.StopServer');
+  TOSLog.d('TPlatformSimulatedBluetoothLEDevice.StopServer');
   FGattServer.close;
   FGattServer := nil;
   FIsActive := False;
 end;
 
-procedure TPlatformSimulatedBluetoothDevice.CharacteristicReadRequest(const ADevice: JBluetoothDevice; const ARequestId, AOffset: Integer;
-  const ACharacteristic: JBluetoothGattCharacteristic);
+function TPlatformSimulatedBluetoothLEDevice.GetCharacteristicValue(const ACharacteristic: JBluetoothGattCharacteristic): TBytes;
+var
+  LValue: TJavaArray<Byte>;
 begin
-  TOSLog.d('TBluetoothGattServer.CharacteristicReadRequest');
+  LValue := ACharacteristic.getValue;
+  try
+    Result := TJavaArrayToTBytes(LValue);
+  finally
+    LValue.Free;
+  end;
 end;
 
-procedure TPlatformSimulatedBluetoothDevice.CharacteristicWriteRequest(const ADevice: JBluetoothDevice; const ARequestId: Integer;
+procedure TPlatformSimulatedBluetoothLEDevice.SetCharacteristicValue(const ACharacteristic: JBluetoothGattCharacteristic; const AValue: TBytes);
+var
+  LValue: TJavaArray<Byte>;
+begin
+  LValue := TBytesToTJavaArray(AValue);
+  try
+    ACharacteristic.setValue(LValue);
+  finally
+    LValue.Free;
+  end;
+end;
+
+function TPlatformSimulatedBluetoothLEDevice.GetDescriptorValue(const ADescriptor: JBluetoothGattDescriptor): TBytes;
+var
+  LValue: TJavaArray<Byte>;
+begin
+  LValue := ADescriptor.getValue;
+  try
+    Result := TJavaArrayToTBytes(LValue);
+  finally
+    LValue.Free;
+  end;
+end;
+
+procedure TPlatformSimulatedBluetoothLEDevice.SetDescriptorValue(const ADescriptor: JBluetoothGattDescriptor; const AValue: TBytes);
+var
+  LValue: TJavaArray<Byte>;
+begin
+  LValue := TBytesToTJavaArray(AValue);
+  try
+    ADescriptor.setValue(LValue);
+  finally
+    LValue.Free;
+  end;
+end;
+
+function TPlatformSimulatedBluetoothLEDevice.SendResponse(const ADevice: JBluetoothDevice; const ARequestId, AStatus, AOffset: Integer;
+  const AValue: TBytes): Boolean;
+var
+  LValue: TJavaArray<Byte>;
+  LName, LAddress: string;
+begin
+  LValue := TBytesToTJavaArray(AValue);
+  try
+    Result := FGattServer.sendResponse(ADevice, ARequestId, AStatus, AOffset, LValue);
+  finally
+    LValue.Free;
+  end;
+  if not Result then
+  begin
+    LName := JStringToString(ADevice.getName);
+    LAddress := JStringToString(ADevice.getAddress);
+    TOSLog.e('Cannot send response to device "%s" at "%s" - Status: %d', [LName , LAddress, AStatus]);
+  end;
+end;
+
+procedure TPlatformSimulatedBluetoothLEDevice.CharacteristicReadRequest(const ADevice: JBluetoothDevice; const ARequestId, AOffset: Integer;
+  const ACharacteristic: JBluetoothGattCharacteristic);
+var
+  LStatus, LOffset: Integer;
+  LValue: TBytes;
+begin
+  TOSLog.d('TPlatformSimulatedBluetoothLEDevice.CharacteristicReadRequest');
+  LStatus := TJBluetoothGatt.JavaClass.GATT_SUCCESS;
+  LValue := GetCharacteristicValue(ACharacteristic);
+  LOffset := Length(LValue) - AOffset;
+  if LOffset <= 0 then
+  begin
+    SetLength(LValue, 0);
+    SendResponse(ADevice, ARequestId, LStatus, LOffset, LValue);
+  end
+  else
+  begin
+    if AOffset > 0 then
+    begin
+      Move(LValue[AOffset], LValue[0], LOffset);
+      SetLength(LValue, LOffset);
+    end;
+    SendResponse(ADevice, ARequestId, LStatus, LOffset, LValue);
+  end;
+end;
+
+procedure TPlatformSimulatedBluetoothLEDevice.CharacteristicWriteRequest(const ADevice: JBluetoothDevice; const ARequestId: Integer;
   const ACharacteristic: JBluetoothGattCharacteristic; const APreparedWrite, AResponseNeeded: Boolean; const AOffset: Integer;
   const AValue: TJavaArray<Byte>);
+var
+  LStatus, LOffset, LTotal: Integer;
+  LNewValue, LOldValue: TBytes;
 begin
-  TOSLog.d('TBluetoothGattServer.CharacteristicWriteRequest');
+  TOSLog.d('TPlatformSimulatedBluetoothLEDevice.CharacteristicWriteRequest');
+  LNewValue := TJavaArrayToTBytes(AValue);
+  LStatus := TJBluetoothGatt.JavaClass.GATT_SUCCESS;
+  if AOffset > 0 then
+  begin
+    LTotal := Length(LNewValue);
+    LOffset := AOffset + LTotal;
+    LOldValue := GetCharacteristicValue(ACharacteristic);
+    SetLength(LOldValue, LOffset);
+    Move(LNewValue[0], LOldValue[AOffset], LTotal);
+    SetCharacteristicValue(ACharacteristic, LNewValue);
+  end
+  else
+    SetCharacteristicValue(ACharacteristic, LNewValue);
+  if AResponseNeeded then
+    SendResponse(ADevice, ARequestId, LStatus, AOffset, LNewValue);
 end;
 
-procedure TPlatformSimulatedBluetoothDevice.ConnectionStateChange(const ADevice: JBluetoothDevice; const AStatus, ANewState: Integer);
+
+procedure TPlatformSimulatedBluetoothLEDevice.ConnectionStateChange(const ADevice: JBluetoothDevice; const AStatus, ANewState: Integer);
 begin
-  TOSLog.d('TBluetoothGattServer.ConnectionStateChange > Device: %s, Status: %d, NewState: %d', [JStringToString(ADevice.getName), AStatus, ANewState]);
+  TOSLog.d('TPlatformSimulatedBluetoothLEDevice.ConnectionStateChange > Device: %s, Status: %d, NewState: %d',
+    [JStringToString(ADevice.getName), AStatus, ANewState]);
 end;
 
-procedure TPlatformSimulatedBluetoothDevice.DescriptorReadRequest(const ADevice: JBluetoothDevice; const ARequestId, AOffset: Integer;
+procedure TPlatformSimulatedBluetoothLEDevice.DescriptorReadRequest(const ADevice: JBluetoothDevice; const ARequestId, AOffset: Integer;
   const ADescriptor: JBluetoothGattDescriptor);
+var
+  LStatus, LOffset: Integer;
+  LValue: TBytes;
 begin
-  TOSLog.d('TBluetoothGattServer.DescriptorReadRequest');
+  TOSLog.d('TPlatformSimulatedBluetoothLEDevice.DescriptorReadRequest');
+  LStatus := TJBluetoothGatt.JavaClass.GATT_SUCCESS;
+  LValue := GetDescriptorValue(ADescriptor);
+  LOffset := Length(LValue) - AOffset;
+  if LOffset <= 0 then
+  begin
+    SetLength(LValue, 0);
+    SendResponse(ADevice, ARequestId, LStatus, LOffset, LValue);
+  end
+  else
+  begin
+    if AOffset > 0 then
+    begin
+      Move(LValue[AOffset], LValue[0], LOffset);
+      SetLength(LValue, LOffset);
+    end;
+    SendResponse(ADevice, ARequestId, LStatus, LOffset, LValue);
+  end;
 end;
 
-procedure TPlatformSimulatedBluetoothDevice.DescriptorWriteRequest(const ADevice: JBluetoothDevice; const ARequestId: Integer;
+procedure TPlatformSimulatedBluetoothLEDevice.DescriptorWriteRequest(const ADevice: JBluetoothDevice; const ARequestId: Integer;
   const ADescriptor: JBluetoothGattDescriptor; const APreparedWrite, AResponseNeeded: Boolean; const AOffset: Integer;
   const AValue: TJavaArray<Byte>);
+var
+  LStatus, LOffset, LTotal: Integer;
+  LNewValue, LOldValue: TBytes;
 begin
-  TOSLog.d('TBluetoothGattServer.DescriptorWriteRequest');
+  TOSLog.d('TPlatformSimulatedBluetoothLEDevice.DescriptorWriteRequest');
+  LNewValue := TJavaArrayToTBytes(AValue);
+  LStatus := TJBluetoothGatt.JavaClass.GATT_SUCCESS;
+  if AOffset > 0 then
+  begin
+    LTotal := Length(LNewValue);
+    LOffset := AOffset + LTotal;
+    LOldValue := GetDescriptorValue(ADescriptor);
+    SetLength(LOldValue, LOffset);
+    Move(LNewValue[0], LOldValue[AOffset], LTotal);
+    SetDescriptorValue(ADescriptor, LNewValue);
+  end
+  else
+    SetDescriptorValue(ADescriptor, LNewValue);
+  if AResponseNeeded then
+    SendResponse(ADevice, ARequestId, LStatus, AOffset, LNewValue);
 end;
 
 end.

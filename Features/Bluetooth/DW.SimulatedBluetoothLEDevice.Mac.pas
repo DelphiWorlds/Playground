@@ -1,4 +1,4 @@
-unit DW.SimulatedBluetoothDevice.Mac;
+unit DW.SimulatedBluetoothLEDevice.Mac;
 
 {*******************************************************}
 {                                                       }
@@ -26,7 +26,7 @@ uses
   Macapi.Foundation,
   {$ENDIF}
   // DW
-  DW.SimulatedBluetoothDevice;
+  DW.SimulatedBluetoothLEDevice;
 
 type
   TNSObjects = TArray<NSObject>;
@@ -37,11 +37,11 @@ type
   end;
   TCBUUIDEx = class(TOCGenericImport<CBUUIDClass, CBUUIDEx>) end;
 
-  TPlatformSimulatedBluetoothDevice = class;
+  TPlatformSimulatedBluetoothLEDevice = class;
 
   TPeripheralManagerDelegate = class(TOCLocal, CBPeripheralManagerDelegate)
   private
-    FDevice: TPlatformSimulatedBluetoothDevice;
+    FDevice: TPlatformSimulatedBluetoothLEDevice;
   public
     { CBPeripheralManagerDelegate }
     procedure peripheralManagerDidUpdateState(peripheral: CBPeripheralManager); cdecl;
@@ -63,30 +63,36 @@ type
     procedure peripheralManagerDidReceiveWriteRequests(peripheral: CBPeripheralManager; requests: NSArray); cdecl;
     procedure peripheralManagerIsReadyToUpdateSubscribers(peripheral: CBPeripheralManager); cdecl;
   public
-    constructor Create(const ADevice: TPlatformSimulatedBluetoothDevice);
+    constructor Create(const ADevice: TPlatformSimulatedBluetoothLEDevice);
   end;
 
-  TBluetoothServices = TArray<CBMutableService>;
-
-  TPlatformSimulatedBluetoothDevice = class(TCustomPlatformSimulatedBluetoothDevice)
+  TPlatformSimulatedBluetoothLEDevice = class(TCustomPlatformSimulatedBluetoothLEDevice)
   private
     FDelegate: TPeripheralManagerDelegate;
     FPeripheralManager: CBPeripheralManager;
-    FServices: TBluetoothServices;
+    FServices: TArray<CBMutableService>;
+    FServicesAdded: TArray<CBService>;
     FServicesIndex: Integer;
     procedure AddServerService;
     procedure StartServices;
   protected
     procedure DidAddService(const AService: CBService; const AError: NSError);
     procedure DidStartAdvertising(const APeripheral: CBPeripheralManager; const AError: NSError);
+    procedure DidSubscribetoCharacteristic(const APeripheral: CBPeripheral; const ACentral: CBCentral;
+      const ACharacteristic: CBCharacteristic); virtual;
     procedure DidUpdateState(const APeripheral: CBPeripheralManager);
+    function GetCharacteristicValue(const ACharacteristic: CBCharacteristic): NSData; virtual;
+    function IsSameCharacteristic(const ACharacteristic1, ACharacteristic2: CBCharacteristic): Boolean;
   protected
     procedure AddService(const AUUID: string; const ACharacteristics: TNSObjects);
     procedure ActiveChanging(const Value: Boolean); override;
+    function CreateCharacteristic(const AUUID, AName: string; const AProps: CBCharacteristicProperties): CBMutableCharacteristic;
+    function CreateNameDescriptor(const AName: string): Pointer;
     procedure StartAdvertising; override;
     procedure StartServer; override;
     procedure StopAdvertising; override;
     procedure StopServer; override;
+    property PeripheralManager: CBPeripheralManager read FPeripheralManager;
   public
     constructor Create; override;
     destructor Destroy; override;
@@ -114,9 +120,14 @@ begin
   {$ENDIF}
 end;
 
+function CBUUIDCharacteristicUserDescriptionString: NSString;
+begin
+  Result := CocoaNSStringConst(libCoreBluetooth, 'CBUUIDCharacteristicUserDescriptionString');
+end;
+
 { TPeripheralManagerDelegate }
 
-constructor TPeripheralManagerDelegate.Create(const ADevice: TPlatformSimulatedBluetoothDevice);
+constructor TPeripheralManagerDelegate.Create(const ADevice: TPlatformSimulatedBluetoothLEDevice);
 begin
   inherited Create;
   FDevice := ADevice;
@@ -129,7 +140,8 @@ end;
 
 procedure TPeripheralManagerDelegate.peripheralManagerDidReceiveReadRequests(peripheral: CBPeripheralManager; request: CBATTRequest);
 begin
-  //
+  request.setValue(FDevice.GetCharacteristicValue(request.characteristic));
+  peripheral.respondToRequest(request, CBATTErrorSuccess);
 end;
 
 procedure TPeripheralManagerDelegate.peripheralManagerDidReceiveWriteRequests(peripheral: CBPeripheralManager; requests: NSArray);
@@ -145,7 +157,7 @@ end;
 procedure TPeripheralManagerDelegate.peripheralManagerDidSubscribetoCharacteristic(peripheral: CBPeripheral; central: CBCentral;
   characteristic: CBCharacteristic);
 begin
-  //
+  FDevice.DidSubscribetoCharacteristic(peripheral, central, characteristic);
 end;
 
 procedure TPeripheralManagerDelegate.peripheralManagerDidUnsubscribeFromCharacteristic(peripheral: CBPeripheralManager; central: CBCentral;
@@ -169,21 +181,41 @@ begin
 
 end;
 
-{ TPlatformSimulatedBluetoothDevice }
+{ TPlatformSimulatedBluetoothLEDevice }
 
-constructor TPlatformSimulatedBluetoothDevice.Create;
+constructor TPlatformSimulatedBluetoothLEDevice.Create;
 begin
   inherited;
   FDelegate := TPeripheralManagerDelegate.Create(Self);
 end;
 
-destructor TPlatformSimulatedBluetoothDevice.Destroy;
+destructor TPlatformSimulatedBluetoothLEDevice.Destroy;
 begin
   //
   inherited;
 end;
 
-procedure TPlatformSimulatedBluetoothDevice.AddService(const AUUID: string; const ACharacteristics: TNSObjects);
+function TPlatformSimulatedBluetoothLEDevice.CreateCharacteristic(const AUUID, AName: string;
+  const AProps: CBCharacteristicProperties): CBMutableCharacteristic;
+var
+  LUUID: CBUUID;
+  LPointer: Pointer;
+begin
+  LUUID := TCBUUID.OCClass.UUIDWithString(StrToNSStr(AUUID));
+  LPointer := TCBMutableCharacteristic.Alloc.initWithType(LUUID, AProps, nil, CBAttributePermissionsReadable);
+  Result := TCBMutableCharacteristic.Wrap(LPointer);
+  Result.setDescriptors(TNSArray.Wrap(TNSArray.OCClass.arrayWithObject(CreateNameDescriptor(AName))));
+end;
+
+function TPlatformSimulatedBluetoothLEDevice.CreateNameDescriptor(const AName: string): Pointer;
+var
+  LUUID: CBUUID;
+begin
+  LUUID := TCBUUID.OCClass.UUIDWithString(CBUUIDCharacteristicUserDescriptionString);
+  Result := TCBMutableDescriptor.Alloc.initWithType(LUUID, StringToID(AName));
+end;
+
+procedure TPlatformSimulatedBluetoothLEDevice.AddService(const AUUID: string; const ACharacteristics: TNSObjects);
 var
   LUUID: CBUUID;
   LService: CBMutableService;
@@ -195,23 +227,26 @@ begin
   FServices := FServices + [LService];
 end;
 
-procedure TPlatformSimulatedBluetoothDevice.DidAddService(const AService: CBService; const AError: NSError);
+procedure TPlatformSimulatedBluetoothLEDevice.DidAddService(const AService: CBService; const AError: NSError);
 begin
-  TOSLog.d('TPlatformSimulatedBluetoothDevice.DidAddService');
-  if AError <> nil then
+  TOSLog.d('TPlatformSimulatedBluetoothLEDevice.DidAddService');
+  if (AError = nil) or (AError.code = 0) then
+    FServicesAdded := FServicesAdded + [AService]
+  else
     TOSLog.d(NSErrorToStr(AError));
+  Inc(FServicesIndex);
   AddServerService;
 end;
 
-procedure TPlatformSimulatedBluetoothDevice.StartAdvertising;
+procedure TPlatformSimulatedBluetoothLEDevice.StartAdvertising;
 var
   LAdvertisingData: NSMutableDictionary;
   LUUIDs: NSMutableArray;
-  LService: CBMutableService;
+  LService: CBService;
 begin
-  TOSLog.d('TPlatformSimulatedBluetoothDevice.StartAdvertising');
+  TOSLog.d('TPlatformSimulatedBluetoothLEDevice.StartAdvertising');
   LUUIDs := TNSMutableArray.Create;
-  for LService in FServices do
+  for LService in FServicesAdded do
     LUUIDs.addObject(NSObjectToID(LService.UUID));
   LAdvertisingData := TNSMutableDictionary.Create;
   LAdvertisingData.setValueForKey(NSObjectToID(GetDeviceName), CBAdvertisementDataLocalNameKey);
@@ -219,35 +254,56 @@ begin
   FPeripheralManager.startAdvertising(LAdvertisingData);
 end;
 
-procedure TPlatformSimulatedBluetoothDevice.DidStartAdvertising(const APeripheral: CBPeripheralManager; const AError: NSError);
+procedure TPlatformSimulatedBluetoothLEDevice.DidStartAdvertising(const APeripheral: CBPeripheralManager; const AError: NSError);
 begin
   FIsAdvertising := (AError = nil) or (AError.code = 0);
   if FIsAdvertising then
-    TOSLog.d('TPlatformSimulatedBluetoothDevice.DidStartAdvertising')
+    TOSLog.d('TPlatformSimulatedBluetoothLEDevice.DidStartAdvertising')
   else
     TOSLog.d('> %s', [NSErrorToStr(AError)]);
 end;
 
-procedure TPlatformSimulatedBluetoothDevice.DidUpdateState(const APeripheral: CBPeripheralManager);
+procedure TPlatformSimulatedBluetoothLEDevice.DidSubscribetoCharacteristic(const APeripheral: CBPeripheral; const ACentral: CBCentral;
+  const ACharacteristic: CBCharacteristic);
+begin
+  //
+end;
+
+procedure TPlatformSimulatedBluetoothLEDevice.DidUpdateState(const APeripheral: CBPeripheralManager);
 begin
   FIsActive := FPeripheralManager.state = CBPeripheralManagerStatePoweredOn;
   if FIsActive then
     StartServices;
 end;
 
-procedure TPlatformSimulatedBluetoothDevice.StartServices;
+function TPlatformSimulatedBluetoothLEDevice.GetCharacteristicValue(const ACharacteristic: CBCharacteristic): NSData;
 begin
-  TOSLog.d('TPlatformSimulatedBluetoothDevice.StartServices');
+  Result := nil;
+end;
+
+function TPlatformSimulatedBluetoothLEDevice.IsSameCharacteristic(const ACharacteristic1, ACharacteristic2: CBCharacteristic): Boolean;
+var
+  LUUIDString1, LUUIDString2: NSString;
+begin
+  LUUIDString1 := TCBUUIDEx.Wrap(NSObjectToID(ACharacteristic1.UUID)).UUIDString;
+  LUUIDString2 := TCBUUIDEx.Wrap(NSObjectToID(ACharacteristic2.UUID)).UUIDString;
+  Result := LUUIDString1.isEqualToString(LUUIDString2);
+end;
+
+procedure TPlatformSimulatedBluetoothLEDevice.StartServices;
+begin
+  TOSLog.d('TPlatformSimulatedBluetoothLEDevice.StartServices');
   if FIsActive then
   begin
     FServicesIndex := 0;
+    FServicesAdded := [];
     AddServerService;
   end;
 end;
 
-procedure TPlatformSimulatedBluetoothDevice.AddServerService;
+procedure TPlatformSimulatedBluetoothLEDevice.AddServerService;
 begin
-  if FServicesIndex = Length(FServices) - 1 then
+  if FServicesIndex = Length(FServices) then
   begin
     FIsActive := True;
     ServicesAdded;
@@ -256,32 +312,32 @@ begin
     FPeripheralManager.addService(FServices[FServicesIndex]);
 end;
 
-procedure TPlatformSimulatedBluetoothDevice.StopAdvertising;
+procedure TPlatformSimulatedBluetoothLEDevice.StopAdvertising;
 begin
-  TOSLog.d('TPlatformSimulatedBluetoothDevice.StopAdvertising');
+  TOSLog.d('TPlatformSimulatedBluetoothLEDevice.StopAdvertising');
   if FPeripheralManager <> nil then
     FPeripheralManager.stopAdvertising;
 end;
 
-procedure TPlatformSimulatedBluetoothDevice.ActiveChanging(const Value: Boolean);
+procedure TPlatformSimulatedBluetoothLEDevice.ActiveChanging(const Value: Boolean);
 begin
-  TOSLog.d('TPlatformSimulatedBluetoothDevice.ActiveChanging');
+  TOSLog.d('TPlatformSimulatedBluetoothLEDevice.ActiveChanging');
   if Value then
     StartServer
   else
     StopServer;
 end;
 
-procedure TPlatformSimulatedBluetoothDevice.StartServer;
+procedure TPlatformSimulatedBluetoothLEDevice.StartServer;
 begin
-  TOSLog.d('TPlatformSimulatedBluetoothDevice.StartServer');
+  TOSLog.d('TPlatformSimulatedBluetoothLEDevice.StartServer');
   FPeripheralManager := TCBPeripheralManager.Alloc;
   FPeripheralManager := TCBPeripheralManager.Wrap(FPeripheralManager.initWithDelegate(FDelegate.GetObjectID, 0));
 end;
 
-procedure TPlatformSimulatedBluetoothDevice.StopServer;
+procedure TPlatformSimulatedBluetoothLEDevice.StopServer;
 begin
-  TOSLog.d('TBluetoothGattServer.StopServer');
+  TOSLog.d('TPlatformSimulatedBluetoothLEDevice.StopServer');
   FPeripheralManager := nil;
   FIsActive := False;
 end;
