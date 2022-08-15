@@ -21,7 +21,7 @@ uses
   // Android
   Androidapi.JNI.JavaTypes, Androidapi.JNI.Bluetooth, Androidapi.JNIBridge,
   // DW
-  DW.Androidapi.JNI.DWBluetooth, DW.Bluetooth, DW.BluetoothLE.Types;
+  DW.Androidapi.JNI.DWBluetooth, DW.Bluetooth;
 
 const
   cBluetoothBroadcastReceiver = 'com.delphiworlds.kastri.DWBluetoothBroadcastReceiver';
@@ -69,59 +69,6 @@ type
     destructor Destroy; override;
   end;
 
-  TPlatformBluetoothDevice = class;
-
-  TBluetoothGattCallbackDelegate = class(TJavaLocal, JDWBluetoothGattCallbackDelegate)
-  private
-    FBluetoothGattCallback: JBluetoothGattCallback;
-    FPlatformBluetoothDevice: TPlatformBluetoothDevice;
-  public
-    { JDWBluetoothGattCallbackDelegate }
-    procedure onCharacteristicChanged(gatt: JBluetoothGatt; characteristic: JBluetoothGattCharacteristic); cdecl;
-    procedure onCharacteristicRead(gatt: JBluetoothGatt; characteristic: JBluetoothGattCharacteristic; status: Integer); cdecl;
-    procedure onCharacteristicWrite(gatt: JBluetoothGatt; characteristic: JBluetoothGattCharacteristic; status: Integer); cdecl;
-    procedure onConnectionStateChange(gatt: JBluetoothGatt; status: Integer; newState: Integer); cdecl;
-    procedure onDescriptorRead(gatt: JBluetoothGatt; descriptor: JBluetoothGattDescriptor; status: Integer); cdecl;
-    procedure onDescriptorWrite(gatt: JBluetoothGatt; descriptor: JBluetoothGattDescriptor; status: Integer); cdecl;
-    procedure onReadRemoteRssi(gatt: JBluetoothGatt; rssi: Integer; status: Integer); cdecl;
-    procedure onReliableWriteCompleted(gatt: JBluetoothGatt; status: Integer); cdecl;
-    procedure onServicesDiscovered(gatt: JBluetoothGatt; status: Integer); cdecl;
-  public
-    constructor Create(const APlatformBluetoothDevice: TPlatformBluetoothDevice);
-    property Callback: JBluetoothGattCallback read FBluetoothGattCallback;
-  end;
-
-  TPlatformBluetoothDevice = class(TCustomPlatformBluetoothDevice)
-  private
-    FBluetoothAdapter: JBluetoothAdapter;
-    FBluetoothDevice: JBluetoothDevice;
-    FBluetoothGatt: JBluetoothGatt;
-    FBluetoothGattCallbackDelegate: TBluetoothGattCallbackDelegate;
-    FBluetoothManager: JBluetoothManager;
-    FIsConnected: Boolean;
-    function GetCharacteristic(const AServiceUUID, ACharacteristicUUID: string): JBluetoothGattCharacteristic; overload;
-    function GetCharacteristic(const AService: JBluetoothGattService; const ACharacteristicUUID: string): JBluetoothGattCharacteristic; overload;
-    function GetCharacteristicValue(const ACharacteristic: JBluetoothGattCharacteristic): TBytes;
-    function GetService(const AServiceUUID: string): JBluetoothGattService;
-  protected
-    procedure CharacteristicChanged(const AGatt: JBluetoothGatt; const ACharacteristic: JBluetoothGattCharacteristic);
-    procedure CharacteristicRead(const AGatt: JBluetoothGatt; const ACharacteristic: JBluetoothGattCharacteristic; const AStatus: Integer);
-    procedure CharacteristicWrite(const AGatt: JBluetoothGatt; const ACharacteristic: JBluetoothGattCharacteristic; const AStatus: Integer);
-    procedure ConnectionStateChange(const AGatt: JBluetoothGatt; const AStatus: Integer; const ANewState: Integer);
-    procedure DescriptorRead(const AGatt: JBluetoothGatt; const ADescriptor: JBluetoothGattDescriptor; const AStatus: Integer);
-    procedure DescriptorWrite(const AGatt: JBluetoothGatt; const ADescriptor: JBluetoothGattDescriptor; const AStatus: Integer);
-    procedure ReadRemoteRssi(const AGatt: JBluetoothGatt; const ARssi: Integer; const AStatus: Integer);
-    procedure ReliableWriteCompleted(const AGatt: JBluetoothGatt; const AStatus: Integer);
-    procedure ServicesDiscovered(const AGatt: JBluetoothGatt; const AStatus: Integer);
-  protected
-    procedure Connect(const AAddress: string); override;
-    function DiscoverServices: Boolean; override;
-    procedure ReadCharacteristic(const AServiceUUID, ACharacteristicUUID: string); override;
-  public
-    constructor Create(const ABluetoothDevice: TBluetoothDevice); override;
-    destructor Destroy; override;
-  end;
-
 implementation
 
 uses
@@ -149,11 +96,63 @@ type
   end;
   TJScanRecordEx = class(TJavaGenericImport<JScanRecordClass, JScanRecordEx>) end;
 
+  TPlatformBluetoothLEDevice = class;
+
+  TBluetoothGattCallbackDelegate = class(TJavaLocal, JDWBluetoothGattCallbackDelegate)
+  private
+    FBluetoothGattCallback: JBluetoothGattCallback;
+    FPlatformBluetoothLEDevice: TPlatformBluetoothLEDevice;
+  public
+    { JDWBluetoothGattCallbackDelegate }
+    procedure onCharacteristicChanged(gatt: JBluetoothGatt; characteristic: JBluetoothGattCharacteristic); cdecl;
+    procedure onCharacteristicRead(gatt: JBluetoothGatt; characteristic: JBluetoothGattCharacteristic; status: Integer); cdecl;
+    procedure onCharacteristicWrite(gatt: JBluetoothGatt; characteristic: JBluetoothGattCharacteristic; status: Integer); cdecl;
+    procedure onConnectionStateChange(gatt: JBluetoothGatt; status: Integer; newState: Integer); cdecl;
+    procedure onDescriptorRead(gatt: JBluetoothGatt; descriptor: JBluetoothGattDescriptor; status: Integer); cdecl;
+    procedure onDescriptorWrite(gatt: JBluetoothGatt; descriptor: JBluetoothGattDescriptor; status: Integer); cdecl;
+    procedure onReadRemoteRssi(gatt: JBluetoothGatt; rssi: Integer; status: Integer); cdecl;
+    procedure onReliableWriteCompleted(gatt: JBluetoothGatt; status: Integer); cdecl;
+    procedure onServicesDiscovered(gatt: JBluetoothGatt; status: Integer); cdecl;
+  public
+    constructor Create(const APlatformBluetoothLEDevice: TPlatformBluetoothLEDevice);
+    property Callback: JBluetoothGattCallback read FBluetoothGattCallback;
+  end;
+
   TPlatformBluetoothLEDevice = class(TCustomBluetoothLEDevice)
   private
+    FBluetoothAdapter: JBluetoothAdapter;
     FBluetoothDevice: JBluetoothDevice;
+    FBluetoothGatt: JBluetoothGatt;
+    FBluetoothGattCallbackDelegate: TBluetoothGattCallbackDelegate;
+    FBluetoothManager: JBluetoothManager;
+    FIsConnected: Boolean;
+    FNeedsDiscover: Boolean;
+    function GetCharacteristic(const AService: JBluetoothGattService; const ACharacteristicUUID: string): JBluetoothGattCharacteristic;
+    function GetCharacteristicValue(const ACharacteristic: JBluetoothGattCharacteristic): TBytes;
+    procedure GetServices(const AServicesList: JList);
+  protected
+    procedure CharacteristicChanged(const AGatt: JBluetoothGatt; const ACharacteristic: JBluetoothGattCharacteristic);
+    procedure CharacteristicRead(const AGatt: JBluetoothGatt; const ACharacteristic: JBluetoothGattCharacteristic; const AStatus: Integer);
+    procedure CharacteristicWrite(const AGatt: JBluetoothGatt; const ACharacteristic: JBluetoothGattCharacteristic; const AStatus: Integer);
+    procedure ConnectionStateChange(const AGatt: JBluetoothGatt; const AStatus: Integer; const ANewState: Integer);
+    procedure DescriptorRead(const AGatt: JBluetoothGatt; const ADescriptor: JBluetoothGattDescriptor; const AStatus: Integer);
+    procedure DescriptorWrite(const AGatt: JBluetoothGatt; const ADescriptor: JBluetoothGattDescriptor; const AStatus: Integer);
+    procedure ReadRemoteRssi(const AGatt: JBluetoothGatt; const ARssi: Integer; const AStatus: Integer);
+    procedure ReliableWriteCompleted(const AGatt: JBluetoothGatt; const AStatus: Integer);
+    procedure ServicesDiscovered(const AGatt: JBluetoothGatt; const AStatus: Integer);
   public
-    property BluetoothDevice: JBluetoothDevice read FBluetoothDevice write FBluetoothDevice;
+    constructor Create(const ABluetoothDevice: JBluetoothDevice);
+    destructor Destroy; override;
+    function Connect: Boolean; override;
+    function DiscoverServices: Boolean; override;
+    property BluetoothDevice: JBluetoothDevice read FBluetoothDevice;
+  end;
+
+  TPlatformBluetoothService = class(TCustomBluetoothService)
+  private
+    FService: JBluetoothGattService;
+  public
+    constructor Create(const AUUID: TGUID; const AService: JBluetoothGattService); reintroduce;
   end;
 
   TScanRunnable = class(THandlerRunnable, JRunnable)
@@ -174,9 +173,22 @@ begin
   Result := TJParcelUuid.JavaClass.fromString(StringToJString(LGUIDString));
 end;
 
+function JUUIDToGUID(const AJUUID: JUUID): TGUID;
+begin
+  Result := TGUID.Create('{' + JStringToString(AJUUID.toString) + '}');
+end;
+
 function JParcelUuidToGUID(const AJParcelUuid: JParcelUuid): TGUID;
 begin
   Result := TGUID.Create('{' + JStringToString(AJParcelUuid.getUuid.toString) + '}');
+end;
+
+{ TPlatformBluetoothService }
+
+constructor TPlatformBluetoothService.Create(const AUUID: TGUID; const AService: JBluetoothGattService);
+begin
+  inherited Create(AUUID);
+  FService := AService;
 end;
 
 { TScanRunnable }
@@ -253,7 +265,7 @@ var
   LUuids: JList;
   I: Integer;
   LData: TJavaArray<Byte>;
-  LService: TDeviceService;
+  LService: TPlatformBluetoothService;
   LParcelUuid: JParcelUuid;
 begin
   // TOSLog.d('TPlatformBluetoothScanner.ScanResult');
@@ -263,7 +275,7 @@ begin
   // TOSLog.d('> Device Address: %s', [LDeviceAddress]);
   if not Devices.TryGetValue(LDeviceAddress, LCustomDevice) then
   begin
-    LDevice := TPlatformBluetoothLEDevice.Create;
+    LDevice := TPlatformBluetoothLEDevice.Create(LBluetoothDevice);
     LDevice.Key := LDeviceAddress;
     LDevice.Address := LDeviceAddress;
     LDevice.Name := JStringToString(LBluetoothDevice.getName);
@@ -279,19 +291,18 @@ begin
       for I := 0 to LUuids.size - 1 do
       begin
         LParcelUuid := TJParcelUuid.Wrap(LUuids.get(I));
-        LService.UUID := JParcelUuidToGUID(LParcelUuid);
+        LService := TPlatformBluetoothService.Create(JParcelUuidToGUID(LParcelUuid), nil);
         TOSLog.w('> Service UUID: %s', [LService.UUID.ToString]);
         LData := AScanResult.getScanRecord.getServiceData(LParcelUuid);
         if LData <> nil then
         try
-          LService.Data := TJavaArrayToTBytes(LData);
+          LService.SetData(TJavaArrayToTBytes(LData));
         finally
           LData.Free;
         end;
-        LDevice.Services := LDevice.Services + [LService];
+        LDevice.Services.Add(LService.UUID.ToString, LService);
       end;
     end;
-    LDevice.BluetoothDevice := LBluetoothDevice;
     Devices.AddOrSetValue(LDevice.Key, LDevice);
     LIsNew := True;
   end
@@ -511,97 +522,111 @@ end;
 
 { TBluetoothGattCallbackDelegate }
 
-constructor TBluetoothGattCallbackDelegate.Create(const APlatformBluetoothDevice: TPlatformBluetoothDevice);
+constructor TBluetoothGattCallbackDelegate.Create(const APlatformBluetoothLEDevice: TPlatformBluetoothLEDevice);
 begin
   inherited Create;
-  FPlatformBluetoothDevice := APlatformBluetoothDevice;
+  FPlatformBluetoothLEDevice := APlatformBluetoothLEDevice;
   FBluetoothGattCallback := TJDWBluetoothGattCallback.JavaClass.init(Self);
 end;
 
 procedure TBluetoothGattCallbackDelegate.onCharacteristicChanged(gatt: JBluetoothGatt; characteristic: JBluetoothGattCharacteristic);
 begin
-  FPlatformBluetoothDevice.CharacteristicChanged(gatt, characteristic);
+  FPlatformBluetoothLEDevice.CharacteristicChanged(gatt, characteristic);
 end;
 
 procedure TBluetoothGattCallbackDelegate.onCharacteristicRead(gatt: JBluetoothGatt; characteristic: JBluetoothGattCharacteristic; status: Integer);
 begin
-  FPlatformBluetoothDevice.CharacteristicRead(gatt, characteristic, status);
+  FPlatformBluetoothLEDevice.CharacteristicRead(gatt, characteristic, status);
 end;
 
 procedure TBluetoothGattCallbackDelegate.onCharacteristicWrite(gatt: JBluetoothGatt; characteristic: JBluetoothGattCharacteristic; status: Integer);
 begin
-  FPlatformBluetoothDevice.CharacteristicWrite(gatt, characteristic, status);
+  FPlatformBluetoothLEDevice.CharacteristicWrite(gatt, characteristic, status);
 end;
 
 procedure TBluetoothGattCallbackDelegate.onConnectionStateChange(gatt: JBluetoothGatt; status, newState: Integer);
 begin
-  FPlatformBluetoothDevice.ConnectionStateChange(gatt, status, newState);
+  FPlatformBluetoothLEDevice.ConnectionStateChange(gatt, status, newState);
 end;
 
 procedure TBluetoothGattCallbackDelegate.onDescriptorRead(gatt: JBluetoothGatt; descriptor: JBluetoothGattDescriptor; status: Integer);
 begin
-  FPlatformBluetoothDevice.DescriptorRead(gatt, descriptor, status);
+  FPlatformBluetoothLEDevice.DescriptorRead(gatt, descriptor, status);
 end;
 
 procedure TBluetoothGattCallbackDelegate.onDescriptorWrite(gatt: JBluetoothGatt; descriptor: JBluetoothGattDescriptor; status: Integer);
 begin
-  FPlatformBluetoothDevice.DescriptorWrite(gatt, descriptor, status);
+  FPlatformBluetoothLEDevice.DescriptorWrite(gatt, descriptor, status);
 end;
 
 procedure TBluetoothGattCallbackDelegate.onReadRemoteRssi(gatt: JBluetoothGatt; rssi, status: Integer);
 begin
-  FPlatformBluetoothDevice.ReadRemoteRssi(gatt, rssi, status);
+  FPlatformBluetoothLEDevice.ReadRemoteRssi(gatt, rssi, status);
 end;
 
 procedure TBluetoothGattCallbackDelegate.onReliableWriteCompleted(gatt: JBluetoothGatt; status: Integer);
 begin
-  FPlatformBluetoothDevice.ReliableWriteCompleted(gatt, status);
+  FPlatformBluetoothLEDevice.ReliableWriteCompleted(gatt, status);
 end;
 
 procedure TBluetoothGattCallbackDelegate.onServicesDiscovered(gatt: JBluetoothGatt; status: Integer);
 begin
-  FPlatformBluetoothDevice.ServicesDiscovered(gatt, status);
+  TThread.Synchronize(nil,
+    procedure
+    begin
+      FPlatformBluetoothLEDevice.ServicesDiscovered(gatt, status)
+    end
+  );
 end;
 
-{ TPlatformBluetoothDevice }
+{ TPlatformBluetoothLEDevice }
 
-constructor TPlatformBluetoothDevice.Create;
+constructor TPlatformBluetoothLEDevice.Create(const ABluetoothDevice: JBluetoothDevice);
 var
   LService: JObject;
 begin
-  inherited;
+  inherited Create;
+  FBluetoothDevice := ABluetoothDevice;
   LService := TAndroidHelper.Context.getApplicationContext.getSystemService(TJContext.JavaClass.BLUETOOTH_SERVICE);
   FBluetoothManager := TJBluetoothManager.Wrap(LService);
   FBluetoothAdapter := FBluetoothManager.getAdapter;
   FBluetoothGattCallbackDelegate := TBluetoothGattCallbackDelegate.Create(Self);
 end;
 
-destructor TPlatformBluetoothDevice.Destroy;
+destructor TPlatformBluetoothLEDevice.Destroy;
 begin
   FBluetoothGattCallbackDelegate.Free;
   inherited;
 end;
 
-function TPlatformBluetoothDevice.DiscoverServices: Boolean;
+function TPlatformBluetoothLEDevice.DiscoverServices: Boolean;
 begin
-  Result := False;
   if FIsConnected then
-    Result := FBluetoothGatt.discoverServices;
-end;
-
-procedure TPlatformBluetoothDevice.Connect(const AAddress: string);
-begin
-  FBluetoothDevice := nil;
-  FBluetoothGatt := nil;
-  FBluetoothDevice := FBluetoothAdapter.getRemoteDevice(StringToJString(AAddress));
-  if FBluetoothDevice <> nil then
   begin
-    FBluetoothGatt := FBluetoothDevice.connectGatt(TAndroidHelper.Context, False, FBluetoothGattCallbackDelegate.Callback);
-    TOSLog.d('Connecting..');
+    Result := FBluetoothGatt.discoverServices;
+    if Result then
+      TOSLog.d('Discovering..')
+    else
+      DoServicesDiscovered(False);
+  end
+  else
+  begin
+    FNeedsDiscover := True;
+    Result := Connect;
+    if not Result then
+      FNeedsDiscover := False;
   end;
 end;
 
-function TPlatformBluetoothDevice.GetCharacteristic(const AService: JBluetoothGattService;
+function TPlatformBluetoothLEDevice.Connect: Boolean;
+begin
+  FBluetoothGatt := FBluetoothDevice.connectGatt(TAndroidHelper.Context, False, FBluetoothGattCallbackDelegate.Callback);
+  Result := FBluetoothGatt <> nil;
+  if Result then
+    TOSLog.d('Connecting..');
+end;
+
+function TPlatformBluetoothLEDevice.GetCharacteristic(const AService: JBluetoothGattService;
   const ACharacteristicUUID: string): JBluetoothGattCharacteristic;
 var
   LCharacteristics: JList;
@@ -621,7 +646,8 @@ begin
   end;
 end;
 
-function TPlatformBluetoothDevice.GetCharacteristic(const AServiceUUID, ACharacteristicUUID: string): JBluetoothGattCharacteristic;
+{
+function TPlatformBluetoothLEDevice.GetCharacteristic(const AServiceUUID, ACharacteristicUUID: string): JBluetoothGattCharacteristic;
 var
   LService: JBluetoothGattService;
 begin
@@ -631,7 +657,7 @@ begin
     Result := GetCharacteristic(LService, ACharacteristicUUID);
 end;
 
-function TPlatformBluetoothDevice.GetService(const AServiceUUID: string): JBluetoothGattService;
+function TPlatformBluetoothLEDevice.GetService(const AServiceUUID: string): JBluetoothGattService;
 var
   LServices: JList;
   LService: JBluetoothGattService;
@@ -652,8 +678,9 @@ begin
     end;
   end;
 end;
+}
 
-function TPlatformBluetoothDevice.GetCharacteristicValue(const ACharacteristic: JBluetoothGattCharacteristic): TBytes;
+function TPlatformBluetoothLEDevice.GetCharacteristicValue(const ACharacteristic: JBluetoothGattCharacteristic): TBytes;
 var
   LValue: TJavaArray<Byte>;
 begin
@@ -665,49 +692,37 @@ begin
   end;
 end;
 
-procedure TPlatformBluetoothDevice.CharacteristicChanged(const AGatt: JBluetoothGatt; const ACharacteristic: JBluetoothGattCharacteristic);
+procedure TPlatformBluetoothLEDevice.CharacteristicChanged(const AGatt: JBluetoothGatt; const ACharacteristic: JBluetoothGattCharacteristic);
 begin
   DoCharacteristicRead(JStringToString(ACharacteristic.getUuid.toString), GetCharacteristicValue(ACharacteristic));
 end;
 
-procedure TPlatformBluetoothDevice.CharacteristicRead(const AGatt: JBluetoothGatt; const ACharacteristic: JBluetoothGattCharacteristic; const AStatus: Integer);
+procedure TPlatformBluetoothLEDevice.CharacteristicRead(const AGatt: JBluetoothGatt; const ACharacteristic: JBluetoothGattCharacteristic;
+  const AStatus: Integer);
 begin
-  // ACharacteristic.
   if AStatus = TJBluetoothGatt.JavaClass.GATT_SUCCESS then
     CharacteristicChanged(AGatt, ACharacteristic);
   // else did not succeed - duh
 end;
 
-procedure TPlatformBluetoothDevice.CharacteristicWrite(const AGatt: JBluetoothGatt; const ACharacteristic: JBluetoothGattCharacteristic; const AStatus: Integer);
+procedure TPlatformBluetoothLEDevice.CharacteristicWrite(const AGatt: JBluetoothGatt; const ACharacteristic: JBluetoothGattCharacteristic;
+  const AStatus: Integer);
 begin
   //
 end;
 
-procedure TPlatformBluetoothDevice.ConnectionStateChange(const AGatt: JBluetoothGatt; const AStatus: Integer; const ANewState: Integer);
-begin
-  if ANewState = TJBluetoothProfile.JavaClass.STATE_CONNECTED then
-  begin
-    TOSLog.d('Connected');
-    FIsConnected := True;
-  end
-  else if ANewState = TJBluetoothProfile.JavaClass.STATE_DISCONNECTED then
-  begin
-    TOSLog.d('Disconnected');
-    FIsConnected := False;
-  end;
-end;
-
-procedure TPlatformBluetoothDevice.DescriptorRead(const AGatt: JBluetoothGatt; const ADescriptor: JBluetoothGattDescriptor; const AStatus: Integer);
+procedure TPlatformBluetoothLEDevice.DescriptorRead(const AGatt: JBluetoothGatt; const ADescriptor: JBluetoothGattDescriptor; const AStatus: Integer);
 begin
   //
 end;
 
-procedure TPlatformBluetoothDevice.DescriptorWrite(const AGatt: JBluetoothGatt; const ADescriptor: JBluetoothGattDescriptor; const AStatus: Integer);
+procedure TPlatformBluetoothLEDevice.DescriptorWrite(const AGatt: JBluetoothGatt; const ADescriptor: JBluetoothGattDescriptor; const AStatus: Integer);
 begin
   //
 end;
 
-procedure TPlatformBluetoothDevice.ReadCharacteristic(const AServiceUUID, ACharacteristicUUID: string);
+{
+procedure TPlatformBluetoothLEDevice.ReadCharacteristic(const AServiceUUID, ACharacteristicUUID: string);
 var
   LCharacteristic: JBluetoothGattCharacteristic;
 begin
@@ -715,22 +730,70 @@ begin
   if LCharacteristic <> nil then
     FBluetoothGatt.readCharacteristic(LCharacteristic);
 end;
+}
 
-procedure TPlatformBluetoothDevice.ReadRemoteRssi(const AGatt: JBluetoothGatt; const ARssi: Integer; const AStatus: Integer);
+procedure TPlatformBluetoothLEDevice.ReadRemoteRssi(const AGatt: JBluetoothGatt; const ARssi: Integer; const AStatus: Integer);
 begin
   if AStatus = TJBluetoothGatt.JavaClass.GATT_SUCCESS then
     DoRemoteRssi(ARssi);
 end;
 
-procedure TPlatformBluetoothDevice.ReliableWriteCompleted(const AGatt: JBluetoothGatt; const AStatus: Integer);
+procedure TPlatformBluetoothLEDevice.ReliableWriteCompleted(const AGatt: JBluetoothGatt; const AStatus: Integer);
 begin
-
+  //
 end;
 
-procedure TPlatformBluetoothDevice.ServicesDiscovered(const AGatt: JBluetoothGatt; const AStatus: Integer);
+procedure TPlatformBluetoothLEDevice.ConnectionStateChange(const AGatt: JBluetoothGatt; const AStatus: Integer; const ANewState: Integer);
 begin
-  TOSLog.d('TPlatformBluetoothDevice.ServicesDiscovered');
-  DoServicesDiscovered;
+  if ANewState = TJBluetoothProfile.JavaClass.STATE_CONNECTED then
+  begin
+    TOSLog.d('Connected');
+    FIsConnected := True;
+    if FNeedsDiscover then
+      DiscoverServices;
+  end
+  else if ANewState = TJBluetoothProfile.JavaClass.STATE_DISCONNECTED then
+  begin
+    TOSLog.d('Disconnected');
+    FIsConnected := False;
+    if FNeedsDiscover then
+      DoServicesDiscovered(False);
+  end;
+  FNeedsDiscover := False;
+end;
+
+procedure TPlatformBluetoothLEDevice.GetServices(const AServicesList: JList);
+var
+  I: Integer;
+  LIncludedServices: JList;
+  LService: JBluetoothGattService;
+  LDeviceService: TPlatformBluetoothService;
+begin
+  for I := 0 to AServicesList.size - 1 do
+  begin
+    LService := TJBluetoothGattService.Wrap(AServicesList.get(I));
+    LIncludedServices := LService.getIncludedServices;
+    if LIncludedServices <> nil then
+      GetServices(LIncludedServices);
+    LDeviceService := TPlatformBluetoothService.Create(JUUIDToGUID(LService.getUuid), LService);
+    Services.Add(LDeviceService.UUID.ToString, LDeviceService);
+  end;
+end;
+
+procedure TPlatformBluetoothLEDevice.ServicesDiscovered(const AGatt: JBluetoothGatt; const AStatus: Integer);
+var
+  LSuccess: Boolean;
+  LServices: JList;
+begin
+  TOSLog.d('TPlatformBluetoothLEDevice.ServicesDiscovered');
+  LSuccess := AStatus = TJBluetoothGatt.JavaClass.GATT_SUCCESS;
+  if LSuccess then
+  begin
+    LServices := FBluetoothGatt.getServices;
+    if LServices <> nil then
+      GetServices(LServices);
+  end;
+  DoServicesDiscovered(LSuccess);
 end;
 
 end.

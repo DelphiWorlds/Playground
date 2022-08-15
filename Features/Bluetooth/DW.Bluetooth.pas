@@ -17,17 +17,57 @@ interface
 
 uses
   // RTL
-  System.SysUtils, System.Classes,
-  // DW
-  DW.BluetoothLE.Types;
+  System.SysUtils, System.Classes, System.JSON, System.Generics.Collections;
 
 const
   cProximityImmediate = 0.5; // Metres
   cProximityNear = 3;
   cProximityFar = 30;
-  cServiceUUIDWith16Bit = '0000%s-0000-1000-8000-00805F9B34FB';
+  cUUIDWith16Bit = '0000%s-0000-1000-8000-00805F9B34FB';
 
 type
+  TServiceDataRawData = record
+    Key: TGUID;
+    Value: TBytes;
+  end;
+
+  TBluetoothLEScanFilter = record
+    LocalName: string;
+    DeviceAddress: string;
+    ManufacturerId: Integer;
+    ManufacturerData: TBytes;
+    ManufacturerDataMask: TBytes;
+    ServiceUUID: TGUID;
+    ServiceUUIDMask: TGUID;
+    ServiceData: TServiceDataRawData;
+    ServiceDataMask: TBytes;
+    constructor Create(const AServiceUUID: string);
+    procedure FromJSON(const AJSON: TJSONValue);
+    function ToJSON: TJSONValue;
+  end;
+
+  TBluetoothLEScanFilters = TArray<TBluetoothLEScanFilter>;
+
+  TBluetoothLEDeviceKind = (Unknown, iBeacon);
+
+  TCustomBluetoothService = class(TObject)
+  private
+    FUUID: TGUID;
+    FData: TBytes;
+    FIsOverflow: Boolean;
+  protected
+    procedure SetData(const AValue: TBytes);
+  public
+    constructor Create(const AUUID: TGUID; const AIsOverflow: Boolean = False); virtual;
+    property UUID: TGUID read FUUID;
+  end;
+
+  TBluetoothServices = TObjectDictionary<string, TCustomBluetoothService>;
+
+  TCustomBluetoothLEDevice = class;
+
+  TBluetoothLEDevices = TObjectDictionary<string, TCustomBluetoothLEDevice>;
+
   TBluetoothScanner = class;
 
   TCustomPlatformBluetoothScanner = class(TObject)
@@ -95,57 +135,66 @@ type
 
   TCharacteristicReadEvent = procedure(Sender: TObject; const ID: string; const Value: TBytes) of object;
   TRemoteRssiEvent = procedure(Sender: TObject; const Rssi: Integer) of object;
+  TServicesDiscoveredEvent = procedure(Sender: TObject; const Success: Boolean) of object;
 
-  TBluetoothDevice = class;
-
-  TCustomPlatformBluetoothDevice = class(TObject)
+  TCustomBluetoothLEDevice = class(TObject)
   private
-    FBluetoothDevice: TBluetoothDevice;
-  protected
-    procedure Connect(const AAddress: string); virtual;
-    function DiscoverServices: Boolean; virtual;
-    procedure DoCharacteristicRead(const AID: string; const AValue: TBytes);
-    procedure DoConnected;
-    procedure DoDisconnected;
-    procedure DoRemoteRssi(const ARssi: Integer);
-    procedure DoServicesDiscovered;
-    procedure ReadCharacteristic(const AServiceUUID, ACharacteristicUUID: string); virtual;
-  public
-    constructor Create(const ABluetoothDevice: TBluetoothDevice); virtual;
-    destructor Destroy; override;
-  end;
-
-  TBluetoothDevice = class(TObject)
-  private
-    FPlatformBluetoothDevice: TCustomPlatformBluetoothDevice;
+    FAddress: string;
+    FData: TBytes;
+    FDeviceType: Integer;
+    FIsConnectable: Boolean;
+    FKey: string;
+    FKind: TBluetoothLEDeviceKind;
+    FName: string;
+    FRSSI: Integer;
+    FServices: TBluetoothServices;
+    FTxPower: Integer;
     FOnCharacteristicRead: TCharacteristicReadEvent;
     FOnConnected: TNotifyEvent;
     FOnDisconnected: TNotifyEvent;
     FOnRemoteRssi: TRemoteRssiEvent;
-    FOnServicesDiscovered: TNotifyEvent;
+    FOnServicesDiscovered: TServicesDiscoveredEvent;
+    function BytesMatch(const ABytes: TBytes; const AOffset: Integer = 0): Boolean;
+    function GetDistance: Double;
+    function GetServices: TBluetoothServices;
+    procedure SetData(const Value: TBytes);
   protected
+    function Connect: Boolean; virtual;
     procedure DoCharacteristicRead(const AID: string; const AValue: TBytes);
     procedure DoConnected;
     procedure DoDisconnected;
     procedure DoRemoteRssi(const ARssi: Integer);
-    procedure DoServicesDiscovered;
+    procedure DoServicesDiscovered(const ASuccess: Boolean);
+    procedure ReadCharacteristic(const AServiceUUID, ACharacteristicUUID: string); virtual;
   public
-    constructor Create;
-    destructor Destroy; override;
-    procedure Connect(const AAddress: string);
-    function DiscoverServices: Boolean;
-    procedure ReadCharacteristic(const AServiceUUID, ACharacteristicUUID: string);
+    function DiscoverServices: Boolean; virtual;
+    function DisplayName: string;
+    function FindService(const AUUIDString: string; out AService: TCustomBluetoothService): Boolean;
+    function HasService(const AUUID: TGUID): Boolean; overload;
+    function HasService(const AUUIDString: string): Boolean; overload;
+    procedure SetServiceData(const AUUIDString: string; const AData: TBytes);
+    property Address: string read FAddress write FAddress;
+    property Data: TBytes read FData write SetData;
+    property DeviceType: Integer read FDeviceType write FDeviceType;
+    property Distance: Double read GetDistance;
+    property IsConnectable: Boolean read FIsConnectable write FIsConnectable;
+    property Key: string read FKey write FKey;
+    property Kind: TBluetoothLEDeviceKind read FKind;
+    property Name: string read FName write FName;
+    property RSSI: Integer read FRSSI write FRSSI;
+    property Services: TBluetoothServices read GetServices;
+    property TxPower: Integer read FTxPower write FTxPower;
     property OnConnected: TNotifyEvent read FOnConnected write FOnConnected;
     property OnCharacteristicRead: TCharacteristicReadEvent read FOnCharacteristicRead write FOnCharacteristicRead;
     property OnDisconnected: TNotifyEvent read FOnDisconnected write FOnDisconnected;
     property OnRemoteRssi: TRemoteRssiEvent read FOnRemoteRssi write FOnRemoteRssi;
-    property OnServicesDiscovered: TNotifyEvent read FOnServicesDiscovered write FOnServicesDiscovered;
+    property OnServicesDiscovered: TServicesDiscoveredEvent read FOnServicesDiscovered write FOnServicesDiscovered;
   end;
 
 implementation
 
 uses
-  System.Generics.Collections,
+  System.Math,
   {$IF Defined(MACOS)}
   DW.Bluetooth.Mac;
   {$ELSEIF Defined(ANDROID)}
@@ -153,6 +202,42 @@ uses
   {$ELSE}
   DW.Bluetooth.Default;
   {$ENDIF}
+
+const
+  cSignalConst = 2;
+  cBLEDataIBeaconTxPower = 29;
+
+{ TBluetoothLEScanFilter }
+
+constructor TBluetoothLEScanFilter.Create(const AServiceUUID: string);
+begin
+  ServiceUUID := TGUID.Create(AServiceUUID);
+  ServiceUUIDMask := TGUID.Create('{FFFFFFFF-FFFF-FFFF-FFFF-FFFFFFFFFFFF}');
+end;
+
+procedure TBluetoothLEScanFilter.FromJSON(const AJSON: TJSONValue);
+var
+  LValue: string;
+begin
+  AJSON.TryGetValue('localName', LocalName);
+  AJSON.TryGetValue('deviceAddress', DeviceAddress);
+  if AJSON.TryGetValue('serviceUUID', LValue) then
+    ServiceUUID := TGUID.Create(LValue);
+  if AJSON.TryGetValue('serviceUUIDMask', LValue) then
+    ServiceUUIDMask := TGUID.Create(LValue);
+end;
+
+function TBluetoothLEScanFilter.ToJSON: TJSONValue;
+var
+  LJSON: TJSONObject;
+begin
+  LJSON := TJSONObject.Create;
+  LJSON.AddPair('localName', TJSONString.Create(LocalName));
+  LJSON.AddPair('deviceAddress', TJSONString.Create(DeviceAddress));
+  LJSON.AddPair('serviceUUID', TJSONString.Create(ServiceUUID.ToString));
+  LJSON.AddPair('serviceUUIDMask', TJSONString.Create(ServiceUUIDMask.ToString));
+  Result := LJSON;
+end;
 
 { TCustomPlatformBluetoothScanner }
 
@@ -318,117 +403,158 @@ begin
   FPlatformBluetoothScanner.Stop;
 end;
 
-{ TCustomPlatformBluetoothDevice }
+{ TCustomBluetoothService }
 
-constructor TCustomPlatformBluetoothDevice.Create(const ABluetoothDevice: TBluetoothDevice);
+constructor TCustomBluetoothService.Create(const AUUID: TGUID; const AIsOverflow: Boolean);
 begin
   inherited Create;
-  FBluetoothDevice := ABluetoothDevice;
+  FUUID := AUUID;
+  FIsOverflow := AIsOverflow;
 end;
 
-destructor TCustomPlatformBluetoothDevice.Destroy;
+procedure TCustomBluetoothService.SetData(const AValue: TBytes);
 begin
-  //
-  inherited;
+  FData := AValue;
 end;
 
-function TCustomPlatformBluetoothDevice.DiscoverServices: Boolean;
+{ TCustomBluetoothLEDevice }
+
+function TCustomBluetoothLEDevice.BytesMatch(const ABytes: TBytes; const AOffset: Integer = 0): Boolean;
+var
+  I: Integer;
+begin
+  Result := False;
+  if  Length(FData) > Length(ABytes) + AOffset then
+  begin
+    Result := True;
+    for I := 0 to High(ABytes) do
+    begin
+      if ABytes[I] <> FData[I + AOffset] then
+      begin
+        Result := False;
+        Break;
+      end;
+    end;
+  end;
+end;
+
+function TCustomBluetoothLEDevice.DisplayName: string;
+var
+  LKey: string;
+begin
+  if Name.IsEmpty then
+  begin
+    if Key.IsEmpty then
+      Result := '(unknown)'
+    else
+      Result := Key;
+  end
+  else
+  begin
+    Result := Name;
+    if not Key.IsEmpty then
+    begin
+      LKey := Key;
+      if Length(LKey) > 15 then
+        LKey := LKey.Substring(0, 7) + '..' + LKey.Substring(Length(LKey) - 7);
+      Result := Result + ' (' + LKey + ')';
+    end;
+  end;
+end;
+
+function TCustomBluetoothLEDevice.GetDistance: Double;
+begin
+  Result := Power(10, (TxPower - RSSI) / (10 * cSignalConst));
+end;
+
+function TCustomBluetoothLEDevice.GetServices: TBluetoothServices;
+begin
+  if FServices = nil then
+    FServices := TBluetoothServices.Create([doOwnsValues]);
+  Result := FServices;
+end;
+
+function TCustomBluetoothLEDevice.FindService(const AUUIDString: string; out AService: TCustomBluetoothService): Boolean;
+begin
+  Result := Services.TryGetValue(AUUIDString, AService);
+end;
+
+function TCustomBluetoothLEDevice.HasService(const AUUIDString: string): Boolean;
+begin
+  Result := Services.ContainsKey(AUUIDString);
+end;
+
+function TCustomBluetoothLEDevice.HasService(const AUUID: TGUID): Boolean;
+begin
+  Result := HasService(AUUID.ToString);
+end;
+
+procedure TCustomBluetoothLEDevice.SetServiceData(const AUUIDString: string; const AData: TBytes);
+var
+  LService: TCustomBluetoothService;
+begin
+  if FindService(AUUIDString, LService) then
+    LService.SetData(AData);
+end;
+
+procedure TCustomBluetoothLEDevice.SetData(const Value: TBytes);
+begin
+  FKind := TBluetoothLEDeviceKind.Unknown;
+  FData := Value;
+  if BytesMatch(TBytes.Create($02, $01, $06)) then
+    FKind := TBluetoothLEDeviceKind.iBeacon;
+  case FKind of
+    TBluetoothLEDeviceKind.iBeacon:
+    begin
+      TxPower := ShortInt(FData[cBLEDataIBeaconTxPower]);
+      Sleep(0);
+    end;
+  end;
+end;
+
+function TCustomBluetoothLEDevice.DiscoverServices: Boolean;
 begin
   Result := False;
 end;
 
-procedure TCustomPlatformBluetoothDevice.Connect(const AAddress: string);
+function TCustomBluetoothLEDevice.Connect: Boolean;
 begin
-  //
+  Result := False;
 end;
 
-procedure TCustomPlatformBluetoothDevice.DoCharacteristicRead(const AID: string; const AValue: TBytes);
-begin
-  FBluetoothDevice.DoCharacteristicRead(AID, AValue);
-end;
-
-procedure TCustomPlatformBluetoothDevice.DoConnected;
-begin
-  FBluetoothDevice.DoConnected;
-end;
-
-procedure TCustomPlatformBluetoothDevice.DoDisconnected;
-begin
-  FBluetoothDevice.DoDisconnected;
-end;
-
-procedure TCustomPlatformBluetoothDevice.DoRemoteRssi(const ARssi: Integer);
-begin
-  FBluetoothDevice.DoRemoteRssi(ARssi);
-end;
-
-procedure TCustomPlatformBluetoothDevice.DoServicesDiscovered;
-begin
-
-end;
-
-procedure TCustomPlatformBluetoothDevice.ReadCharacteristic(const AServiceUUID, ACharacteristicUUID: string);
-begin
-  //
-end;
-
-{ TBluetoothDevice }
-
-constructor TBluetoothDevice.Create;
-begin
-  inherited;
-  FPlatformBluetoothDevice := TPlatformBluetoothDevice.Create(Self);
-end;
-
-destructor TBluetoothDevice.Destroy;
-begin
-  FPlatformBluetoothDevice.Free;
-  inherited;
-end;
-
-function TBluetoothDevice.DiscoverServices: Boolean;
-begin
-  Result := FPlatformBluetoothDevice.DiscoverServices;
-end;
-
-procedure TBluetoothDevice.Connect(const AAddress: string);
-begin
-  FPlatformBluetoothDevice.Connect(AAddress);
-end;
-
-procedure TBluetoothDevice.DoCharacteristicRead(const AID: string; const AValue: TBytes);
+procedure TCustomBluetoothLEDevice.DoCharacteristicRead(const AID: string; const AValue: TBytes);
 begin
   if Assigned(FOnCharacteristicRead) then
     FOnCharacteristicRead(Self, AID, AValue);
 end;
 
-procedure TBluetoothDevice.DoConnected;
+procedure TCustomBluetoothLEDevice.DoConnected;
 begin
   if Assigned(FOnConnected) then
     FOnConnected(Self);
 end;
 
-procedure TBluetoothDevice.DoDisconnected;
+procedure TCustomBluetoothLEDevice.DoDisconnected;
 begin
   if Assigned(FOnDisconnected) then
     FOnDisconnected(Self);
 end;
 
-procedure TBluetoothDevice.DoRemoteRssi(const ARssi: Integer);
+procedure TCustomBluetoothLEDevice.DoRemoteRssi(const ARssi: Integer);
 begin
   if Assigned(FOnRemoteRssi) then
     FOnRemoteRssi(Self, ARssi);
 end;
 
-procedure TBluetoothDevice.DoServicesDiscovered;
+procedure TCustomBluetoothLEDevice.DoServicesDiscovered(const ASuccess: Boolean);
 begin
   if Assigned(FOnServicesDiscovered) then
-    FOnServicesDiscovered(Self);
+    FOnServicesDiscovered(Self, ASuccess);
 end;
 
-procedure TBluetoothDevice.ReadCharacteristic(const AServiceUUID, ACharacteristicUUID: string);
+procedure TCustomBluetoothLEDevice.ReadCharacteristic(const AServiceUUID, ACharacteristicUUID: string);
 begin
-  FPlatformBluetoothDevice.ReadCharacteristic(AServiceUUID, ACharacteristicUUID);
+  //
 end;
 
 end.

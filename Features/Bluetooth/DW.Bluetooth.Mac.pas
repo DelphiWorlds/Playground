@@ -113,7 +113,7 @@ type
 
   TPlatformBluetoothScanner = class;
 
-  TCBCentralManagerDelegate = class(TOCLocal, CBCentralManagerDelegate)
+  TScannerCBCentralManagerDelegate = class(TOCLocal, CBCentralManagerDelegate)
   private
     FPlatformBluetoothScanner: TPlatformBluetoothScanner;
   public
@@ -138,13 +138,12 @@ type
     procedure centralManagerWillRestoreState(central: CBCentralManager; willRestoreState: NSDictionary); cdecl;
   public
     constructor Create(const APlatformBluetoothScanner: TPlatformBluetoothScanner);
-    destructor Destroy; override;
   end;
 
   TPlatformBluetoothScanner = class(TCustomPlatformBluetoothScanner)
   private
     FCentralManager: CBCentralManager;
-    FDelegate: TCBCentralManagerDelegate;
+    FCentralManagerDelegate: TScannerCBCentralManagerDelegate;
     FExpiryTimer: TOSTimer;
     FIsScanPending: Boolean;
     FIsStarting: Boolean;
@@ -166,14 +165,13 @@ type
     destructor Destroy; override;
   end;
 
-  TPlatformBluetoothDevice = class(TCustomPlatformBluetoothDevice);
-
 implementation
 
 uses
   System.SysUtils,
   Macapi.Helpers,
-  DW.Macapi.Helpers, DW.BluetoothLE.Types;
+  DW.OSLog,
+  DW.Macapi.Helpers;
 
 type
   CBUUIDEx = interface(CBUUID)
@@ -232,21 +230,70 @@ type
     constructor Create(const APlatformBluetoothLEDevice: TPlatformBluetoothLEDevice);
   end;
 
+  TDeviceCBCentralManagerDelegate = class(TOCLocal, CBCentralManagerDelegate)
+  private
+    FPlatformBluetoothDevice: TPlatformBluetoothLEDevice;
+  public
+    { CBCentralManagerDelegate }
+    [MethodName('centralManager:connectionEventDidOccur:forPeripheral:')]
+    procedure centralManagerConnectionEventDidOccur(central: CBCentralManager; connectionEventDidOccur: CBConnectionEvent;
+      forPeripheral: CBPeripheral); cdecl;
+    [MethodName('centralManager:didConnectPeripheral:')]
+    procedure centralManagerDidConnectPeripheral(central: CBCentralManager; didConnectPeripheral: CBPeripheral); cdecl;
+    [MethodName('centralManager:didDisconnectPeripheral:error:')]
+    procedure centralManagerDidDisconnectPeripheral(central: CBCentralManager; didDisconnectPeripheral: CBPeripheral; error: NSError); cdecl;
+    [MethodName('centralManager:didDiscoverPeripheral:advertisementData:RSSI:')]
+    procedure centralManagerDidDiscoverPeripheral(central: CBCentralManager; didDiscoverPeripheral: CBPeripheral; advertisementData: NSDictionary;
+      RSSI: NSNumber); cdecl;
+    [MethodName('centralManager:didFailToConnectPeripheral:error:')]
+    procedure centralManagerDidFailToConnectPeripheral(central: CBCentralManager; didFailToConnectPeripheral: CBPeripheral; error: NSError); cdecl;
+    [MethodName('centralManager:didUpdateANCSAuthorizationForPeripheral:')]
+    procedure centralManagerDidUpdateANCSAuthorizationForPeripheral(central: CBCentralManager;
+      didUpdateANCSAuthorizationForPeripheral: CBPeripheral); cdecl;
+    procedure centralManagerDidUpdateState(central: CBCentralManager); cdecl;
+    [MethodName('centralManager:willRestoreState:')]
+    procedure centralManagerWillRestoreState(central: CBCentralManager; willRestoreState: NSDictionary); cdecl;
+  public
+    constructor Create(const APlatformBluetoothLEDevice: TPlatformBluetoothLEDevice);
+  end;
+
   TPlatformBluetoothLEDevice = class(TCustomBluetoothLEDevice)
   private
-    FDelegate: TCBPeripheralDelegate;
+    FCentralManager: CBCentralManager;
+    FCentralManagerDelegate: TDeviceCBCentralManagerDelegate;
+    FIsConnected: Boolean;
+    FNeedsDiscover: Boolean;
     FPeripheral: CBPeripheral;
+    FPeripheralDelegate: TCBPeripheralDelegate;
+  private
+    procedure CheckNeedsDiscover;
+  protected
+    procedure DidConnectPeripheral(const ACentralManager: CBCentralManager; const APeripheral: CBPeripheral);
+    procedure DidDisconnectPeripheral(const ACentralManager: CBCentralManager; const APeripheral: CBPeripheral; const AError: NSError);
+    procedure DidDiscoverServices(const APeripheral: CBPeripheral; AError: NSError);
+    procedure DidDiscoverIncludedServicesForService(const APeripheral: CBPeripheral; const AService: CBService; const AError: NSError);
+    procedure DidFailToConnectPeripheral(const ACentralManager: CBCentralManager; const APeripheral: CBPeripheral; const AError: NSError);
+  protected
+    function Connect: Boolean; override;
   public
     constructor Create(const APeripheral: CBPeripheral);
     destructor Destroy; override;
+    function DiscoverServices: Boolean; override;
     property Peripheral: CBPeripheral read FPeripheral;
+  end;
+
+  TPlatformBluetoothService = class(TCustomBluetoothService)
+  private
+    FService: CBService;
+  protected
+    property Service: CBService read FService write FService;
   end;
 
 function CBUUIDAsString(const AUUID: CBUUIDEx): string;
 begin
   Result := NSStrToStr(AUUID.UUIDString);
   if Length(Result) = 4 then
-    Result := Format(cServiceUUIDWith16Bit, [Result]);
+    Result := Format(cUUIDWith16Bit, [Result]);
   Result := '{' + Result + '}';
 end;
 
@@ -273,12 +320,12 @@ end;
 procedure TCBPeripheralDelegate.peripheralDidDiscoverIncludedServicesForService(peripheral: CBPeripheral;
   didDiscoverIncludedServicesForService: CBService; error: NSError);
 begin
-
+  FPlatformBluetoothLEDevice.DidDiscoverIncludedServicesForService(peripheral, didDiscoverIncludedServicesForService, error);
 end;
 
 procedure TCBPeripheralDelegate.peripheralDidDiscoverServices(peripheral: CBPeripheral; didDiscoverServices: NSError);
 begin
-
+  FPlatformBluetoothLEDevice.DidDiscoverServices(peripheral, didDiscoverServices);
 end;
 
 procedure TCBPeripheralDelegate.peripheralDidModifyServices(peripheral: CBPeripheral; didModifyServices: NSArray);
@@ -341,76 +388,213 @@ begin
 
 end;
 
-{ TPlatformBluetoothLEDevice }
+{ TDeviceCBCentralManagerDelegate }
 
-constructor TPlatformBluetoothLEDevice.Create(const APeripheral: CBPeripheral);
+constructor TDeviceCBCentralManagerDelegate.Create(const APlatformBluetoothLEDevice: TPlatformBluetoothLEDevice);
 begin
   inherited Create;
-  FDelegate := TCBPeripheralDelegate.Create(Self);
-  FPeripheral := APeripheral;
-  FPeripheral.setDelegate(FDelegate.GetObjectID);
+  FPlatformBluetoothDevice := APlatformBluetoothLEDevice;
 end;
 
-destructor TPlatformBluetoothLEDevice.Destroy;
-begin
-  FDelegate.Free;
-  inherited;
-end;
-
-{ TCBCentralManagerDelegate }
-
-constructor TCBCentralManagerDelegate.Create(const APlatformBluetoothScanner: TPlatformBluetoothScanner);
-begin
-  inherited Create;
-  FPlatformBluetoothScanner := APlatformBluetoothScanner;
-end;
-
-destructor TCBCentralManagerDelegate.Destroy;
-begin
-
-  inherited;
-end;
-
-procedure TCBCentralManagerDelegate.centralManagerConnectionEventDidOccur(central: CBCentralManager; connectionEventDidOccur: CBConnectionEvent;
+procedure TDeviceCBCentralManagerDelegate.centralManagerConnectionEventDidOccur(central: CBCentralManager; connectionEventDidOccur: CBConnectionEvent;
   forPeripheral: CBPeripheral);
+begin
+  // FPlatformBluetoothDevice.ConnectionEventDidOccur(central, connectionEventDidOccur, forPeripheral);
+end;
+
+procedure TDeviceCBCentralManagerDelegate.centralManagerDidConnectPeripheral(central: CBCentralManager; didConnectPeripheral: CBPeripheral);
+begin
+  FPlatformBluetoothDevice.DidConnectPeripheral(central, didConnectPeripheral);
+end;
+
+procedure TDeviceCBCentralManagerDelegate.centralManagerDidDisconnectPeripheral(central: CBCentralManager; didDisconnectPeripheral: CBPeripheral;
+  error: NSError);
+begin
+  FPlatformBluetoothDevice.DidDisconnectPeripheral(central, didDisconnectPeripheral, error);
+end;
+
+procedure TDeviceCBCentralManagerDelegate.centralManagerDidDiscoverPeripheral(central: CBCentralManager; didDiscoverPeripheral: CBPeripheral;
+  advertisementData: NSDictionary; RSSI: NSNumber);
 begin
   //
 end;
 
-procedure TCBCentralManagerDelegate.centralManagerDidConnectPeripheral(central: CBCentralManager; didConnectPeripheral: CBPeripheral);
+procedure TDeviceCBCentralManagerDelegate.centralManagerDidFailToConnectPeripheral(central: CBCentralManager;
+  didFailToConnectPeripheral: CBPeripheral; error: NSError);
 begin
-  FPlatformBluetoothScanner.DidConnectPeripheral(didConnectPeripheral);
+  FPlatformBluetoothDevice.DidFailToConnectPeripheral(central, didFailToConnectPeripheral, error);
 end;
 
-procedure TCBCentralManagerDelegate.centralManagerDidDisconnectPeripheral(central: CBCentralManager; didDisconnectPeripheral: CBPeripheral; error: NSError);
-begin
-  FPlatformBluetoothScanner.DidDisconnectPeripheral(didDisconnectPeripheral, error);
-end;
-
-procedure TCBCentralManagerDelegate.centralManagerDidDiscoverPeripheral(central: CBCentralManager; didDiscoverPeripheral: CBPeripheral;
-  advertisementData: NSDictionary; RSSI: NSNumber);
-begin
-  FPlatformBluetoothScanner.DidDiscoverPeripheral(didDiscoverPeripheral, advertisementData, RSSI);
-end;
-
-procedure TCBCentralManagerDelegate.centralManagerDidFailToConnectPeripheral(central: CBCentralManager; didFailToConnectPeripheral: CBPeripheral;
-  error: NSError);
-begin
-  // Might need it?
-end;
-
-procedure TCBCentralManagerDelegate.centralManagerDidUpdateANCSAuthorizationForPeripheral(central: CBCentralManager;
+procedure TDeviceCBCentralManagerDelegate.centralManagerDidUpdateANCSAuthorizationForPeripheral(central: CBCentralManager;
   didUpdateANCSAuthorizationForPeripheral: CBPeripheral);
 begin
   //
 end;
 
-procedure TCBCentralManagerDelegate.centralManagerDidUpdateState(central: CBCentralManager);
+procedure TDeviceCBCentralManagerDelegate.centralManagerDidUpdateState(central: CBCentralManager);
+begin
+  //
+end;
+
+procedure TDeviceCBCentralManagerDelegate.centralManagerWillRestoreState(central: CBCentralManager; willRestoreState: NSDictionary);
+begin
+  //
+end;
+
+{ TPlatformBluetoothLEDevice }
+
+constructor TPlatformBluetoothLEDevice.Create(const APeripheral: CBPeripheral);
+begin
+  inherited Create;
+  FCentralManagerDelegate := TDeviceCBCentralManagerDelegate.Create(Self);
+  FCentralManager := TCBCentralManager.Wrap(TCBCentralManager.Alloc.initWithDelegate(FCentralManagerDelegate.GetObjectID, 0));
+  FPeripheralDelegate := TCBPeripheralDelegate.Create(Self);
+  FPeripheral := APeripheral;
+  FPeripheral.setDelegate(FPeripheralDelegate.GetObjectID);
+end;
+
+destructor TPlatformBluetoothLEDevice.Destroy;
+begin
+  FCentralManagerDelegate.Free;
+  FPeripheralDelegate.Free;
+  inherited;
+end;
+
+procedure TPlatformBluetoothLEDevice.CheckNeedsDiscover;
+begin
+  if FNeedsDiscover then
+  begin
+    FNeedsDiscover := False;
+    if FIsConnected then
+      DiscoverServices
+    else
+      DoServicesDiscovered(False);
+  end;
+end;
+
+function TPlatformBluetoothLEDevice.Connect: Boolean;
+begin
+  FCentralManager.connectPeripheral(FPeripheral, nil);
+  Result := True;
+end;
+
+procedure TPlatformBluetoothLEDevice.DidConnectPeripheral(const ACentralManager: CBCentralManager; const APeripheral: CBPeripheral);
+begin
+  FIsConnected := True;
+  CheckNeedsDiscover;
+end;
+
+procedure TPlatformBluetoothLEDevice.DidDisconnectPeripheral(const ACentralManager: CBCentralManager; const APeripheral: CBPeripheral;
+  const AError: NSError);
+begin
+  FIsConnected := False;
+  CheckNeedsDiscover;
+end;
+
+procedure TPlatformBluetoothLEDevice.DidDiscoverIncludedServicesForService(const APeripheral: CBPeripheral; const AService: CBService;
+  const AError: NSError);
+begin
+  // Future
+end;
+
+procedure TPlatformBluetoothLEDevice.DidDiscoverServices(const APeripheral: CBPeripheral; AError: NSError);
+var
+  LSuccess: Boolean;
+  I: Integer;
+  LService: CBService;
+  LCustomDeviceService: TCustomBluetoothService;
+  LDeviceService: TPlatformBluetoothService;
+  LGUID: TGUID;
+begin
+  LSuccess := (AError = nil) or (AError.code = 0);
+  if LSuccess then
+  begin
+    for I := 0 to FPeripheral.services.count - 1 do
+    begin
+      LService := TCBService.Wrap(FPeripheral.services.objectAtIndex(I));
+      LGUID := TGUID.Create(CBUUIDAsString(TCBUUIDEx.Wrap(LService.UUID)));
+      if Services.TryGetValue(LGUID.ToString, LCustomDeviceService) then
+        LDeviceService := TPlatformBluetoothService(LCustomDeviceService)
+      else
+        LDeviceService := TPlatformBluetoothService.Create(LGUID, False);
+      LDeviceService.Service := LService;
+    end;
+  end;
+  DoServicesDiscovered(LSuccess);
+end;
+
+procedure TPlatformBluetoothLEDevice.DidFailToConnectPeripheral(const ACentralManager: CBCentralManager; const APeripheral: CBPeripheral;
+  const AError: NSError);
+begin
+  FIsConnected := False;
+  CheckNeedsDiscover;
+end;
+
+function TPlatformBluetoothLEDevice.DiscoverServices: Boolean;
+begin
+  if FIsConnected then
+  begin
+    Result := True;
+    TOSLog.d('Discovering..');
+    FPeripheral.discoverServices(nil);
+  end
+  else
+  begin
+    FNeedsDiscover := True;
+    Result := Connect;
+    if not Result then
+      FNeedsDiscover := False;
+  end;
+end;
+
+{ TScannerCBCentralManagerDelegate }
+
+constructor TScannerCBCentralManagerDelegate.Create(const APlatformBluetoothScanner: TPlatformBluetoothScanner);
+begin
+  inherited Create;
+  FPlatformBluetoothScanner := APlatformBluetoothScanner;
+end;
+
+procedure TScannerCBCentralManagerDelegate.centralManagerConnectionEventDidOccur(central: CBCentralManager; connectionEventDidOccur: CBConnectionEvent;
+  forPeripheral: CBPeripheral);
+begin
+  //
+end;
+
+procedure TScannerCBCentralManagerDelegate.centralManagerDidConnectPeripheral(central: CBCentralManager; didConnectPeripheral: CBPeripheral);
+begin
+  FPlatformBluetoothScanner.DidConnectPeripheral(didConnectPeripheral);
+end;
+
+procedure TScannerCBCentralManagerDelegate.centralManagerDidDisconnectPeripheral(central: CBCentralManager; didDisconnectPeripheral: CBPeripheral; error: NSError);
+begin
+  FPlatformBluetoothScanner.DidDisconnectPeripheral(didDisconnectPeripheral, error);
+end;
+
+procedure TScannerCBCentralManagerDelegate.centralManagerDidDiscoverPeripheral(central: CBCentralManager; didDiscoverPeripheral: CBPeripheral;
+  advertisementData: NSDictionary; RSSI: NSNumber);
+begin
+  FPlatformBluetoothScanner.DidDiscoverPeripheral(didDiscoverPeripheral, advertisementData, RSSI);
+end;
+
+procedure TScannerCBCentralManagerDelegate.centralManagerDidFailToConnectPeripheral(central: CBCentralManager; didFailToConnectPeripheral: CBPeripheral;
+  error: NSError);
+begin
+  // Might need it?
+end;
+
+procedure TScannerCBCentralManagerDelegate.centralManagerDidUpdateANCSAuthorizationForPeripheral(central: CBCentralManager;
+  didUpdateANCSAuthorizationForPeripheral: CBPeripheral);
+begin
+  //
+end;
+
+procedure TScannerCBCentralManagerDelegate.centralManagerDidUpdateState(central: CBCentralManager);
 begin
   FPlatformBluetoothScanner.DidUpdateState;
 end;
 
-procedure TCBCentralManagerDelegate.centralManagerWillRestoreState(central: CBCentralManager; willRestoreState: NSDictionary);
+procedure TScannerCBCentralManagerDelegate.centralManagerWillRestoreState(central: CBCentralManager; willRestoreState: NSDictionary);
 begin
   //
 end;
@@ -425,16 +609,16 @@ begin
   FScanTimer := TOSTimer.Create;
   FScanTimer.OnInterval := ScanTimerIntervalHandler;
   FScanTimer.Interval := 100;
-  FDelegate := TCBCentralManagerDelegate.Create(Self);
   FIsStarting := True;
-  FCentralManager := TCBCentralManager.Wrap(TCBCentralManager.Alloc.initWithDelegate(FDelegate.GetObjectID, 0));
+  FCentralManagerDelegate := TScannerCBCentralManagerDelegate.Create(Self);
+  FCentralManager := TCBCentralManager.Wrap(TCBCentralManager.Alloc.initWithDelegate(FCentralManagerDelegate.GetObjectID, 0));
 end;
 
 destructor TPlatformBluetoothScanner.Destroy;
 begin
   FExpiryTimer.Free;
   FScanTimer.Free;
-  FDelegate.Free;
+  FCentralManagerDelegate.Free;
   inherited;
 end;
 
@@ -458,9 +642,10 @@ var
   LUUIDs: NSArray;
   I: Integer;
   LIsNew: Boolean;
-  LService: TDeviceService;
+  LService: TCustomBluetoothService; // Platform
   LServiceData: NSDictionary;
   LServiceUUID: string;
+  LGUID: TGUID;
 begin
   LIsNew := False;
   LKey := NSStrToStr(APeripheral.identifier.UUIDString);
@@ -480,8 +665,9 @@ begin
       LUUIDs := TNSArray.Wrap(LPointer);
       for I := 0 to LUUIDs.count - 1 do
       begin
-        LService.UUID := TGUID.Create(CBUUIDAsString(TCBUUIDEx.Wrap(LUUIDs.objectAtIndex(I))));
-        LDevice.Services := LDevice.Services + [LService];
+        LGUID := TGUID.Create(CBUUIDAsString(TCBUUIDEx.Wrap(LUUIDs.objectAtIndex(I))));
+        LService := TPlatformBluetoothService.Create(LGUID);
+        LDevice.Services.Add(LGUID.ToString, LService);
       end;
     end;
     LPointer := AAdvertisementData.valueForKey(CBAdvertisementDataOverflowServiceUUIDsKey);
@@ -490,9 +676,9 @@ begin
       LUUIDs := TNSArray.Wrap(LPointer);
       for I := 0 to LUUIDs.count - 1 do
       begin
-        LService.UUID := TGUID.Create(CBUUIDAsString(TCBUUIDEx.Wrap(LUUIDs.objectAtIndex(I))));
-        LService.IsOverflow := True;
-        LDevice.Services := LDevice.Services + [LService];
+        LGUID := TGUID.Create(CBUUIDAsString(TCBUUIDEx.Wrap(LUUIDs.objectAtIndex(I))));
+        LService := TPlatformBluetoothService.Create(LGUID, True);
+        LDevice.Services.Add(LGUID.ToString, LService);
       end;
     end;
     LPointer := AAdvertisementData.valueForKey(CBAdvertisementDataServiceDataKey);
