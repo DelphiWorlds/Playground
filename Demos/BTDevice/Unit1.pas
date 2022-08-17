@@ -5,33 +5,36 @@ interface
 uses
   System.SysUtils, System.Types, System.UITypes, System.Classes, System.Variants, System.Messaging,
   FMX.Types, FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Dialogs, FMX.Controls.Presentation, FMX.StdCtrls, FMX.Layouts, FMX.ListBox, FMX.Edit,
-  DW.Bluetooth, DW.BluetoothLE.Types,
-  GenericBluetooth;
+  DW.Bluetooth,
+  GenericSimulatedBluetoothLE;
 
 type
+  TAniIndicator = class(FMX.StdCtrls.TAniIndicator)
+  public
+    procedure Animate(const AAnimate: Boolean);
+  end;
+
   TForm1 = class(TForm)
     DetectedDevicesLabel: TLabel;
     DevicesListBox: TListBox;
     BottomLayout: TLayout;
     ScanButton: TButton;
-    DeviceGridPanelLayout: TGridPanelLayout;
-    DeviceIDLabel: TLabel;
-    DeviceIDValueLabel: TLabel;
-    DeviceRSSILabel: TLabel;
-    DeviceRSSIValueLabel: TLabel;
-    DeviceDistanceLabel: TLabel;
-    DeviceDistanceValueLabel: TLabel;
     SwitchLayout: TLayout;
     ActiveSwitch: TSwitch;
+    DeviceServicesLabel: TLabel;
+    ServicesListBox: TListBox;
+    ServicesAniIndicator: TAniIndicator;
+    DevicesAniIndicator: TAniIndicator;
     procedure ScanButtonClick(Sender: TObject);
     procedure DevicesListBoxItemClick(const Sender: TCustomListBox; const Item: TListBoxItem);
     procedure ActiveSwitchSwitch(Sender: TObject);
   private
-    FGenericDevice: TGenericBluetoothDevice;
+    FSelectedDevice: TCustomBluetoothLEDevice;
+    FGenericDevice: TGenericSimulatedBluetoothLEDevice;
     FScanner: TBluetoothScanner;
     procedure ApplicationEventMessageHandler(const Sender: TObject; const AMsg: TMessage);
-    procedure ClearDeviceDetails;
     procedure CreateDevice;
+    procedure DeviceServicesDiscoveredHandler(Sender: TObject; const ASuccess: Boolean);
     function GetPermissions: TArray<string>;
     procedure ScannerDiscoveredDeviceHandler(Sender: TObject; const ADevice: TCustomBluetoothLEDevice);
     procedure ScannerScanFinishHandler(Sender: TObject);
@@ -50,21 +53,29 @@ implementation
 uses
   System.Permissions,
   FMX.Platform,
-  DW.Permissions.Helpers, DW.Consts.Android,
-  DW.SimulatedBluetoothDevice,
-  GenericBluetooth.Consts;
+  DW.Permissions.Helpers, DW.Consts.Android, DW.SimulatedBluetoothLEDevice,
+  GenericSimulatedBluetoothLE.Consts;
+
+{ TAniIndicator }
+
+procedure TAniIndicator.Animate(const AAnimate: Boolean);
+begin
+  Visible := AAnimate;
+  Enabled := AAnimate;
+end;
 
 { TForm1 }
 
 constructor TForm1.Create(AOwner: TComponent);
 begin
   inherited;
+  DevicesAniIndicator.Visible := False;
+  ServicesAniIndicator.Visible := False;
   TMessageManager.DefaultManager.SubscribeToMessage(TApplicationEventMessage, ApplicationEventMessageHandler);
   FScanner := TBluetoothScanner.Create;
   FScanner.Expiry := 5000; // milliseconds
   FScanner.OnScanFinish := ScannerScanFinishHandler;
   FScanner.OnDiscoveredDevice := ScannerDiscoveredDeviceHandler;
-  ClearDeviceDetails;
   {$IF Defined(OSX)}
   CreateDevice;
   {$ENDIF}
@@ -78,21 +89,24 @@ begin
   inherited;
 end;
 
-procedure TForm1.ClearDeviceDetails;
+procedure TForm1.DeviceServicesDiscoveredHandler(Sender: TObject; const ASuccess: Boolean);
+var
+  LService: TCustomBluetoothService;
 begin
-  DeviceIDValueLabel.Text := '';
-  DeviceRSSIValueLabel.Text := '';
-  DeviceDistanceValueLabel.Text := '';
+  ServicesAniIndicator.Animate(False);
+  for LService in FSelectedDevice.Services.Values do
+    ServicesListBox.Items.Add(LService.UUID.ToString);
 end;
 
 procedure TForm1.DevicesListBoxItemClick(const Sender: TCustomListBox; const Item: TListBoxItem);
-var
-  LDevice: TCustomBluetoothLEDevice;
 begin
-  LDevice := TCustomBluetoothLEDevice(Item.TagObject);
-  DeviceIDValueLabel.Text := LDevice.Key;
-  DeviceRSSIValueLabel.Text := LDevice.RSSI.ToString;
-  DeviceDistanceValueLabel.Text := Format('%.2f', [LDevice.Distance]);
+  ServicesListBox.Items.Clear;
+  if FSelectedDevice <> nil then
+    FSelectedDevice.OnServicesDiscovered := nil;
+  FSelectedDevice := TCustomBluetoothLEDevice(Item.TagObject);
+  FSelectedDevice.OnServicesDiscovered := DeviceServicesDiscoveredHandler;
+  if FSelectedDevice.DiscoverServices then
+    ServicesAniIndicator.Animate(True);
 end;
 
 function TForm1.GetPermissions: TArray<string>;
@@ -107,23 +121,19 @@ procedure TForm1.ScanButtonClick(Sender: TObject);
 begin
   ScanButton.Enabled := False;
   DevicesListBox.Items.Clear;
-  ClearDeviceDetails;
+  DevicesAniIndicator.Animate(True);
   FScanner.Scan;
 end;
 
 procedure TForm1.ScannerDiscoveredDeviceHandler(Sender: TObject; const ADevice: TCustomBluetoothLEDevice);
-var
-  LService: TDeviceService;
 begin
-  if ADevice.FindService('{' + StringToServiceUUID(USER_DATA_SERVICE_UUID) + '}', LService) then
-  begin
-    DevicesListBox.Items.Add(Format('Name: %s, RSSI: %s', [ADevice.DisplayName, ADevice.RSSI.ToString]));
-    DevicesListBox.ListItems[DevicesListBox.Items.Count - 1].TagObject := ADevice;
-  end;
+  DevicesListBox.Items.Add(Format('Name: %s, RSSI: %s', [ADevice.DisplayName, ADevice.RSSI.ToString]));
+  DevicesListBox.ListItems[DevicesListBox.Items.Count - 1].TagObject := ADevice;
 end;
 
 procedure TForm1.ScannerScanFinishHandler(Sender: TObject);
 begin
+  DevicesAniIndicator.Animate(False);
   ScanButton.Enabled := True;
 end;
 
@@ -157,7 +167,7 @@ end;
 
 procedure TForm1.CreateDevice;
 begin
-  FGenericDevice := TGenericBluetoothDevice.Create;
+  FGenericDevice := TGenericSimulatedBluetoothLEDevice.Create;
   ActiveSwitch.IsChecked := True;
 end;
 

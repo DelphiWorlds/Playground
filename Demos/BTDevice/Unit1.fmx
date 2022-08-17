@@ -19,23 +19,31 @@ object Form1: TForm1
     Size.Height = 25.000000000000000000
     Size.PlatformDefault = False
     Text = 'Detected devices:'
-    TabOrder = 1
+    TabOrder = 2
   end
   object DevicesListBox: TListBox
-    Align = Client
+    Align = Top
     Margins.Left = 6.000000000000000000
     Margins.Right = 6.000000000000000000
+    Position.X = 6.000000000000000000
+    Position.Y = 29.000000000000000000
     Size.Width = 478.000000000000000000
-    Size.Height = 485.000000000000000000
+    Size.Height = 253.000000000000000000
     Size.PlatformDefault = False
-    TabOrder = 2
+    TabOrder = 3
     DisableFocusEffect = True
     DefaultItemStyles.ItemStyle = ''
     DefaultItemStyles.GroupHeaderStyle = ''
     DefaultItemStyles.GroupFooterStyle = ''
     OnItemClick = DevicesListBoxItemClick
     Viewport.Width = 474.000000000000000000
-    Viewport.Height = 481.000000000000000000
+    Viewport.Height = 249.000000000000000000
+    object DevicesAniIndicator: TAniIndicator
+      Align = Contents
+      Size.Width = 474.000000000000000000
+      Size.Height = 249.000000000000000000
+      Size.PlatformDefault = False
+    end
   end
   object BottomLayout: TLayout
     Align = Bottom
@@ -47,7 +55,7 @@ object Form1: TForm1
     Size.Width = 490.000000000000000000
     Size.Height = 54.000000000000000000
     Size.PlatformDefault = False
-    TabOrder = 3
+    TabOrder = 4
     object ScanButton: TButton
       Align = Left
       Position.X = 6.000000000000000000
@@ -79,115 +87,39 @@ object Form1: TForm1
       end
     end
   end
-  object DeviceGridPanelLayout: TGridPanelLayout
-    Align = Bottom
+  object DeviceServicesLabel: TLabel
+    Align = Top
     Margins.Left = 6.000000000000000000
-    Margins.Top = 6.000000000000000000
+    Margins.Top = 4.000000000000000000
     Margins.Right = 6.000000000000000000
-    Margins.Bottom = 6.000000000000000000
     Position.X = 6.000000000000000000
-    Position.Y = 520.000000000000000000
+    Position.Y = 286.000000000000000000
     Size.Width = 478.000000000000000000
-    Size.Height = 98.000000000000000000
+    Size.Height = 25.000000000000000000
     Size.PlatformDefault = False
+    Text = 'Device services:'
     TabOrder = 0
-    ColumnCollection = <
-      item
-        Value = 33.369191688118820000
-      end
-      item
-        Value = 66.630808311881180000
-      end>
-    ControlCollection = <
-      item
-        Column = 0
-        Control = DeviceIDLabel
-        Row = 0
-      end
-      item
-        Column = 1
-        Control = DeviceIDValueLabel
-        Row = 0
-      end
-      item
-        Column = 0
-        Control = DeviceRSSILabel
-        Row = 1
-      end
-      item
-        Column = 1
-        Control = DeviceRSSIValueLabel
-        Row = 1
-      end
-      item
-        Column = 0
-        Control = DeviceDistanceLabel
-        Row = 2
-      end
-      item
-        Column = 1
-        Control = DeviceDistanceValueLabel
-        Row = 2
-      end>
-    RowCollection = <
-      item
-        Value = 33.333333333333340000
-      end
-      item
-        Value = 33.333333333333340000
-      end
-      item
-        Value = 33.333333333333340000
-      end>
-    object DeviceIDLabel: TLabel
-      Align = Client
-      Size.Width = 159.504730224609400000
-      Size.Height = 32.666667938232420000
+  end
+  object ServicesListBox: TListBox
+    Align = Client
+    Margins.Left = 6.000000000000000000
+    Margins.Right = 6.000000000000000000
+    Size.Width = 478.000000000000000000
+    Size.Height = 313.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 1
+    DisableFocusEffect = True
+    DefaultItemStyles.ItemStyle = ''
+    DefaultItemStyles.GroupHeaderStyle = ''
+    DefaultItemStyles.GroupFooterStyle = ''
+    OnItemClick = DevicesListBoxItemClick
+    Viewport.Width = 474.000000000000000000
+    Viewport.Height = 309.000000000000000000
+    object ServicesAniIndicator: TAniIndicator
+      Align = Contents
+      Size.Width = 474.000000000000000000
+      Size.Height = 309.000000000000000000
       Size.PlatformDefault = False
-      Text = 'ID'
-      TabOrder = 5
-    end
-    object DeviceIDValueLabel: TLabel
-      Align = Client
-      Size.Width = 318.495269775390600000
-      Size.Height = 32.666667938232420000
-      Size.PlatformDefault = False
-      Text = 'YYYYYYY'
-      TabOrder = 0
-    end
-    object DeviceRSSILabel: TLabel
-      Align = Client
-      Size.Width = 159.504730224609400000
-      Size.Height = 32.666667938232420000
-      Size.PlatformDefault = False
-      Text = 'RSSI'
-      TabOrder = 4
-    end
-    object DeviceRSSIValueLabel: TLabel
-      Align = Client
-      Size.Width = 318.495269775390600000
-      Size.Height = 32.666667938232420000
-      Size.PlatformDefault = False
-      Text = '0'
-      TabOrder = 2
-    end
-    object DeviceDistanceLabel: TLabel
-      Align = Client
-      Size.Width = 159.504730224609400000
-      Size.Height = 32.666664123535160000
-      Size.PlatformDefault = False
-      Text = 'Distance'
-      Visible = False
-      TabOrder = 3
-    end
-    object DeviceDistanceValueLabel: TLabel
-      Align = Client
-      Size.Width = 318.495269775390600000
-      Size.Height = 32.666664123535160000
-      Size.PlatformDefault = False
-      Text = '0'
-      Visible = False
-      TabOrder = 1
     end
   end
 end
