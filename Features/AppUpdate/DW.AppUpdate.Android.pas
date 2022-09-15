@@ -112,7 +112,7 @@ begin
       LUpdateInfo.Priority := LInfo.updatePriority;
       LUpdateInfo.Immediate := LInfo.isUpdateTypeAllowed(TJAppUpdateType.JavaClass.IMMEDIATE);
       LUpdateInfo.Flexible := LInfo.isUpdateTypeAllowed(TJAppUpdateType.JavaClass.FLEXIBLE);
-      if LUpdateInfo.Flexible then
+      if LUpdateInfo.Flexible and (LInfo.clientVersionStalenessDays <> nil) then
         LUpdateInfo.StalenessDays := LInfo.clientVersionStalenessDays.intValue;
       LUpdateInfo.TotalBytesToDownload := LInfo.totalBytesToDownload;
     end;
@@ -151,7 +151,7 @@ begin
   if TJNIResolver.IsInstanceOf(AObject, TJAppUpdateInfo.GetClsID) then
   begin
     LOptions := TJAppUpdateOptions.JavaClass.defaultOptions(FAppUpdateType);
-    FAppUpdateManager.startUpdateFlow(TJAppUpdateInfo.Wrap(AObject), TAndroidHelper.Activity, LOptions);
+    LTask := FAppUpdateManager.startUpdateFlow(TJAppUpdateInfo.Wrap(AObject), TAndroidHelper.Activity, LOptions);
     LTask.addOnCompleteListener(FStartUpdateFlowCompleteListener);
     DoStartedUpdateFlow(LTask.isSuccessful);
     FIsUpdating := LTask.isSuccessful;
