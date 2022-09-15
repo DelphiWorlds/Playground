@@ -2,6 +2,8 @@
 
 ## Description
 
+**For Delphi 11 only.**. Support for earlier versions is very unlikely to happen.
+
 This demo represents a potential update to the Biometric demo that [already exists in Kastri](https://github.com/DelphiWorlds/Kastri/tree/master/Demos/Biometric)
 
 It was created as a result of [this issue](https://github.com/DelphiWorlds/Kastri/issues/88) reported in the original demo, which apparently affects devices running Android 9 or earlier.
@@ -45,7 +47,7 @@ The longer term plan for the kind of requirements to build projects that rely on
 
 As described above, Delphi currently does not support easy integration of Android packages, like tools such as Android Studio do. In order to fill this gap, it is necessary to download the package, and any of its dependencies. Those dependencies may have their own dependencies as well.
 
-In this demo, the work of downloading and extracting the package and dependencies has been done and included with this repo. This was achieved by using Gradle (which Android Studio uses), and through some automation. The result is in the `ThirdParty\Android\androidx-biometric-1.1.0` folder, as well as some of the `.jar` files that appear in ``ThirdParty\Android`.
+In this demo, the work of downloading and extracting the package and dependencies has been done and included with this repo. This was achieved by using Gradle (which Android Studio uses), and through some automation. The result is in the `ThirdParty\Android\androidx-biometric-1.1.0` folder, as well as some of the `.jar` files that appear in `ThirdParty\Android`.
 
 The batch files in the `Scripts` folder use these resources which are processed with tools from Kastri, Android Build Tools and the JDK to first merge the resources, then create the final `BiometricDemoD11.R.jar` library that appears in the `Lib` folder. The merged resources have then been added to the project deployment.
 
