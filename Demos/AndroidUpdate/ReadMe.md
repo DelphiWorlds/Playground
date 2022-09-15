@@ -29,3 +29,5 @@ This demo uses the Play Core library, which does not ship with Delphi. When crea
 
 Waiting for anyone interested to test it
 
+**The code/demo was built for Delphi 11, however it might be able to be modified to work in Delphi 10.4.2**
+
