@@ -1,0 +1,48 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{2CBBC26A-553A-4980-BAEB-476DC4D70094}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="ServiceLibrary\Service.dproj">
+            <Dependencies/>
+        </Projects>
+        <Projects Include="LocationDemo.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="Service">
+        <MSBuild Projects="ServiceLibrary\Service.dproj"/>
+    </Target>
+    <Target Name="Service:Clean">
+        <MSBuild Projects="ServiceLibrary\Service.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="Service:Make">
+        <MSBuild Projects="ServiceLibrary\Service.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="LocationDemo">
+        <MSBuild Projects="LocationDemo.dproj"/>
+    </Target>
+    <Target Name="LocationDemo:Clean">
+        <MSBuild Projects="LocationDemo.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="LocationDemo:Make">
+        <MSBuild Projects="LocationDemo.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="Service;LocationDemo"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="Service:Clean;LocationDemo:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="Service:Make;LocationDemo:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>
