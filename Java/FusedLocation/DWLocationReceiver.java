@@ -6,7 +6,7 @@ package com.delphiworlds.kastri;
  *                                                     *
  *        Delphi Worlds Cross-Platform Library         *
  *                                                     *
- * Copyright 2020-2021 Dave Nottage under MIT license  *
+ * Copyright 2020-2022 Dave Nottage under MIT license  *
  * which is located in the root folder of this library *
  *                                                     *
  *******************************************************/
@@ -35,6 +35,7 @@ public class DWLocationReceiver extends BroadcastReceiver {
   private static final String TAG = "DWLocationReceiver";
 
   private boolean forwardIntent(Context context, Intent intent) {
+		Log.d(TAG, "forwardIntent");
     String serviceClassName = null;
     int jobId = 234567; // Just a random number. If it clashes with any other job ids in your app, add the KEY_JOB_ID metadata
     try {
@@ -78,7 +79,7 @@ public class DWLocationReceiver extends BroadcastReceiver {
 
   private void handleAlarmIntent(Context context, Intent intent) {
     // Restart the alarm
-    DWFusedLocationClient.startAlarm(context, intent.getLongExtra(DWFusedLocationClient.EXTRA_ALARM_INTERVAL, 0));
+    // DWFusedLocationClient.startAlarm(context, intent.getLongExtra(DWFusedLocationClient.EXTRA_ALARM_INTERVAL, 0));
     // Pass the intent on to the service
     boolean wasDozed = getStoredDozeMode(context);
     boolean isDozed = isDozeMode(context);
@@ -111,11 +112,13 @@ public class DWLocationReceiver extends BroadcastReceiver {
     if (LocationResult.hasResult(intent))
       forwardIntent(context, intent);
     else if (intent.getAction() != null) {
-      // Log.d(TAG, "Action: " + intent.getAction());
+      Log.d(TAG, "Action: " + intent.getAction());
       if (intent.getAction().equals(Intent.ACTION_BOOT_COMPLETED))
         DWFusedLocationClient.startFromBoot(context);
       else if (intent.getAction().equals(DWFusedLocationClient.ACTION_ALARM))
         handleAlarmIntent(context, intent);
     }
+		else
+		  Log.d(TAG, "Received an intent with no location result and no action");
   }
 }

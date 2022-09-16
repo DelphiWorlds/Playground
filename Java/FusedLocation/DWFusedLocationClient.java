@@ -6,7 +6,7 @@ package com.delphiworlds.kastri;
  *                                                     *
  *        Delphi Worlds Cross-Platform Library         *
  *                                                     *
- * Copyright 2020-2021 Dave Nottage under MIT license  *
+ * Copyright 2020-2022 Dave Nottage under MIT license  *
  * which is located in the root folder of this library *
  *                                                     *
  *******************************************************/
@@ -98,10 +98,15 @@ public class DWFusedLocationClient {
       // Do nothing
     }
     // If a service class name is present in the metadata, use broadcast intent, else use callbacks
-    if (serviceClassName != null)
-      createIntent();
+    if (serviceClassName != null) {
+			Log.d(TAG, "Creating intent for DWLocationReceiver");
+	    Intent intent = new Intent(mContext, DWLocationReceiver.class);
+	    mLocationServiceIntent = PendingIntent.getBroadcast(mContext, REQUEST_LOCATION, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_MUTABLE);
+		}
     else if (mDelegate != null)
       mLocationCallback = new DWLocationCallback(mDelegate);
+		// if (serviceClassName == null)
+		//   Log.w("No service found in manifest");
     mLocationClient = LocationServices.getFusedLocationProviderClient(mContext);
     mSettingsClient = LocationServices.getSettingsClient(mContext);
     mLocationManager = (LocationManager) context.getSystemService(Context.LOCATION_SERVICE);
@@ -128,11 +133,6 @@ public class DWFusedLocationClient {
     */
   }
 
-  private void createIntent() {
-    Intent intent = new Intent(mContext, DWLocationReceiver.class);
-    mLocationServiceIntent = PendingIntent.getBroadcast(mContext, REQUEST_LOCATION, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-  }
-
   protected void readPreferences() {
     mFastestInterval = preferences.getLong("FastestInterval", mFastestInterval);
     mInterval = preferences.getLong("FastestInterval", mInterval);
@@ -148,22 +148,6 @@ public class DWFusedLocationClient {
     editor.putInt("Priority", mPriority);
     editor.putFloat("SmallestDisplacement", mSmallestDisplacement);
     editor.commit();
-  }
-
-  public static void startAlarm(Context context, Long interval) {
-    Intent intent = new Intent(context, DWLocationReceiver.class);
-    intent.setAction(DWFusedLocationClient.ACTION_ALARM);
-    intent.putExtra(DWFusedLocationClient.EXTRA_ALARM_INTERVAL, interval);
-    PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-    AlarmManager alarmManager = (AlarmManager) context.getSystemService(Context.ALARM_SERVICE);
-    alarmManager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, System.currentTimeMillis() + interval, pendingIntent);
-  }
-
-  public static void stopAlarm(Context context) {
-    Intent intent = new Intent(context, DWLocationReceiver.class);
-    intent.setAction(DWFusedLocationClient.ACTION_ALARM);
-    PendingIntent pendingIntent = PendingIntent.getBroadcast(context, 0, intent, PendingIntent.FLAG_UPDATE_CURRENT);
-    pendingIntent.cancel();
   }
 
   private void createSettingsRequest() {
@@ -186,25 +170,6 @@ public class DWFusedLocationClient {
     // Sets the fastest rate for active location updates. This interval is exact, and your
     // application will never receive updates faster than this value.
     mFastestInterval = interval;
-  }
-
-  public long getAlarmInterval() {
-    return mAlarmInterval;
-  }
-
-  public void setAlarmInterval(long interval) {
-    boolean changed = (mAlarmInterval != interval);
-    mAlarmInterval = interval;
-    if (mAlarmInterval >= 0)
-      DWFusedLocationClient.createWakeLock(mContext);
-    else
-      DWFusedLocationClient.destroyWakeLock();
-    SharedPreferences.Editor editor = preferences.edit();
-    editor.putLong("AlarmInterval", mAlarmInterval);
-    if (mIsActive && changed) {
-      DWFusedLocationClient.stopAlarm(mContext);
-      DWFusedLocationClient.startAlarm(mContext, mAlarmInterval);
-    }
   }
 
   public void setSmallestDisplacement(float value) {
@@ -371,14 +336,13 @@ public class DWFusedLocationClient {
         @Override
         public void onSuccess(LocationSettingsResponse locationSettingsResponse) {
           Log.i(TAG, "All location settings are satisfied");
-          if ((Build.VERSION.SDK_INT >= 23) && (mAlarmInterval > 0))
-            DWFusedLocationClient.startAlarm(mContext, mAlarmInterval);
           boolean started = false;
           if (mLocationCallback != null) {
             mLocationClient.requestLocationUpdates(mLocationRequest, mLocationCallback, Looper.myLooper());
             started = true;
           }
           else if (mLocationServiceIntent != null) {
+            Log.d(TAG, "Requesting updates using receiver intent");
             mLocationClient.requestLocationUpdates(mLocationRequest, mLocationServiceIntent);
             started = true;
           }
@@ -421,8 +385,6 @@ public class DWFusedLocationClient {
 
   public void stopLocationUpdates() {
     Task<Void> removeTask = null;
-    if (Build.VERSION.SDK_INT >= 23)
-      DWFusedLocationClient.stopAlarm(mContext);
     if (mLocationCallback != null)    
       removeTask = mLocationClient.removeLocationUpdates(mLocationCallback);
     else if (mLocationServiceIntent != null)
