@@ -12,10 +12,10 @@ It was created as a result of [this issue](https://github.com/DelphiWorlds/Kastr
 
 ## Steps to build this demo
 
-Due to [missing support for Android packages](https://quality.embarcadero.com/browse/RSP-20000) in Delphi, there are extra steps required to build the demo.
+Due to [missing support for Android packages](https://quality.embarcadero.com/browse/RSP-20000) in Delphi, there are extra steps required to build the demo. _These steps only need to be done the first time the project is built, or when the resources and/or packages change, which hopefully should not be often._
 
 1. Modify `BuildRJarSetVars.bat` in the `Scripts` folder to suit your environment. See below for details
-2. Load the `BiometricDemoD11 project in Delphi`
+2. Load the `BiometricDemoD11` project in Delphi
 3. Build the project
 4. Deploy the project - **note that this will error at the end of the process - this is expected**
 5. In a command line window, navigate to the `Scripts` folder, and run `BuildRJar.bat`
