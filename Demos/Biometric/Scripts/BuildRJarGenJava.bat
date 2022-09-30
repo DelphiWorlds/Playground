@@ -13,3 +13,6 @@ if "%IsRelease%" == "1" (
 ) else (
   "%AAPTExe%" package -f -m -I "%PlatformPath%\android.jar" -M "%PackagePath%\%RPackage%\AndroidManifest.xml" -S "%MergedResPath%" -J "%RPath%\src"
 )
+
+@echo Compacting R.java file for %RPackage%
+%TrimRJavaExe% "%BuildPath%\%RPackage%\src" "%PackagePath%\%RPackage%\R.txt"

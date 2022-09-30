@@ -15,6 +15,7 @@ set MergedResPath=%ProjectPath%\Resources\Merged\res
 set BuildPath=%ProjectPath%\Build
 
 set ResMergeExe=%KastriPath%\Tools\resmerge.exe
+set TrimRJavaExe=%KastriPath%\Tools\trimrjava.exe
 :: Root path to target package and its dependencies
 set PackagePath=%~dp0..\..\..\ThirdParty\Android\androidx-biometric-1.1.0
 
