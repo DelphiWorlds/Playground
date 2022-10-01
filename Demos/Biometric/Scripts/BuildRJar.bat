@@ -1,6 +1,6 @@
 @echo off
 
-set IsRelease=%1
+set IsAAB=%1
 call BuildRJarSetVars.bat
 
 if not exist "%ProjectBinPath%\res" (
