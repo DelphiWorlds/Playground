@@ -14,7 +14,17 @@ From [Delphi Worlds](https://www.delphiworlds.com):
 
 ## Project configuration
 
-The Playground demos and other projects that depend on the Kastri library have search paths that include an environment variable user override named `Kastri` (appears as `$(Kastri)` in the paths). Either create a user override with the same name which points to your copy of Kastri, or replace the values with the appropriate path.
+Some of the demos in Playground rely on the [Kastri repo](https://github.com/DelphiWorlds/Kastri). The projects for these demos will have search paths to the Kastri source, e.g:
+
+<img src="./Screenshots/ProjectSearchPaths.png" height="400">
+
+Note how the search paths make use of a macro: `$(Kastri)`. This macro can be defined in the User System Overrides of the Environment Variables section of the IDE Options, e.g:
+
+<img src="./Screenshots/UserSystemOverrides.png" height="500">
+
+To add an override, click the New button, enter Kastri for the name, select the folder where you have downloaded the Kastri repo to, and click OK.
+
+If you do not want to add an override, you will need to replace `$(Kastri)` with the path where you have Kastri.
 
 ## Communicating problems and/or suggestions
 
