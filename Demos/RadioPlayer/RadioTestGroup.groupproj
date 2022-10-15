@@ -1,0 +1,48 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{94EA3657-F722-4F1E-BC7C-64CE8159AE62}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="RadioTest.dproj">
+            <Dependencies>Service\RadioService.dproj</Dependencies>
+        </Projects>
+        <Projects Include="Service\RadioService.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="RadioTest" DependsOnTargets="RadioService">
+        <MSBuild Projects="RadioTest.dproj"/>
+    </Target>
+    <Target Name="RadioTest:Clean" DependsOnTargets="RadioService:Clean">
+        <MSBuild Projects="RadioTest.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="RadioTest:Make" DependsOnTargets="RadioService:Make">
+        <MSBuild Projects="RadioTest.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="RadioService">
+        <MSBuild Projects="Service\RadioService.dproj"/>
+    </Target>
+    <Target Name="RadioService:Clean">
+        <MSBuild Projects="Service\RadioService.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="RadioService:Make">
+        <MSBuild Projects="Service\RadioService.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="RadioTest;RadioService"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="RadioTest:Clean;RadioService:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="RadioTest:Make;RadioService:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>
