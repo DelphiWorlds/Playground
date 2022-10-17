@@ -9,14 +9,16 @@ interface
 uses
   System.Classes,
   Bass,
-  DW.RadioServiceController, DW.RadioPlayer.Common;
+  DW.RadioPlayer.ServiceController, DW.RadioPlayer.Common;
 
 type
   TRadioStatus = DW.RadioPlayer.Common.TRadioStatus;
 
   TRadioPlayer = class(TObject)
   private
+    {$IF not Defined(MACOS)}
     FPluginHandle: HPLUGIN;
+    {$ENDIF}
     {$IF Defined(MSWINDOWS)}
     FHandle: UIntPtr;
     {$ELSE}
@@ -29,6 +31,7 @@ type
     FURL: string;
     FOnServiceStarted: TNotifyEvent;
     FOnStatusChanged: TNotifyEvent;
+    FOnStreamMetadata: TStreamMetadataEvent;
     procedure StatusChange(const AStatus: TRadioStatus);
     procedure DoError;
     function DoBASSPause: Boolean;
@@ -38,13 +41,17 @@ type
     procedure DoServiceStarted;
     function LoadPlugin: Boolean;
     function Resume: Boolean;
+    {$IF Defined(ANDROIDAPP)}
     procedure ServiceControllerRadioStatusChangedHandler(Sender: TObject; const AStatus: TRadioStatus);
     procedure ServiceControllerServiceStartedHandler(Sender: TObject);
+    procedure ServiceControllerStreamMetadataHandler(Sender: TObject; const AMetadata: string);
+    {$ENDIF}
     procedure Stopped;
   protected
     procedure DoEndSync;
     procedure DoMetaSync;
     procedure DoPosSync(const AData: DWORD);
+    procedure DoStreamMetadata(const AMetadata: string);
   public
     constructor Create;
     destructor Destroy; override;
@@ -56,11 +63,16 @@ type
     property Status: TRadioStatus read FRadioStatus;
     property OnServiceStarted: TNotifyEvent read FOnServiceStarted write FOnServiceStarted;
     property OnStatusChanged: TNotifyEvent read FOnStatusChanged write FOnStatusChanged;
+    property OnStreamMetadata: TStreamMetadataEvent read FOnStreamMetadata write FOnStreamMetadata;
   end;
 
 implementation
 
 uses
+  DW.OSLog,
+  {$IF Defined(SERVICE)}
+  DW.RadioPlayer.ServiceHelper,
+  {$ENDIF}
   System.SysUtils;
 
 const
@@ -122,6 +134,7 @@ begin
     FServiceController := TPlatformRadioServiceController.Create;
     FServiceController.OnRadioStatusChanged := ServiceControllerRadioStatusChangedHandler;
     FServiceController.OnServiceStarted := ServiceControllerServiceStartedHandler;
+    FServiceController.OnStreamMetadata := ServiceControllerStreamMetadataHandler;
   end;
   {$ENDIF}
   FRadioStatus := TRadioStatus.Stopped;
@@ -135,6 +148,7 @@ begin
   inherited;
 end;
 
+{$IF Defined(ANDROIDAPP)}
 procedure TRadioPlayer.ServiceControllerRadioStatusChangedHandler(Sender: TObject; const AStatus: TRadioStatus);
 begin
   StatusChange(AStatus);
@@ -145,16 +159,32 @@ begin
   DoServiceStarted;
 end;
 
+procedure TRadioPlayer.ServiceControllerStreamMetadataHandler(Sender: TObject; const AMetadata: string);
+begin
+  DoStreamMetadata(AMetadata);
+end;
+{$ENDIF}
+
 procedure TRadioPlayer.DoServiceStarted;
 begin
   if Assigned(FOnServiceStarted) then
     FOnServiceStarted(Self);
 end;
 
+procedure TRadioPlayer.DoStreamMetadata(const AMetadata: string);
+begin
+  if Assigned(FOnStreamMetadata) then
+    FOnStreamMetadata(Self, AMetadata);
+end;
+
 procedure TRadioPlayer.StartService(const AServiceName: string);
 begin
   if FServiceController <> nil then
-    FServiceController.StartService(AServiceName)
+  begin
+    // Returns True if the service has already started
+    if FServiceController.StartService(AServiceName) then
+      DoServiceStarted;
+  end
   else
     DoServiceStarted;
 end;
@@ -177,9 +207,12 @@ procedure TRadioPlayer.DoMetaSync;
 var
   LMeta: string;
 begin
+  // e.g. StreamTitle='Stephen Howie - The Grooveline Series';
   LMeta := UTF8ToString(BASS_ChannelGetTags(FStream, BASS_TAG_META));
-  Sleep(0);
-  // DoMeta(LMeta);
+  {$IF Defined(SERVICE)}
+  TRadioServiceHelper.ReceivedStreamMetadata(LMeta);
+  {$ENDIF}
+  DoStreamMetadata(LMeta);
 end;
 
 procedure TRadioPlayer.DoPosSync(const AData: DWORD);
@@ -215,16 +248,24 @@ end;
 procedure TRadioPlayer.StatusChange(const AStatus: TRadioStatus);
 begin
   FRadioStatus := AStatus;
+  {$IF Defined(SERVICE)}
+  TRadioServiceHelper.RadioStatusChanged(AStatus);
+  {$ENDIF}
   if Assigned(FOnStatusChanged) then
     FOnStatusChanged(Self);
 end;
 
 procedure TRadioPlayer.Stop;
 begin
-  if FStream > 0 then
-    BASS_StreamFree(FStream);
-  FStream := 0;
-  Stopped;
+  if FServiceController = nil then
+  begin
+    if FStream > 0 then
+      BASS_StreamFree(FStream);
+    FStream := 0;
+    Stopped;
+  end
+  else
+    FServiceController.Stop;
 end;
 
 procedure TRadioPlayer.Stopped;
