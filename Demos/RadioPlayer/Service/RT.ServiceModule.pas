@@ -30,8 +30,6 @@ type
     FReceiver: TLocalReceiver;
     procedure CreateNotificationChannel;
     function IsForeground: Boolean;
-    procedure RadioStatusChangedHandler(Sender: TObject);
-    procedure SendState(const AState: Integer);
     procedure StartForeground(const AMustStartForeground: Boolean);
     procedure StopForeground(const AIsStarting: Boolean);
   protected
@@ -57,7 +55,8 @@ uses
   DW.Androidapi.JNI.AndroidX.LocalBroadcastManager, DW.Androidapi.JNI.AndroidX.App,
   {$ENDIF}
   DW.OSLog,
-  DW.Consts.Android, DW.Android.Helpers, DW.RadioPlayer.Common;
+  DW.Consts.Android, DW.Android.Helpers,
+  DW.RadioPlayer.Common, DW.RadioPlayer.ServiceHelper;
 
 const
   cNotificationChannelName = 'RadioService';
@@ -89,9 +88,14 @@ end;
 
 procedure TServiceModule.AndroidServiceCreate(Sender: TObject);
 begin
-  FReceiver := TLocalReceiver.Create(Self);
-  FRadio := TRadioPlayer.Create;
-  FRadio.OnStatusChanged := RadioStatusChangedHandler;
+  // The Create event can be called by the system when the app is "swipe closed"
+  if TAndroidHelperEx.IsActivityForeground then
+  begin
+    FReceiver := TLocalReceiver.Create(Self);
+    FRadio := TRadioPlayer.Create;
+  end
+  else
+    JavaService.stopSelf;
 end;
 
 procedure TServiceModule.AndroidServiceDestroy(Sender: TObject);
@@ -104,7 +108,7 @@ function TServiceModule.AndroidServiceStartCommand(const Sender: TObject; const 
 begin
   if not TAndroidHelperEx.IsActivityForeground then
     StartForeground(False);
-  SendState(cServiceStateStarted);
+  TRadioServiceHelper.SendState(cServiceStateStarted);
   Result := TJService.JavaClass.START_STICKY;
 end;
 
@@ -169,21 +173,6 @@ begin
         StartForeground(LCommand = cServiceCommandAppIsRequestingPermissions);
     end;
   end;
-end;
-
-procedure TServiceModule.RadioStatusChangedHandler(Sender: TObject);
-begin
-  SendState(cServiceStateRadioBase + Ord(FRadio.Status));
-end;
-
-procedure TServiceModule.SendState(const AState: Integer);
-var
-  LIntent: JIntent;
-begin
-  LIntent := TJIntent.JavaClass.init(StringToJString(cServiceStateAction));
-  LIntent.putExtra(StringToJString(cServiceBroadcastParamState), AState);
-  // TOSLog.d('Sending state broadcast: %s', [JStringToString(LIntent.toURI)]);
-  TJLocalBroadcastManager.JavaClass.getInstance(TAndroidHelper.Context).sendBroadcast(LIntent);
 end;
 
 procedure TServiceModule.StartForeground(const AMustStartForeground: Boolean);
