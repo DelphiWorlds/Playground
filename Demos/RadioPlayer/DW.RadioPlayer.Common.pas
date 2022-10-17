@@ -12,6 +12,8 @@ const
   cServiceCommandRadioVolumeUp = 104;
   cServiceCommandRadioVolumeDown = 105;
 
+  cServiceMessageTypeRadioStreamMetadata = 1;
+
 type
   TRadioStatus = (Unknown, Stopped, Playing, Paused);
 
@@ -22,6 +24,8 @@ type
     procedure FromJSON(const AJSON: string);
     function ToJSON: string;
   end;
+
+  TStreamMetadataEvent = procedure(Sender: TObject; const Metadata: string) of object;
 
 implementation
 
