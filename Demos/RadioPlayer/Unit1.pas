@@ -12,12 +12,14 @@ type
     ButtonsLayout: TLayout;
     StopButton: TButton;
     PlayButton: TButton;
+    MetadataLabel: TLabel;
     procedure PlayButtonClick(Sender: TObject);
     procedure StopButtonClick(Sender: TObject);
   private
     FRadio: TRadioPlayer;
     procedure RadioStatusChangedHandler(Sender: TObject);
     procedure RadioServiceStartedHandler(Sender: TObject);
+    procedure RadioStreamMetadataHandler(Sender: TObject; const AMetadata: string);
     procedure UpdateButtons;
   public
     constructor Create(AOwner: TComponent); override;
@@ -46,6 +48,7 @@ begin
   FRadio.URL := 'http://uk7.internet-radio.com:8352/stream'; // The Groove
   FRadio.OnServiceStarted := RadioServiceStartedHandler;
   FRadio.OnStatusChanged := RadioStatusChangedHandler;
+  FRadio.OnStreamMetadata := RadioStreamMetadataHandler;
   // Only applies to Android, but calling it in case this *is* Android
   FRadio.StartService('RadioService');
 end;
@@ -64,6 +67,16 @@ end;
 procedure TForm1.RadioStatusChangedHandler(Sender: TObject);
 begin
   UpdateButtons;
+end;
+
+procedure TForm1.RadioStreamMetadataHandler(Sender: TObject; const AMetadata: string);
+const
+  cStreamTitle = 'StreamTitle=';
+begin
+  if AMetadata.StartsWith(cStreamTitle) then
+    MetadataLabel.Text := AnsiDequotedStr(AMetadata.Substring(Length(cStreamTitle)).Trim([';']), '''')
+  else
+    MetadataLabel.Text := 'No title available';
 end;
 
 procedure TForm1.PlayButtonClick(Sender: TObject);
