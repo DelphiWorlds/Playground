@@ -6,7 +6,9 @@ Implement radio streaming in Delphi apps
 
 ## Description
 
-**NOTE** This code is dependent on code from the [Kastri](https://github.com/DelphiWorlds/Kastri) repo.
+**NOTE** This code is dependent on code from the [Kastri](https://github.com/DelphiWorlds/Kastri) repo. It is also dependent on the BASS library, which I have created a [new repo](https://github.com/DelphiWorlds/BASS) for.
+
+**Please see the Configuration section of the main readme for how to configure project compiler search paths.**. 
 
 Unashamed rewrite of [FMX.Radio](https://github.com/ersanyakit/FMX.Radio)
 
@@ -27,6 +29,12 @@ The code is currently for Delphi 11.x. It may or may not work on earlier version
 Please provide feedback about this demo as per [the main ReadMe.](https://github.com/DelphiWorlds/Playground/blob/main/Readme.md)
 
 ## Status
+
+Oct 18th, 2022:
+
+* Performed some refactoring so that less code is required in the Android service.
+* Implemented an event for the stream metadata
+* Changed project search paths to rely on new [BASS repo](https://github.com/DelphiWorlds/BASS)
 
 Oct 16th, 2022:
 
