@@ -2,7 +2,8 @@ program RadioService;
 
 uses
   System.Android.ServiceApplication,
-  RT.ServiceModule in 'RT.ServiceModule.pas' {ServiceModule: TAndroidService};
+  RT.ServiceModule in 'RT.ServiceModule.pas' {ServiceModule: TAndroidService},
+  DW.RadioPlayer.ServiceHelper in '..\DW.RadioPlayer.ServiceHelper.pas';
 
 {$R *.res}
 
