@@ -37,7 +37,8 @@ implementation
 
 // Majestic jukebox: http://uk3.internet-radio.com:8405/live
 // The Groove: http://uk7.internet-radio.com:8352/stream
-// ABC Adelaide: http://www.abc.net.au/res/streaming/audio/aac/local_adelaide.pls http://live-radio01.mediahubaustralia.com/5LRW/aac
+// ABC Adelaide: http://live-radio01.mediahubaustralia.com/5LRW/aac
+// Plonsk: https://sluchaj.link:5443/plonsk
 
 { TForm1 }
 
@@ -45,11 +46,13 @@ constructor TForm1.Create(AOwner: TComponent);
 begin
   inherited;
   FRadio := TRadioPlayer.Create;
-  FRadio.URL := 'http://uk7.internet-radio.com:8352/stream'; // The Groove
+  FRadio.URL := 'http://uk3.internet-radio.com:8405/live';
+  // Set UseService to False if you don't want to use a service (i.e. applies to Android only)
+  // FRadio.UseService := False;
   FRadio.OnServiceStarted := RadioServiceStartedHandler;
   FRadio.OnStatusChanged := RadioStatusChangedHandler;
   FRadio.OnStreamMetadata := RadioStreamMetadataHandler;
-  // Only applies to Android, but calling it in case this *is* Android
+  // Only applies to Android only, but calling it to cater for when it *is* Android
   FRadio.StartService('RadioService');
 end;
 
@@ -70,13 +73,8 @@ begin
 end;
 
 procedure TForm1.RadioStreamMetadataHandler(Sender: TObject; const AMetadata: string);
-const
-  cStreamTitle = 'StreamTitle=';
 begin
-  if AMetadata.StartsWith(cStreamTitle) then
-    MetadataLabel.Text := AnsiDequotedStr(AMetadata.Substring(Length(cStreamTitle)).Trim([';']), '''')
-  else
-    MetadataLabel.Text := 'No title available';
+  MetadataLabel.Text := FRadio.ParseStreamTitle(AMetadata, 'Unknown title');
 end;
 
 procedure TForm1.PlayButtonClick(Sender: TObject);
