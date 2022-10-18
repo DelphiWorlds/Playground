@@ -14,6 +14,8 @@ const
 
   cServiceMessageTypeRadioStreamMetadata = 1;
 
+  cMetadataStreamTitlePrefix = 'StreamTitle=';
+
 type
   TRadioStatus = (Unknown, Stopped, Playing, Paused);
 
