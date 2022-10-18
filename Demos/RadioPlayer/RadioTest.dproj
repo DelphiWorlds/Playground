@@ -5,7 +5,7 @@
         <FrameworkType>FMX</FrameworkType>
         <Base>True</Base>
         <Config Condition="'$(Config)'==''">Debug</Config>
-        <Platform Condition="'$(Platform)'==''">Android</Platform>
+        <Platform Condition="'$(Platform)'==''">OSX64</Platform>
         <TargetedPlatforms>693267</TargetedPlatforms>
         <AppType>Application</AppType>
         <MainSource>RadioTest.dpr</MainSource>
@@ -868,6 +868,20 @@ $(PostBuildEvent)]]></PostBuildEvent>
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>
+                <DeployFile LocalName="Lib\Android\arm64-v8a\libbass_ssl.so" Configuration="Debug" Class="File">
+                    <Platform Name="Android64">
+                        <RemoteDir>library\lib\arm64-v8a\</RemoteDir>
+                        <RemoteName>libbass_ssl.so</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="Lib\Android\arm64-v8a\libbass_ssl.so" Configuration="Release" Class="File">
+                    <Platform Name="Android64">
+                        <RemoteDir>library\lib\arm64-v8a\</RemoteDir>
+                        <RemoteName>libbass_ssl.so</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
                 <DeployFile LocalName="Lib\Android\armeabi-v7a\libbass.so" Configuration="Debug" Class="File">
                     <Platform Name="Android">
                         <RemoteDir>library\lib\armeabi-v7a\</RemoteDir>
@@ -893,6 +907,20 @@ $(PostBuildEvent)]]></PostBuildEvent>
                     <Platform Name="Android">
                         <RemoteDir>library\lib\armeabi-v7a\</RemoteDir>
                         <RemoteName>libbass_aac.so</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="Lib\Android\armeabi-v7a\libbass_ssl.so" Configuration="Debug" Class="File">
+                    <Platform Name="Android">
+                        <RemoteDir>library\lib\armeabi-v7a\</RemoteDir>
+                        <RemoteName>libbass_ssl.so</RemoteName>
+                        <Overwrite>true</Overwrite>
+                    </Platform>
+                </DeployFile>
+                <DeployFile LocalName="Lib\Android\armeabi-v7a\libbass_ssl.so" Configuration="Release" Class="File">
+                    <Platform Name="Android">
+                        <RemoteDir>library\lib\armeabi-v7a\</RemoteDir>
+                        <RemoteName>libbass_ssl.so</RemoteName>
                         <Overwrite>true</Overwrite>
                     </Platform>
                 </DeployFile>
