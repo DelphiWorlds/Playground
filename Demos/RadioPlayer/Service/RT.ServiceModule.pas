@@ -26,10 +26,14 @@ type
     function AndroidServiceStartCommand(const Sender: TObject; const Intent: JIntent; Flags, StartId: Integer): Integer;
   private
     FNotificationChannel: JNotificationChannel;
+    FNotificationText: string;
+    FNotificationTitle: string;
     FRadio: TRadioPlayer;
     FReceiver: TLocalReceiver;
+    function CreateNotification: JNotification;
     procedure CreateNotificationChannel;
     function IsForeground: Boolean;
+    procedure RadioStreamMetadataHandler(Sender: TObject; const AMetadata: string);
     procedure StartForeground(const AMustStartForeground: Boolean);
     procedure StopForeground(const AIsStarting: Boolean);
   protected
@@ -91,11 +95,23 @@ begin
   // The Create event can be called by the system when the app is "swipe closed"
   if TAndroidHelperEx.IsActivityForeground then
   begin
+    FNotificationTitle := 'Radio Player Test';
+    FNotificationText := 'Idle';
     FReceiver := TLocalReceiver.Create(Self);
     FRadio := TRadioPlayer.Create;
+    FRadio.OnStreamMetadata := RadioStreamMetadataHandler;
+    TOSLog.d('FRadio created');
   end
   else
     JavaService.stopSelf;
+end;
+
+procedure TServiceModule.RadioStreamMetadataHandler(Sender: TObject; const AMetadata: string);
+begin
+  TOSLog.d('TServiceModule.RadioStreamMetadataHandler');
+  FNotificationText := FRadio.ParseStreamTitle(AMetadata, 'Unknown title');
+  if IsForeground then
+    TAndroidHelperEx.NotificationManager.notify(cServiceForegroundId, CreateNotification);
 end;
 
 procedure TServiceModule.AndroidServiceDestroy(Sender: TObject);
@@ -132,6 +148,7 @@ var
   LRadioCommand: TRadioCommand;
   LCommand: Integer;
 begin
+  TOSLog.d('TServiceModule.LocalReceiverReceive');
   if intent.getAction.equals(StringToJString(cServiceCommandJSONAction)) then
   begin
     LJSON := JStringToString(intent.getStringExtra(StringToJString(cServiceBroadcastParamCommand)));
@@ -175,12 +192,28 @@ begin
   end;
 end;
 
-procedure TServiceModule.StartForeground(const AMustStartForeground: Boolean);
+function TServiceModule.CreateNotification: JNotification;
 var
-  LBuilder: JNotificationCompat_Builder;
-  LIsForegroundMandatory: Boolean;
   LIntent: JIntent;
   LFlags: Integer;
+begin
+  LIntent := TJIntent.Create;
+  LIntent.setClassName(TAndroidHelper.Context.getPackageName, StringToJString('com.embarcadero.firemonkey.FMXNativeActivity'));
+  LFlags := TJIntent.JavaClass.FLAG_ACTIVITY_NEW_TASK or TJPendingIntent.JavaClass.FLAG_IMMUTABLE;
+  Result := TJNotificationCompat_Builder.JavaClass.init(TAndroidHelper.Context, TAndroidHelper.Context.getPackageName)
+    .setAutoCancel(True)
+    .setContentTitle(StrToJCharSequence(FNotificationTitle))
+    .setContentText(StrToJCharSequence(FNotificationText))
+    .setSmallIcon(TAndroidHelperEx.GetDefaultIconID)
+    .setTicker(StrToJCharSequence(cServiceNotificationCaption))
+    .setPriority(TJNotification.JavaClass.PRIORITY_MIN)
+    .setContentIntent(TJPendingIntent.JavaClass.getActivity(TAndroidHelper.Context, 0, LIntent, LFlags))
+    .build;
+end;
+
+procedure TServiceModule.StartForeground(const AMustStartForeground: Boolean);
+var
+  LIsForegroundMandatory: Boolean;
 begin
   LIsForegroundMandatory := not TAndroidHelperEx.IsActivityForeground or AMustStartForeground;
   // Only allow the service to start in the foreground if it needs to. One case is where the Android permissions dialog is showing!
@@ -190,19 +223,7 @@ begin
     if FNotificationChannel = nil then
       CreateNotificationChannel;
     JavaService.stopForeground(True);
-    // Create an intent for starting the app if the user taps the notification
-    LIntent := TJIntent.Create;
-    LIntent.setClassName(TAndroidHelper.Context.getPackageName, StringToJString('com.embarcadero.firemonkey.FMXNativeActivity'));
-    LFlags := TJIntent.JavaClass.FLAG_ACTIVITY_NEW_TASK or TJPendingIntent.JavaClass.FLAG_IMMUTABLE;
-    LBuilder := TJNotificationCompat_Builder.JavaClass.init(TAndroidHelper.Context, TAndroidHelper.Context.getPackageName);
-    LBuilder.setAutoCancel(True);
-    LBuilder.setContentTitle(StrToJCharSequence(cServiceNotificationCaption));
-    LBuilder.setContentText(StrToJCharSequence(cServiceNotificationText));
-    LBuilder.setSmallIcon(TAndroidHelperEx.GetDefaultIconID);
-    LBuilder.setTicker(StrToJCharSequence(cServiceNotificationCaption));
-    LBuilder.setPriority(TJNotification.JavaClass.PRIORITY_MIN);
-    LBuilder.setContentIntent(TJPendingIntent.JavaClass.getActivity(TAndroidHelper.Context, 0, LIntent, LFlags));
-    JavaService.startForeground(cServiceForegroundId, LBuilder.build);
+    JavaService.startForeground(cServiceForegroundId, CreateNotification);
   end;
 end;
 
