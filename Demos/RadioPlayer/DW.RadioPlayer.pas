@@ -29,16 +29,17 @@ type
     FServiceController: TCustomRadioServiceController;
     FStream: HSTREAM;
     FURL: string;
+    FUseService: Boolean;
     FOnServiceStarted: TNotifyEvent;
     FOnStatusChanged: TNotifyEvent;
     FOnStreamMetadata: TStreamMetadataEvent;
-    procedure StatusChange(const AStatus: TRadioStatus);
     procedure DoError;
     function DoBASSPause: Boolean;
     function DoBASSPlay: Boolean;
     function DoBASSResume: Boolean;
     function DoPlay: Boolean;
     procedure DoServiceStarted;
+    function GetTags(const ATagIndex: Cardinal; out ATags: string): Boolean;
     function LoadPlugin: Boolean;
     function Resume: Boolean;
     {$IF Defined(ANDROIDAPP)}
@@ -46,6 +47,8 @@ type
     procedure ServiceControllerServiceStartedHandler(Sender: TObject);
     procedure ServiceControllerStreamMetadataHandler(Sender: TObject; const AMetadata: string);
     {$ENDIF}
+    function ShouldUseService: Boolean;
+    procedure StatusChange(const AStatus: TRadioStatus);
     procedure Stopped;
   protected
     procedure DoEndSync;
@@ -55,12 +58,14 @@ type
   public
     constructor Create;
     destructor Destroy; override;
+    function ParseStreamTitle(const AMetadata: string; const ADefault: string = ''): string;
     function Play: Boolean;
     function Pause: Boolean;
     procedure StartService(const AServiceName: string);
     procedure Stop;
     property URL: string read FURL write FURL;
     property Status: TRadioStatus read FRadioStatus;
+    property UseService: Boolean read FUseService write FUseService;
     property OnServiceStarted: TNotifyEvent read FOnServiceStarted write FOnServiceStarted;
     property OnStatusChanged: TNotifyEvent read FOnStatusChanged write FOnStatusChanged;
     property OnStreamMetadata: TStreamMetadataEvent read FOnStreamMetadata write FOnStreamMetadata;
@@ -136,6 +141,7 @@ begin
     FServiceController.OnServiceStarted := ServiceControllerServiceStartedHandler;
     FServiceController.OnStreamMetadata := ServiceControllerStreamMetadataHandler;
   end;
+  FUseService := True;
   {$ENDIF}
   FRadioStatus := TRadioStatus.Stopped;
 end;
@@ -177,9 +183,14 @@ begin
     FOnStreamMetadata(Self, AMetadata);
 end;
 
+function TRadioPlayer.ShouldUseService: Boolean;
+begin
+  Result := (FServiceController <> nil) and FUseService;
+end;
+
 procedure TRadioPlayer.StartService(const AServiceName: string);
 begin
-  if FServiceController <> nil then
+  if ShouldUseService then
   begin
     // Returns True if the service has already started
     if FServiceController.StartService(AServiceName) then
@@ -199,8 +210,20 @@ var
   LCode: Integer;
 begin
   LCode := Bass_ErrorGetCode;
-  if LCode <> 0 then
-    Sleep(0);
+  TOSLog.d('BASS Error Code: %d', [LCode]);
+end;
+
+function TRadioPlayer.GetTags(const ATagIndex: Cardinal; out ATags: string): Boolean;
+var
+  LTagAString: MarshaledAString;
+begin
+  Result := False;
+  LTagAString := BASS_ChannelGetTags(FStream, ATagIndex);
+  if LTagAString <> nil then
+  begin
+    ATags := UTF8ToString(LTagAString);
+    Result := True;
+  end;
 end;
 
 procedure TRadioPlayer.DoMetaSync;
@@ -208,11 +231,13 @@ var
   LMeta: string;
 begin
   // e.g. StreamTitle='Stephen Howie - The Grooveline Series';
-  LMeta := UTF8ToString(BASS_ChannelGetTags(FStream, BASS_TAG_META));
-  {$IF Defined(SERVICE)}
-  TRadioServiceHelper.ReceivedStreamMetadata(LMeta);
-  {$ENDIF}
-  DoStreamMetadata(LMeta);
+  if GetTags(BASS_TAG_META, LMeta) then
+  begin
+    {$IF Defined(SERVICE)}
+    TRadioServiceHelper.ReceivedStreamMetadata(LMeta);
+    {$ENDIF}
+    DoStreamMetadata(LMeta);
+  end;
 end;
 
 procedure TRadioPlayer.DoPosSync(const AData: DWORD);
@@ -223,7 +248,7 @@ end;
 function TRadioPlayer.LoadPlugin: Boolean;
 begin
   Result := False;
-  if FServiceController = nil then
+  if not FUseService then
   begin
     if not FIsBASSLoaded then
       FIsBASSLoaded := BASS_Init(-1, 44100, 0, FHandle, nil);
@@ -257,7 +282,7 @@ end;
 
 procedure TRadioPlayer.Stop;
 begin
-  if FServiceController = nil then
+  if not ShouldUseService then
   begin
     if FStream > 0 then
       BASS_StreamFree(FStream);
@@ -284,9 +309,17 @@ begin
     StatusChange(TRadioStatus.Unknown);
 end;
 
+function TRadioPlayer.ParseStreamTitle(const AMetadata: string; const ADefault: string = ''): string;
+begin
+  if AMetadata.StartsWith(cMetadataStreamTitlePrefix) then
+    Result := AnsiDequotedStr(AMetadata.Substring(Length(cMetadataStreamTitlePrefix)).Trim([';']), '''')
+  else
+    Result := ADefault;
+end;
+
 function TRadioPlayer.Pause: Boolean;
 begin
-  if FServiceController <> nil then
+  if ShouldUseService then
   begin
     FServiceController.Pause;
     Result := True;
@@ -308,7 +341,9 @@ begin
     end
     else
       Result := Resume;
-  end;
+  end
+  else
+    TOSLog.d('Failed to load plugin');
 end;
 
 function TRadioPlayer.DoBASSResume: Boolean;
@@ -325,7 +360,7 @@ end;
 
 function TRadioPlayer.Resume: Boolean;
 begin
-  if FServiceController <> nil then
+  if ShouldUseService then
   begin
     FServiceController.Play;
     Result := True;
@@ -336,20 +371,15 @@ end;
 
 function TRadioPlayer.DoBASSPlay: Boolean;
 var
-  LTagAString: MarshaledAString;
   LTag, LBroadcastName, LBitRate: string;
 begin
+  TOSLog.d('TRadioPlayer.DoBASSPlay');
   Result := False;
   FStream := BASS_StreamCreateURL(PChar(FURL), 0, BASS_STREAM_BLOCK or BASS_STREAM_STATUS or BASS_STREAM_AUTOFREE or BASS_UNICODE, nil, nil);
   if FStream > 0 then
   begin
-    // +Tag
-    LTagAString := BASS_ChannelGetTags(FStream, BASS_TAG_ICY);
-    if LTagAString = nil then
-      LTagAString := BASS_ChannelGetTags(FStream, BASS_TAG_HTTP);
-    if LTagAString <> nil then
+    if GetTags(BASS_TAG_ICY, LTag) then
     begin
-      LTag := UTF8ToString(LTagAString);
       if LTag.StartsWith(cIcyNamePrefix, True) then
         LBroadcastName := LTag.Substring(Length(cIcyNamePrefix))
       else if LTag.StartsWith(cIcyBitratePrefix, True) then
@@ -357,8 +387,8 @@ begin
       // Might be more than one tag?
       // DoBroadcastInfo(LBroadcastName, LBitRate);
     end;
-    // DoMeta
-    // -Tag
+    // Get metadata where there may not be any callback
+    DoMetaSync;
     BASS_ChannelSetSync(FStream, BASS_SYNC_META, 0, @BASSSyncMeta, Self);
     // BASS_ChannelSetSync(FStream, BASS_SYNC_POS, 0, @BASSSyncPos, Self);
     BASS_ChannelSetSync(FStream, BASS_SYNC_END, 0, @BASSSyncEnd, Self);
@@ -375,7 +405,8 @@ end;
 
 function TRadioPlayer.DoPlay: Boolean;
 begin
-  if FServiceController <> nil then
+  TOSLog.d('TRadioPlayer.DoPlay');
+  if ShouldUseService then
   begin
     FServiceController.Play(FURL);
     Result := True;
