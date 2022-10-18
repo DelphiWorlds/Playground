@@ -1,0 +1,36 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{341CB4B0-257A-49E4-A938-1C689537F1A0}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="RadioTest.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="RadioTest">
+        <MSBuild Projects="RadioTest.dproj"/>
+    </Target>
+    <Target Name="RadioTest:Clean">
+        <MSBuild Projects="RadioTest.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="RadioTest:Make">
+        <MSBuild Projects="RadioTest.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="RadioTest"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="RadioTest:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="RadioTest:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>
