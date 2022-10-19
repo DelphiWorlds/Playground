@@ -27,7 +27,7 @@ type
     function ToJSON: string;
   end;
 
-  TStreamMetadataEvent = procedure(Sender: TObject; const Metadata: string) of object;
+  TStreamMetadataEvent = procedure(Sender: TObject; const Metadata: TArray<string>) of object;
 
 implementation
 
