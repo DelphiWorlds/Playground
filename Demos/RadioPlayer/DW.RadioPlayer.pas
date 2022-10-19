@@ -9,7 +9,11 @@ interface
 uses
   System.Classes,
   Bass,
-  DW.RadioPlayer.ServiceController, DW.RadioPlayer.Common;
+  DW.RadioPlayer.ServiceController, DW.RadioPlayer.Common, DW.OSTimer;
+
+const
+  cIcyName = 'icy-name';
+  cIcyBitrate = 'icy-br';
 
 type
   TRadioStatus = DW.RadioPlayer.Common.TRadioStatus;
@@ -25,6 +29,8 @@ type
     FHandle: Pointer;
     {$ENDIF}
     FIsBASSLoaded: Boolean;
+    FMetadataTime: TDateTime;
+    FMetaTimer: TOSTimer;
     FRadioStatus: TRadioStatus;
     FServiceController: TCustomRadioServiceController;
     FStream: HSTREAM;
@@ -39,13 +45,17 @@ type
     function DoBASSResume: Boolean;
     function DoPlay: Boolean;
     procedure DoServiceStarted;
-    function GetTags(const ATagIndex: Cardinal; out ATags: string): Boolean;
+    procedure DoStreamMetadata(const AMetadata: TArray<string>);
+    function GetTags(const ATagIndex: Cardinal; out ATags: TArray<string>): Boolean;
     function LoadPlugin: Boolean;
+    procedure MetaTimerIntervalHandler(Sender: TObject);
+    procedure MetaTimerStart;
+    procedure MetaTimerStop;
     function Resume: Boolean;
     {$IF Defined(ANDROIDAPP)}
     procedure ServiceControllerRadioStatusChangedHandler(Sender: TObject; const AStatus: TRadioStatus);
     procedure ServiceControllerServiceStartedHandler(Sender: TObject);
-    procedure ServiceControllerStreamMetadataHandler(Sender: TObject; const AMetadata: string);
+    procedure ServiceControllerStreamMetadataHandler(Sender: TObject; const AMetadata: TArray<string>);
     {$ENDIF}
     function ShouldUseService: Boolean;
     procedure StatusChange(const AStatus: TRadioStatus);
@@ -54,11 +64,9 @@ type
     procedure DoEndSync;
     procedure DoMetaSync;
     procedure DoPosSync(const AData: DWORD);
-    procedure DoStreamMetadata(const AMetadata: string);
   public
     constructor Create;
     destructor Destroy; override;
-    function ParseStreamTitle(const AMetadata: string; const ADefault: string = ''): string;
     function Play: Boolean;
     function Pause: Boolean;
     procedure StartService(const AServiceName: string);
@@ -71,6 +79,12 @@ type
     property OnStreamMetadata: TStreamMetadataEvent read FOnStreamMetadata write FOnStreamMetadata;
   end;
 
+  TRadioMetadata = record
+  public
+    class function GetStreamTitle(const AMetadata: TArray<string>; out AValue: string): Boolean; static;
+    class function GetValue(const AMetadata: TArray<string>; const ATag: string; out AValue: string): Boolean; static;
+  end;
+
 implementation
 
 uses
@@ -78,16 +92,49 @@ uses
   {$IF Defined(SERVICE)}
   DW.RadioPlayer.ServiceHelper,
   {$ENDIF}
-  System.SysUtils;
+  System.SysUtils, System.DateUtils;
 
 const
+  cMetadataTimeMinimum = 30000;
   {$IF Defined(MSWINDOWS)}
   cBASSPluginLib = 'bass_aac.dll';
   {$ELSE}
   cBASSPluginLib = 'libbass_aac.so';
   {$ENDIF}
-  cIcyNamePrefix = 'icy-name:';
-  cIcyBitratePrefix = 'icy-br:';
+
+{ TRadioMetadata }
+
+class function TRadioMetadata.GetStreamTitle(const AMetadata: TArray<string>; out AValue: string): Boolean;
+var
+  LItem: string;
+begin
+  Result := False;
+  for LItem in AMetadata do
+  begin
+    if LItem.StartsWith(cMetadataStreamTitlePrefix) then
+    begin
+      AValue := AnsiDequotedStr(LItem.Substring(Length(cMetadataStreamTitlePrefix)).Trim([';']), '''');
+      Result := True;
+      Break;
+    end
+  end;
+end;
+
+class function TRadioMetadata.GetValue(const AMetadata: TArray<string>; const ATag: string; out AValue: string): Boolean;
+var
+  LItem: string;
+begin
+  Result := False;
+  for LItem in AMetadata do
+  begin
+    if LItem.StartsWith(ATag + ':') then
+    begin
+      AValue := LItem.Substring(Length(ATag) + 1).Trim;
+      Result := True;
+      Break;
+    end
+  end;
+end;
 
 procedure BASSSyncMeta(handle: HSYNC; channel, data: DWORD; user: Pointer); {$IF Defined(MSWINDOWS)} stdcall {$ELSE} cdecl {$ENDIF};
 begin
@@ -106,30 +153,6 @@ end;
 
 { TRadioPlayer }
 
-(*
-procedure TFMXPlatformRadio.DoMeta();
-var
-  meta: MarshaledAString;
-  line: string;
-  p: Integer;
-begin
-  meta := BASS_ChannelGetTags(FActiveChannel, BASS_TAG_META);
-  if (meta <> nil) then
-  begin
-    line:=UTF8Decode(meta);
-    p := Pos('StreamTitle=', line);
-    if (p = 0) then
-      Exit;
-    p := p + 13;
-
-    if Assigned(FBroadcastMetaProc)
-      then begin
-               FBroadcastMetaProc(Copy(meta, p, Pos(';', line) - p - 1));
-           end;
-  end;
-end;
-*)
-
 constructor TRadioPlayer.Create;
 begin
   inherited;
@@ -144,6 +167,9 @@ begin
   FUseService := True;
   {$ENDIF}
   FRadioStatus := TRadioStatus.Stopped;
+  FMetaTimer := TOSTimer.Create;
+  FMetaTimer.Interval := cMetadataTimeMinimum;
+  FMetaTimer.OnInterval := MetaTimerIntervalHandler;
 end;
 
 destructor TRadioPlayer.Destroy;
@@ -165,11 +191,28 @@ begin
   DoServiceStarted;
 end;
 
-procedure TRadioPlayer.ServiceControllerStreamMetadataHandler(Sender: TObject; const AMetadata: string);
+procedure TRadioPlayer.ServiceControllerStreamMetadataHandler(Sender: TObject; const AMetadata: TArray<string>);
 begin
   DoStreamMetadata(AMetadata);
 end;
 {$ENDIF}
+
+procedure TRadioPlayer.MetaTimerIntervalHandler(Sender: TObject);
+begin
+  if SecondsBetween(Now, FMetadataTime) > cMetadataTimeMinimum div 2 then
+    DoMetaSync;
+end;
+
+procedure TRadioPlayer.MetaTimerStart;
+begin
+  FMetadataTime := Now;
+  FMetaTimer.Enabled := True;
+end;
+
+procedure TRadioPlayer.MetaTimerStop;
+begin
+  FMetaTimer.Enabled := False;
+end;
 
 procedure TRadioPlayer.DoServiceStarted;
 begin
@@ -177,7 +220,7 @@ begin
     FOnServiceStarted(Self);
 end;
 
-procedure TRadioPlayer.DoStreamMetadata(const AMetadata: string);
+procedure TRadioPlayer.DoStreamMetadata(const AMetadata: TArray<string>);
 begin
   if Assigned(FOnStreamMetadata) then
     FOnStreamMetadata(Self, AMetadata);
@@ -213,7 +256,9 @@ begin
   TOSLog.d('BASS Error Code: %d', [LCode]);
 end;
 
-function TRadioPlayer.GetTags(const ATagIndex: Cardinal; out ATags: string): Boolean;
+function TRadioPlayer.GetTags(const ATagIndex: Cardinal; out ATags: TArray<string>): Boolean;
+const
+  cNullChar: AnsiChar = #0;
 var
   LTagAString: MarshaledAString;
 begin
@@ -221,22 +266,29 @@ begin
   LTagAString := BASS_ChannelGetTags(FStream, ATagIndex);
   if LTagAString <> nil then
   begin
-    ATags := UTF8ToString(LTagAString);
-    Result := True;
-  end;
+    while LTagAString^ <> cNullChar do
+    begin
+      ATags := ATags + [UTF8ToString(Copy(LTagAString, 1, MaxInt))];
+      LTagAString := LTagAString + Length(LTagAString) + 1;
+    end;
+    Result := Length(ATags) > 0;
+  end
+  else
+    TOSLog.d('Could not get tags for index: %d. Error code: %d', [ATagIndex, BASS_ErrorGetCode]);
 end;
 
 procedure TRadioPlayer.DoMetaSync;
 var
-  LMeta: string;
+  LTags: TArray<string>;
 begin
   // e.g. StreamTitle='Stephen Howie - The Grooveline Series';
-  if GetTags(BASS_TAG_META, LMeta) then
+  if GetTags(BASS_TAG_META, LTags) then
   begin
+    FMetadataTime := Now;
     {$IF Defined(SERVICE)}
-    TRadioServiceHelper.ReceivedStreamMetadata(LMeta);
+    TRadioServiceHelper.ReceivedStreamMetadata(LTags);
     {$ENDIF}
-    DoStreamMetadata(LMeta);
+    DoStreamMetadata(LTags);
   end;
 end;
 
@@ -273,6 +325,10 @@ end;
 procedure TRadioPlayer.StatusChange(const AStatus: TRadioStatus);
 begin
   FRadioStatus := AStatus;
+  if FRadioStatus = TRadioStatus.Playing then
+    MetaTimerStart
+  else
+    MetaTimerStop;
   {$IF Defined(SERVICE)}
   TRadioServiceHelper.RadioStatusChanged(AStatus);
   {$ENDIF}
@@ -307,14 +363,6 @@ begin
     StatusChange(TRadioStatus.Paused)
   else
     StatusChange(TRadioStatus.Unknown);
-end;
-
-function TRadioPlayer.ParseStreamTitle(const AMetadata: string; const ADefault: string = ''): string;
-begin
-  if AMetadata.StartsWith(cMetadataStreamTitlePrefix) then
-    Result := AnsiDequotedStr(AMetadata.Substring(Length(cMetadataStreamTitlePrefix)).Trim([';']), '''')
-  else
-    Result := ADefault;
 end;
 
 function TRadioPlayer.Pause: Boolean;
@@ -371,21 +419,26 @@ end;
 
 function TRadioPlayer.DoBASSPlay: Boolean;
 var
-  LTag, LBroadcastName, LBitRate: string;
+  LTags: TArray<string>;
 begin
-  TOSLog.d('TRadioPlayer.DoBASSPlay');
   Result := False;
   FStream := BASS_StreamCreateURL(PChar(FURL), 0, BASS_STREAM_BLOCK or BASS_STREAM_STATUS or BASS_STREAM_AUTOFREE or BASS_UNICODE, nil, nil);
   if FStream > 0 then
   begin
-    if GetTags(BASS_TAG_ICY, LTag) then
+    if GetTags(BASS_TAG_ICY, LTags) or GetTags(BASS_TAG_HTTP, LTags) then
     begin
+      {
       if LTag.StartsWith(cIcyNamePrefix, True) then
         LBroadcastName := LTag.Substring(Length(cIcyNamePrefix))
       else if LTag.StartsWith(cIcyBitratePrefix, True) then
         LBitRate := LTag.Substring(Length(cIcyBitratePrefix));
-      // Might be more than one tag?
-      // DoBroadcastInfo(LBroadcastName, LBitRate);
+      if LBroadcastName.IsEmpty and not LBitRate.IsEmpty then
+        LBroadcastName := 'Unknown';
+      }
+      {$IF Defined(SERVICE)}
+      TRadioServiceHelper.ReceivedStreamMetadata(LTags);
+      {$ENDIF}
+      DoStreamMetadata(LTags);
     end;
     // Get metadata where there may not be any callback
     DoMetaSync;
@@ -393,6 +446,7 @@ begin
     // BASS_ChannelSetSync(FStream, BASS_SYNC_POS, 0, @BASSSyncPos, Self);
     BASS_ChannelSetSync(FStream, BASS_SYNC_END, 0, @BASSSyncEnd, Self);
     Result := BASS_ChannelPlay(FStream, False);
+
     // FStatusProc(strCompleted,100);
     if Result then
       StatusChange(TRadioStatus.Playing)
@@ -405,7 +459,6 @@ end;
 
 function TRadioPlayer.DoPlay: Boolean;
 begin
-  TOSLog.d('TRadioPlayer.DoPlay');
   if ShouldUseService then
   begin
     FServiceController.Play(FURL);
