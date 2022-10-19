@@ -30,6 +30,11 @@ Please provide feedback about this demo as per [the main ReadMe.](https://github
 
 ## Status
 
+Oct 19th, 2022:
+
+* Fixed the GetTags code, and refactored metadata so that it is passed as an array of strings
+* Updated the demo to load stations from a JSON file, and present more metadata
+
 Oct 18th, 2022:
 
 * Performed some refactoring so that less code is required in the Android service.
