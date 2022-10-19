@@ -11,7 +11,7 @@ type
     class procedure SendMessage(const AMessage: string); static;
   public
     class procedure RadioStatusChanged(const AStatus: TRadioStatus); static;
-    class procedure ReceivedStreamMetadata(const AMetadata: string); static;
+    class procedure ReceivedStreamMetadata(const AMetadata: TArray<string>); static;
     class procedure SendState(const AState: Integer); static;
   end;
 
@@ -34,14 +34,19 @@ begin
   SendState(cServiceStateRadioBase + Ord(AStatus));
 end;
 
-class procedure TRadioServiceHelper.ReceivedStreamMetadata(const AMetadata: string);
+class procedure TRadioServiceHelper.ReceivedStreamMetadata(const AMetadata: TArray<string>);
 var
   LJSON: TJSONObject;
+  LValues: TJSONArray;
+  LValue: string;
 begin
   LJSON := TJSONObject.Create;
   try
     LJSON.AddPair('MessageType', cServiceMessageTypeRadioStreamMetadata);
-    LJSON.AddPair('Content', TJSONString.Create(AMetadata));
+    LValues := TJSONArray.Create;
+    for LValue in AMetadata do
+      LValues.Add(LValue);
+    LJSON.AddPair('Content', LValues);
     SendMessage(LJSON.ToJSON);
   finally
     LJSON.Free;

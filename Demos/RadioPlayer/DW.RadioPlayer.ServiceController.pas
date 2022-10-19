@@ -26,7 +26,7 @@ type
   protected
     procedure DoRadioStatusChanged(const AStatus: TRadioStatus);
     procedure DoServiceStarted;
-    procedure DoStreamMetadata(const AMetadata: string);
+    procedure DoStreamMetadata(const AMetadata: TArray<string>);
   public
     procedure Pause; virtual;
     procedure Play; overload; virtual;
@@ -98,7 +98,7 @@ begin
     FOnServiceStarted(Self);
 end;
 
-procedure TCustomRadioServiceController.DoStreamMetadata(const AMetadata: string);
+procedure TCustomRadioServiceController.DoStreamMetadata(const AMetadata: TArray<string>);
 begin
   if Assigned(FOnStreamMetadata) then
     FOnStreamMetadata(Self, AMetadata);
@@ -176,9 +176,10 @@ end;
 
 procedure TPlatformRadioServiceController.ReceiverMessageHandler(Sender: TObject; const AMsg: string);
 var
-  LJSON: TJSONValue;
+  LJSON, LElement: TJSONValue;
+  LContent: TJSONArray;
   LMessageType: Integer;
-  LContent: string;
+  LMetadata: TArray<string>;
 begin
   LJSON := TJSONObject.ParseJSONValue(AMsg);
   if LJSON <> nil then
@@ -189,7 +190,11 @@ begin
         cServiceMessageTypeRadioStreamMetadata:
         begin
           if LJSON.TryGetValue('Content', LContent) then
-            DoStreamMetadata(LContent);
+          begin
+            for LElement in LContent do
+              LMetadata := LMetadata + [LElement.Value];
+            DoStreamMetadata(LMetadata);
+          end;
         end;
       end;
     end;

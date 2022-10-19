@@ -33,7 +33,7 @@ type
     function CreateNotification: JNotification;
     procedure CreateNotificationChannel;
     function IsForeground: Boolean;
-    procedure RadioStreamMetadataHandler(Sender: TObject; const AMetadata: string);
+    procedure RadioStreamMetadataHandler(Sender: TObject; const AMetadata: TArray<string>);
     procedure StartForeground(const AMustStartForeground: Boolean);
     procedure StopForeground(const AIsStarting: Boolean);
   protected
@@ -106,12 +106,17 @@ begin
     JavaService.stopSelf;
 end;
 
-procedure TServiceModule.RadioStreamMetadataHandler(Sender: TObject; const AMetadata: string);
+procedure TServiceModule.RadioStreamMetadataHandler(Sender: TObject; const AMetadata: TArray<string>);
+var
+  LTitle: string;
 begin
   TOSLog.d('TServiceModule.RadioStreamMetadataHandler');
-  FNotificationText := FRadio.ParseStreamTitle(AMetadata, 'Unknown title');
-  if IsForeground then
-    TAndroidHelperEx.NotificationManager.notify(cServiceForegroundId, CreateNotification);
+  if TRadioMetadata.GetStreamTitle(AMetadata, LTitle) then
+  begin
+    FNotificationText := LTitle;
+    if IsForeground then
+      TAndroidHelperEx.NotificationManager.notify(cServiceForegroundId, CreateNotification);
+  end;
 end;
 
 procedure TServiceModule.AndroidServiceDestroy(Sender: TObject);
