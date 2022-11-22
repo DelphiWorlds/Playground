@@ -40,13 +40,13 @@ uses
   Androidapi.JNI.Os, Androidapi.JNI.GraphicsContentViewText, Androidapi.JNI.JavaTypes, Androidapi.Helpers, Androidapi.JNI.Firebase,
   Androidapi.JNI.App, Androidapi.JNIBridge,
   FMX.PushNotification.Android,
+  DW.PushServiceNotification.Android,
   {$ENDIF}
   {$IF Defined(IOS)}
   Macapi.Helpers, iOSapi.FirebaseMessaging, iOSapi.UserNotifications,
   FMX.PushNotification.FCM.iOS,
   {$ENDIF}
   FMX.Platform,
-  DW.OSLog,
   {$IF Defined(IOS)}
   DW.UserDefaults.iOS,
   {$ENDIF}
@@ -155,61 +155,6 @@ const
   UNAuthorizationStatusEphemeral = 4;
 
 {$IF Defined(ANDROID)}
-type
-  TDWPushServiceNotification = class(TPushServiceNotification)
-  private
-    FRawData: TJSONObject;
-  protected
-    function GetDataKey: string; override;
-    function GetJson: TJSONObject; override;
-    function GetDataObject: TJSONObject; override;
-  public
-    constructor Create(const ABundle: JBundle); overload;
-  end;
-
-{ TDWPushServiceNotification }
-
-constructor TDWPushServiceNotification.Create(const ABundle: JBundle);
-var
-  LJSONObject: TJSONObject;
-  LIterator: JIterator;
-  LValue: JString;
-  LKey: JString;
-begin
-  LJSONObject := TJSONObject.Create;
-  LIterator := ABundle.KeySet.iterator;
-  while LIterator.hasNext do
-  begin
-    LKey := LIterator.next.toString;
-    LValue := ABundle.&get(LKey).ToString;
-    LJSONObject.AddPair(JStringToString(LKey), JStringToString(LValue));
-  end;
-  FRawData := LJSONObject;
-end;
-
-function TDWPushServiceNotification.GetDataKey: string;
-begin
-  Result := 'fcm';
-end;
-
-function TDWPushServiceNotification.GetDataObject: TJSONObject;
-var
-  LValue: TJSONValue;
-begin
-  Result := FRawData;
-  if FRawData <> nil then
-  begin
-    LValue := FRawData.Values[GetDataKey];
-    if LValue <> nil then
-      Result := LValue as TJSONObject;
-  end;
-end;
-
-function TDWPushServiceNotification.GetJson: TJSONObject;
-begin
-  Result := FRawData;
-end;
-
 { TDWFirebaseMessagingServiceCallback }
 
 constructor TDWFirebaseMessagingServiceCallback.Create(const AFCMManager: TFCMManager);
@@ -226,14 +171,13 @@ begin
   LExtras := intent.getExtras;
   if LExtras <> nil then
   begin
-    LNotification := TDWPushServiceNotification.Create(LExtras);
+    LNotification := TAndroidPushServiceNotification.Create(LExtras);
     try
       FFCMManager.ReceiveNotificationHandler(Self, LNotification);
     finally
       LNotification.Free;
     end;
   end;
-  TOSLog.d(JStringToString(intent.toURI(0)));
 end;
 {$ENDIF}
 
