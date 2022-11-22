@@ -12,6 +12,11 @@ In this implementation, support has been added for a customised notification on 
 
 There is now a single unit: `DW.FCMManager`, that handles management of FCM, and is exposed as a reference to an interface: `IFCMManager`. Now you do not need to create any classes; just assign event handlers, and call the `Start` method on the `FCM` reference.
 
+There are 2 demos: 
+
+* A regular FCM demo, and
+* A demo of using a service to handle the message regardless of whether or not the app is running
+
 **In order for messages to be received properly on Android, FCM message payloads will need to omit `notification` elements, and include `title`, `body` and `imageUrl` (if needed) properties in the `data` element.** Please refer to the [Sending test messages](#sending-test-messages) section.
 
 ## Supported Versions
@@ -24,7 +29,7 @@ Please provide feedback about this demo as per [the main ReadMe.](https://github
 
 ## Project Configuration
 
-Note that this project relies on the Kastri repo, and for this demo expects that you have a user override environment variable named `Kastri` that points to the root of the Kastri source.
+Note that these demos rely on the Kastri repo, and for this demo expects that you have a user override environment variable named `Kastri` that points to the root of the Kastri source.
 
 For setup in Firebase Console and the Apple Developer site, please refer to the [instructions in the original FCM demo](https://github.com/DelphiWorlds/Kastri/blob/master/Demos/FirebaseCloudMessaging/Readme.md).
 
@@ -50,6 +55,11 @@ If you are creating your own project:
 
 FCM Rebooted relies on `dw-kastri-base-2.1.0.jar` and `dw-fcm-2.0.0.jar` from the `Lib` folder of this repo, so add them to the `Libraries` node under the `Android 32 bit` platform in Project Manager. (There is no need to add them to `Android 64 bit`).
 
+### Relay Demo
+
+The "Relay" demo uses metadata that is merged into the Android manifest (using `AndroidManifest.merge.xml` in that demo), to specify the service to relay the notification to - in this case: `com.embarcadero.services.FCMRelayService`, i.e. the fully qualified name of the service.
+Use the `AndroidIntentServiceHandleIntent` event in the service to handle the notification.
+
 **Note that these jars are not (yet) the same as those in the Kastri repo, and you do not need `dw-firebase-messaging.jar`**
 
 Please ensure that the `Receive push notifications` checkbox is checked in the Entitlements Section of the Project Options.
@@ -74,7 +84,14 @@ With PushIt, you can see what the resulting payload looks like by selecting the 
 
 ## Status
 
-Jul 21st, 2022: Waiting for feedback/suggestions
+Nov 23rd, 2022:
+
+Re-organised the code to allow for Relay demo to be added
+Fixed an issue with non-receipt of notifications in the app when it is running
+
+Jul 21st, 2022: 
+
+Waiting for feedback/suggestions
 
 
 
