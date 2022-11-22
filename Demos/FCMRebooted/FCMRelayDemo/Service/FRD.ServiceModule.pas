@@ -29,13 +29,27 @@ implementation
 
 uses
   Androidapi.Helpers, Androidapi.JNI.JavaTypes,
+  DW.PushServiceNotification.Android,
   DW.OSLog;
 
 procedure TServiceModule.AndroidIntentServiceHandleIntent(const Sender: TObject; const AnIntent: JIntent);
+var
+  LExtras: JBundle;
+  LNotification: TAndroidPushServiceNotification;
 begin
   TOSLog.d('+TServiceModule.AndroidIntentServiceHandleIntent');
-  TOSLog.d('> Intent:');
-  TOSLog.d(JStringToString(AnIntent.toUri(0)));
+  LExtras := AnIntent.getExtras;
+  if LExtras <> nil then
+  begin
+    LNotification := TAndroidPushServiceNotification.Create(LExtras);
+    try
+      // Handle notification here
+      TOSLog.d('> Notification:');
+      TOSLog.d(LNotification.Json.ToJSON);
+    finally
+      LNotification.Free;
+    end;
+  end;
   TOSLog.d('-TServiceModule.AndroidIntentServiceHandleIntent');
 end;
 
