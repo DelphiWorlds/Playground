@@ -39,6 +39,10 @@ May need to be changed, depending on where these are located on your machine. If
 set JDKPath=C:\Program Files\Eclipse Adoptium\jdk-11.0.14.101-hotspot\bin
 ```
 
+**When building for 64-bit Android, change the `PlatformConfig` variable to Android64**, i.e.:
+
+`set PlatformConfig=Android64`
+
 ## Longer Term Plan
 
 The longer term plan for the kind of requirements to build projects that rely on Android packages such as this demo is to better automate the build process (most likely via [Codex](https://github.com/DelphiWorlds/Codex)), so that developers don't need to worry about tweaking batch files (and perhaps not even relying on them).
