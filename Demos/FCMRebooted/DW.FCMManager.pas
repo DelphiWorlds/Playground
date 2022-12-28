@@ -35,12 +35,12 @@ var
 implementation
 
 uses
-  System.SysUtils, System.Notification, System.Messaging, System.IOUtils,
+  System.SysUtils, System.Notification, System.Messaging, System.IOUtils, System.Permissions,
   {$IF Defined(ANDROID)}
   Androidapi.JNI.Os, Androidapi.JNI.GraphicsContentViewText, Androidapi.JNI.JavaTypes, Androidapi.Helpers, Androidapi.JNI.Firebase,
   Androidapi.JNI.App, Androidapi.JNIBridge,
   FMX.PushNotification.Android,
-  DW.PushServiceNotification.Android,
+  DW.PushServiceNotification.Android, DW.Android.Helpers,
   {$ENDIF}
   {$IF Defined(IOS)}
   Macapi.Helpers, iOSapi.FirebaseMessaging, iOSapi.UserNotifications,
@@ -50,7 +50,8 @@ uses
   {$IF Defined(IOS)}
   DW.UserDefaults.iOS,
   {$ENDIF}
-  DW.OSMetadata;
+  DW.OSLog,
+  DW.OSMetadata, DW.Consts.Android, DW.Permissions.Helpers;
 
 type
   {$IF Defined(ANDROID)}
@@ -119,6 +120,7 @@ type
     procedure CheckStartupNotifications;
     procedure CreateChannel;
     procedure CreateConnection;
+    procedure DoStart;
     function GetPushService: TPushService;
     {$IF Defined(ANDROID)}
     function IsAndroidPushEnabled: Boolean;
@@ -127,6 +129,8 @@ type
     procedure PushDeviceTokenMessageHandler(const Sender: TObject; const AMsg: TMessage);
     procedure ReceiveNotificationHandler(Sender: TObject; const AServiceNotification: TPushServiceNotification);
     procedure ServiceConnectionChangeHandler(Sender: TObject; APushChanges: TPushService.TChanges);
+  protected
+    procedure HandleNotification(const AServiceNotification: TPushServiceNotification);
   public
     { IFCMManager }
     procedure CheckPushEnabled(const AHandler: TCheckPushEnabledMethod);
@@ -173,7 +177,7 @@ begin
   begin
     LNotification := TAndroidPushServiceNotification.Create(LExtras);
     try
-      FFCMManager.ReceiveNotificationHandler(Self, LNotification);
+      FFCMManager.HandleNotification(LNotification);
     finally
       LNotification.Free;
     end;
@@ -396,6 +400,14 @@ begin
   {$ENDIF}
 end;
 
+procedure TFCMManager.HandleNotification(const AServiceNotification: TPushServiceNotification);
+begin
+  if TThread.CurrentThread.ThreadID <> MainThreadID then
+    TThread.Synchronize(nil, procedure begin ReceiveNotificationHandler(Self, AServiceNotification) end)
+  else
+    ReceiveNotificationHandler(Self, AServiceNotification);
+end;
+
 procedure TFCMManager.ReceiveNotificationHandler(Sender: TObject; const AServiceNotification: TPushServiceNotification);
 begin
   if Assigned(FOnNotificationReceived) then
@@ -415,11 +427,27 @@ begin
     FOnStatusChange(Self);
 end;
 
-procedure TFCMManager.Start;
+procedure TFCMManager.DoStart;
 begin
   CreateChannel;
   CreateConnection;
   CheckStartupNotifications;
+end;
+
+procedure TFCMManager.Start;
+begin
+  if TAndroidHelperEx.CheckBuildAndTarget(33) then
+  begin
+    PermissionsService.RequestPermissions([cPermissionPostNotifications],
+      procedure(const APermissions: TPermissionArray; const AGrantResults: TPermissionStatusArray)
+      begin
+        if AGrantResults.AreAllGranted then
+          DoStart;
+      end
+    );
+  end
+  else
+    DoStart;
 end;
 
 procedure TFCMManager.SubscribeToTopic(const ATopic: string);
