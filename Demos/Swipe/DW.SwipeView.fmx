@@ -5,13 +5,13 @@ object SwipeView: TSwipeView
   Size.PlatformDefault = False
   OnResized = FrameResized
   object MainLayout: TLayout
+    Anchors = [akTop, akBottom]
     Size.Width = 500.000000000000000000
     Size.Height = 800.000000000000000000
     Size.PlatformDefault = False
     TabOrder = 0
     object MainLayoutAnimation: TFloatAnimation
       Duration = 0.200000002980232200
-      OnFinish = MainLayoutAnimationFinish
       PropertyName = 'Position.X'
       StartValue = 0.000000000000000000
       StartFromCurrent = True
