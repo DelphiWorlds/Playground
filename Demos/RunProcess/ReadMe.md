@@ -3,7 +3,7 @@
 ## Purpose
 
 Potential replacement for the `TRunProcess` code that already exists in [Kastri, in the Core folder](https://github.com/DelphiWorlds/Kastri/tree/master/Core).
-As per [this issue]() raised in the Codex repo, the intention is to remove the dependence on JCL/JVCL.
+As per [this issue](https://github.com/DelphiWorlds/Codex/issues/26) raised in the Codex repo, the intention is to remove the dependence on JCL/JVCL.
 
 ## Description
 
