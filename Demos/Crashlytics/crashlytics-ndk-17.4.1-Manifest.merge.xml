@@ -1,0 +1,36 @@
+<?xml version="1.0"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+  <uses-permission android:name="android.permission.INTERNET"/>
+  <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+  <meta-data android:name="firebase_crashlytics_collection_enabled" android:value="true" />
+  <application>
+    <provider
+      android:name="com.google.firebase.provider.FirebaseInitProvider"
+      android:authorities="%package%.firebaseinitprovider"
+      android:directBootAware="true"
+      android:exported="false"
+      android:initOrder="100"/>
+    <service
+      android:name="com.google.firebase.components.ComponentDiscoveryService"
+      android:directBootAware="true"
+      android:exported="false">
+      <!--
+                This registrar is not defined in the dynamic-module-support sdk itself to allow non-firebase
+                clients to use it as well, by defining this registrar in their own core/common library.
+            -->
+      <meta-data android:name="com.google.firebase.components:com.google.firebase.dynamicloading.DynamicLoadingRegistrar" android:value="com.google.firebase.components.ComponentRegistrar"/>
+    </service>
+    <service
+      android:name="com.google.android.datatransport.runtime.scheduling.jobscheduling.JobInfoSchedulerService"
+      android:exported="false"
+      android:permission="android.permission.BIND_JOB_SERVICE">
+    </service>
+    <receiver
+      android:name="com.google.android.datatransport.runtime.scheduling.jobscheduling.AlarmManagerSchedulerBroadcastReceiver"
+      android:exported="false"/>
+    <service
+      android:name="com.google.android.datatransport.runtime.backends.TransportBackendDiscovery"
+      android:exported="false"/>
+    <meta-data android:name="com.google.android.gms.version" android:value="@integer/google_play_services_version"/>
+  </application>
+</manifest>

@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
+    <string name="com.crashlytics.android.build_id">com.delphiworlds.test.firebase.build.id</string>
+</resources>
