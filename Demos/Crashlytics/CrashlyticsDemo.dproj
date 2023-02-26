@@ -140,10 +140,6 @@ $(Kastri)\Tools\resmerge strings.xml $(Platform)\$(Config)\strings.xml
 $(PostBuildEvent)]]></PostBuildEvent>
         <VerInfo_Build>1</VerInfo_Build>
         <Android_NotificationAccentColor>#000000</Android_NotificationAccentColor>
-        <Android_AppId>1:952580923416:android:962c46cef614c7a8</Android_AppId>
-        <Android_ApiKey>AIzaSyBotu72dQeWcl9_6pSupg48arBi1irrhDQ</Android_ApiKey>
-        <Android_GcmDefaultSenderId>952580923416</Android_GcmDefaultSenderId>
-        <Android_ProjectId>delphi-worlds-test</Android_ProjectId>
         <EL_ApsEnvironment>true</EL_ApsEnvironment>
     </PropertyGroup>
     <PropertyGroup Condition="'$(Base_Android64)'!=''">
