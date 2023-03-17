@@ -35,7 +35,7 @@ For setup in Firebase Console and the Apple Developer site, please refer to the 
 
 ### iOS
 
-FCM Rebooted can be used with the latest of the 8.x versions of the Firebase iOS SDK, which is v8.15.0. Due to technical issues as reported here, there is presently no support for v9.x, however it may come later.
+FCM Rebooted can be used with the latest of the 8.x versions of the Firebase iOS SDK, which is v8.15.0. Due to technical issues as [reported here](https://quality.embarcadero.com/browse/RSP-38700), there is presently no support for v9.x or later, however it may come later.
 
 Please download the [Firebase iOS SDK from here](https://github.com/firebase/firebase-ios-sdk/releases/download/v8.15.0/Firebase.zip), and for the demo, extract it into the `ThirdParty` folder, so that the path matches the framework search paths in the project, i.e. folders starting with `ThirdParty\Firebase`.
 
