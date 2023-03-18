@@ -436,6 +436,7 @@ end;
 
 procedure TFCMManager.Start;
 begin
+  {$IF Defined(ANDROID)}
   if TAndroidHelperEx.CheckBuildAndTarget(33) then
   begin
     PermissionsService.RequestPermissions([cPermissionPostNotifications],
@@ -448,6 +449,9 @@ begin
   end
   else
     DoStart;
+  {$ELSE}
+  DoStart;
+  {$ENDIF}
 end;
 
 procedure TFCMManager.SubscribeToTopic(const ATopic: string);
