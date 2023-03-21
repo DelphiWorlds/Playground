@@ -29,21 +29,19 @@ implementation
 
 procedure TForm1.Button1Click(Sender: TObject);
 begin
-{
   FProcess.CommandLine := 'cmd /c dir C:\Temp';
-  if FProcess.RunAndWait(6000) <> 0 then
+//  FProcess.Run;
+  if FProcess.RunAndWait(100) <> 0 then
     ShowMessage('Timeout or failed to start')
   else
     ShowMessage('Success!');
-}
-  FProcess.CommandLine := 'cmd /c dir C:\Temp';
-  FProcess.Run;
 end;
 
 constructor TForm1.Create(AOwner: TComponent);
 begin
   inherited;
   FProcess := TRunProcess.Create;
+  FProcess.ShowCommandInLog := True;
   FProcess.OnProcessOutput := ProcessOutputHandler;
 end;
 
