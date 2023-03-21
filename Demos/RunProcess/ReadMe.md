@@ -19,6 +19,10 @@ Please provide feedback about this demo as per [the main ReadMe.](https://github
 
 ## Status
 
+Mar 21st, 2023:
+
+Peformed major refactoring, and the code now works. Still needs more testing
+
 Jan 30th, 2023:
 
 Currently, there's an issue with an AV in [line 214 of `DW.Process.Win.pas`](https://github.com/DelphiWorlds/Playground/blob/c19f7767d0d784b116ece0c2f67beed49c79c3c3/Demos/RunProcess/DW.RunProcess.Win.pas#L214), so help is being sought on how to resolve this.
