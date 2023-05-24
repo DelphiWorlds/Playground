@@ -24,7 +24,17 @@ Please provide feedback about this demo as per [the main ReadMe.](https://github
 
 ## Status 
 
-As at Jan 6th, 2022
+* May 24th, 2023:
+
+Updated Android libraries
+Included resources from libraries and merged with project resources
+
+Sadly, still non-functional, but now the screen is black, rather than white. That may be because of other changes.
+Logcat entries seem to be more promising, as rotating the screen emits messages about the orientation changing.
+
+More later..
+
+* Jan 6th, 2022:
 
 As indicated above, currently this demo is non-functional
 
