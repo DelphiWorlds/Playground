@@ -80,38 +80,31 @@ end;
 
 procedure TForm1.StartCamera;
 begin
+  TOSLog.d('+TForm1.StartCamera');
   TJProcessCameraProvider.JavaClass.configureInstance(TJCamera2Config.JavaClass.defaultConfig);
   FCameraProviderFuture := TJProcessCameraProvider.JavaClass.getInstance(TAndroidHelper.Context);
   FCameraProviderFuture.addListener(FCameraProviderFutureListener, TJcontent_ContextCompat.JavaClass.getMainExecutor(TAndroidHelper.Context));
+  TOSLog.d('-TForm1.StartCamera');
 end;
 
 procedure TForm1.CameraProviderFutureListenerHandler;
 var
   LNativePreviewView: JPreviewView;
-  LLifecycleOwner: JLifecycleOwner;
 begin
+  TOSLog.d('+TForm1.CameraProviderFutureListenerHandler');
   FCameraProvider := TJProcessCameraProvider.Wrap(FCameraProviderFuture.&get);
   FPreview := TJPreview_Builder.JavaClass.init.build;
+
   FPreviewUseCaseGroup := TJUseCaseGroup_Builder.JavaClass.init
     .addUseCase(FPreview)
     .build;
   FCameraProvider.unbindAll;
-  // FPreviewView provides the surface for LPreview
+  FCameraProvider.bindToLifecycle(TJProcessLifecycleOwner.JavaClass.get, TJCameraSelector.JavaClass.DEFAULT_BACK_CAMERA, FPreviewUseCaseGroup);
+
+  // LNativePreviewView provides the surface for LPreview
   LNativePreviewView := TAndroidNativeCameraPreviewView(FCameraPreview.Presentation).View;
   FPreview.setSurfaceProvider(LNativePreviewView.getSurfaceProvider);
-  LLifecycleOwner := TJProcessLifecycleOwner.JavaClass.get;
-  if LLifecycleOwner <> nil then
-  begin
-    if LLifecycleOwner.getLifecycle <> nil then
-    begin
-      Log.d('LifecycleOwner.getLifecycle: %s', [JStringToString(LLifecycleOwner.getLifecycle.toString)]);
-    end
-    else
-      Log.d('LifecycleOwner.getLifecycle is nil');
-  end
-  else
-    Log.d('LifecycleOwner is nil');
-  FCameraProvider.bindToLifecycle(TJProcessLifecycleOwner.JavaClass.get, TJCameraSelector.JavaClass.DEFAULT_BACK_CAMERA, FPreviewUseCaseGroup);
+  TOSLog.d('-TForm1.CameraProviderFutureListenerHandler');
 end;
 
 procedure TForm1.Button1Click(Sender: TObject);

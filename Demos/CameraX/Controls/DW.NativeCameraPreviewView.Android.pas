@@ -55,6 +55,7 @@ end;
 function TAndroidNativeCameraPreviewView.CreateView: JView;
 begin
   FView := TJPreviewView.JavaClass.init(TAndroidHelper.Context);
+  FView.setImplementationMode(TJPreviewView_ImplementationMode.JavaClass.COMPATIBLE);
   Result := FView;
 end;
 

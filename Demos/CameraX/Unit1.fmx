@@ -2,7 +2,7 @@ object Form1: TForm1
   Left = 0
   Top = 0
   Caption = 'Form1'
-  ClientHeight = 713
+  ClientHeight = 714
   ClientWidth = 554
   FormFactor.Width = 320
   FormFactor.Height = 480
@@ -10,7 +10,7 @@ object Form1: TForm1
   DesignerMasterStyle = 0
   object Layout1: TLayout
     Align = Bottom
-    Position.Y = 664.000000000000000000
+    Position.Y = 665.000000000000000000
     Size.Width = 554.000000000000000000
     Size.Height = 49.000000000000000000
     Size.PlatformDefault = False
