@@ -5,7 +5,7 @@
         <FrameworkType>FMX</FrameworkType>
         <Base>True</Base>
         <Config Condition="'$(Config)'==''">Debug</Config>
-        <Platform Condition="'$(Platform)'==''">iOSDevice64</Platform>
+        <Platform Condition="'$(Platform)'==''">Android</Platform>
         <TargetedPlatforms>693267</TargetedPlatforms>
         <AppType>Application</AppType>
         <MainSource>SimpleCameraDemo.dpr</MainSource>
@@ -308,7 +308,7 @@
             <Form>Form1</Form>
             <FormType>fmx</FormType>
         </DCCReference>
-        <JavaReference Include="..\..\..\Lib\dw-camera.jar">
+        <JavaReference Include="Lib\dw-camera.jar">
             <ContainerId>ClassesdexFile</ContainerId>
             <Disabled/>
         </JavaReference>
