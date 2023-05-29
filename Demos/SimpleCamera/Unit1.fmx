@@ -1,0 +1,89 @@
+object Form1: TForm1
+  Left = 0
+  Top = 0
+  Caption = 'Form1'
+  ClientHeight = 672
+  ClientWidth = 480
+  Padding.Left = 8.000000000000000000
+  Padding.Top = 8.000000000000000000
+  Padding.Right = 8.000000000000000000
+  Padding.Bottom = 8.000000000000000000
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [Desktop]
+  DesignerMasterStyle = 0
+  object PreviewLayout: TLayout
+    Align = Client
+    Size.Width = 464.000000000000000000
+    Size.Height = 595.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 0
+    object MediaPlayerControl1: TMediaPlayerControl
+      Size.Width = 464.000000000000000000
+      Size.Height = 595.000000000000000000
+      Size.PlatformDefault = False
+      Align = Client
+      MediaPlayer = MediaPlayer1
+    end
+  end
+  object Label1: TLabel
+    Align = Top
+    Margins.Bottom = 4.000000000000000000
+    Position.X = 8.000000000000000000
+    Position.Y = 8.000000000000000000
+    Size.Width = 464.000000000000000000
+    Size.Height = 17.000000000000000000
+    Size.PlatformDefault = False
+    Text = 'Label1'
+    TabOrder = 1
+  end
+  object ButtonsLayout: TLayout
+    Align = Top
+    Position.X = 8.000000000000000000
+    Position.Y = 29.000000000000000000
+    Size.Width = 464.000000000000000000
+    Size.Height = 40.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 2
+    object RecordButton: TButton
+      Action = RecordAction
+      Align = Left
+      Enabled = True
+      ImageIndex = -1
+      Size.Width = 125.000000000000000000
+      Size.Height = 40.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 1
+    end
+    object PlaybackButton: TButton
+      Action = PlaybackAction
+      Align = Left
+      Enabled = True
+      ImageIndex = -1
+      Margins.Left = 12.000000000000000000
+      Position.X = 137.000000000000000000
+      Size.Width = 125.000000000000000000
+      Size.Height = 40.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 0
+    end
+  end
+  object ActionList: TActionList
+    Left = 364
+    Top = 89
+    object RecordAction: TAction
+      Text = 'Record'
+      OnExecute = RecordActionExecute
+      OnUpdate = RecordActionUpdate
+    end
+    object PlaybackAction: TAction
+      Text = 'Playback'
+      OnExecute = PlaybackActionExecute
+      OnUpdate = PlaybackActionUpdate
+    end
+  end
+  object MediaPlayer1: TMediaPlayer
+    Left = 140
+    Top = 205
+  end
+end
