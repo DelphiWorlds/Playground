@@ -34,6 +34,18 @@ If using the Zxing based image processor, you will need to configure your projec
 
 ## Status
 
+* May 30th, 2023
+
+Recording issue:
+
+On my Android device (Pixel 3a), when pressing "Stop Recording", it causes this error (in logcat, and a message is displayed on the screen):
+
+```
+2023/05/29 21:37:00.863	E	com.embarcadero.SimpleCameraDemo	30035	30035	MediaRecorder	stop failed: -1007
+```
+
+The Pixel 3a is also unable to playback the recorded video (similar problem to the Pixel 6 Pro)
+
 * May 29th, 2023
 
 Playback issue:
