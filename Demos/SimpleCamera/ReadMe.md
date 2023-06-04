@@ -40,15 +40,23 @@ If using the Zxing based image processor, you will need to configure your projec
 
 * Barcode image processors:
 
-    As per the description, the current image processors are for iOS. Contributions of image processors for Android and/or alternative implementations are welcome. Please ensure that contributions adhere to [Delphi Worlds coding standards](https://github.com/DelphiWorlds/Kastri/blob/master/CodingStandards.md).
+    As per the description, the current image processors are for iOS, aside from Zxing which has both Android and iOS (see [Status](#status)). Contributions of image processors for Android and/or alternative implementations are welcome. Please ensure that contributions adhere to [Delphi Worlds coding standards](https://github.com/DelphiWorlds/Kastri/blob/master/CodingStandards.md).
 
 **The code/demo was built for Delphi 11.3, however it might be able to be modified to work in earlier versions**
 
 ## Status
 
-* May 30th, 2023
+Jun 4th, 2023
 
-    Recording issue:
+* Added Zxing image processor for Android (i.e. Barcode scanning)
+
+    Note: Performance for this library seems to be absolutely horrendous on Android. That may or may not be my fault
+
+* Added placeholder event for `OnImageAvailable` - it may or may not be removed
+
+May 30th, 2023
+
+* Recording issue:
 
     On my Android device (Pixel 3a), when pressing "Stop Recording", it causes this error (in logcat, and a message is displayed on the screen):
 
@@ -58,9 +66,9 @@ If using the Zxing based image processor, you will need to configure your projec
 
     The Pixel 3a is also unable to playback the recorded video (similar problem to the Pixel 6 Pro)
 
-* May 29th, 2023
+May 29th, 2023
 
-    Playback issue:
+* Playback issue:
 
     On my Android device (Pixel 6 Pro with Android 13), the video does not play back, however the audio does play. When it plays, these lines appear in the logcat messages:
 
