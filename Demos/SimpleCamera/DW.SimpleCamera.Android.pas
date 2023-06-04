@@ -3,6 +3,7 @@ unit DW.SimpleCamera.Android;
 interface
 
 uses
+  System.Classes,
   Androidapi.JNI.GraphicsContentViewText, Androidapi.JNI.JavaTypes, Androidapi.JNI.Util, Androidapi.JNIBridge, Androidapi.JNI.Os,
   Androidapi.JNI.Media,
   FMX.Controls,
@@ -13,12 +14,14 @@ type
   TPlatformSimpleCamera = class;
 
   TTextureAvailableEvent = procedure(Sender: TObject; const Texture: JSurfaceTexture; const Width, Height: Integer) of object;
+  TTextureUpdatedEvent = procedure(Sender: TObject; const Texture: JSurfaceTexture) of object;
   TTextureDestroyedEvent = procedure(Sender: TObject; const Texture: JSurfaceTexture) of object;
 
   TSurfaceTextureListener = class(TJavaLocal, JTextureView_SurfaceTextureListener)
   private
     FOnTextureAvailable: TTextureAvailableEvent;
     FOnTextureDestroyed: TTextureDestroyedEvent;
+    FOnTextureUpdated: TTextureUpdatedEvent;
   public
     { JTextureView_SurfaceTextureListener }
     procedure onSurfaceTextureAvailable(texture: JSurfaceTexture; width: Integer; height: Integer); cdecl;
@@ -28,6 +31,20 @@ type
   public
     property OnTextureAvailable: TTextureAvailableEvent read FOnTextureAvailable write FOnTextureAvailable;
     property OnTextureDestroyed: TTextureDestroyedEvent read FOnTextureDestroyed write FOnTextureDestroyed;
+    property OnTextureUpdated: TTextureUpdatedEvent read FOnTextureUpdated write FOnTextureUpdated;
+  end;
+
+  TImageEvent = procedure(Sender: TObject; const Image: JImage) of object;
+
+  TImageAvailableListener = class(TJavaLocal, JImageReader_OnImageAvailableListener)
+  private
+    FOnImage: TImageEvent;
+    procedure DoImage(const AImage: JImage);
+  public
+    { JImageReader_OnImageAvailableListener }
+    procedure onImageAvailable(reader: JImageReader); cdecl;
+  public
+    property OnImage: TImageEvent read FOnImage write FOnImage;
   end;
 
   TCaptureSessionState = (Stopped, Starting, Creating, Started);
@@ -44,6 +61,8 @@ type
     FCaptureRequestBuilder: JCaptureRequest_Builder;
     FCaptureSessionStateCallback: JDWCameraCaptureSessionStateCallback;
     FCaptureSessionStateCallbackDelegate: JDWCameraCaptureSessionStateCallbackDelegate;
+    FImageAvailableListener: TImageAvailableListener;
+    FImageReader: JImageReader;
     FIsRecording: Boolean;
     FPlatformSimpleCamera: TPlatformSimpleCamera;
     FMediaRecorder: JMediaRecorder;
@@ -61,6 +80,7 @@ type
     procedure SetupMediaRecorder;
     procedure TextureAvailableHandler(Sender: TObject; const ATexture: JSurfaceTexture; const AWidth, AHeight: Integer);
     procedure TextureDestroyedHandler(Sender: TObject; const ATexture: JSurfaceTexture);
+    // procedure TextureUpdatedHandler(Sender: TObject; const ATexture: JSurfaceTexture);
     procedure UpdatePreview;
     procedure UpdateSurfaceTexture;
   protected
@@ -96,10 +116,13 @@ type
     FDeviceStateCallback: JDWCameraDeviceStateCallback;
     FFileName: string;
     FHandler: JHandler;
+    FImageCount: Integer; // Debugging
+    FImageTime: TDateTime; // Debugging
     FPreviewView: JView;
     FThread: JHandlerThread;
     FViewSize: Jutil_Size;
     function CameraPositionChanged: Boolean;
+    procedure ImageAvailable(const AImage: TStream);
     procedure OpenCamera;
     procedure StartThread;
     procedure StopThread;
@@ -108,6 +131,7 @@ type
     procedure CameraDisconnected(camera: JCameraDevice);
     procedure CameraError(camera: JCameraDevice; error: Integer);
     procedure CameraOpened(camera: JCameraDevice);
+    procedure ImageHandler(Sender: TObject; const AImage: JImage);
     function IsRecording: Boolean; override;
     procedure PreviewResized; override;
     procedure StartRecording(const AFileName: string); override;
@@ -126,8 +150,8 @@ type
 implementation
 
 uses
-  DW.OSLog,
-  System.SysUtils, System.Classes, System.Permissions, System.Types,
+  DW.OSLog, System.DateUtils,
+  System.SysUtils, System.Permissions, System.Types,
   Androidapi.Helpers, Androidapi.JNI.App, Androidapi.JNI,
   FMX.Types, FMX.Forms, FMX.Presentation.Android, FMX.Presentation.Factory,
   DW.Permissions.Helpers, DW.Consts.Android;
@@ -239,6 +263,26 @@ begin
   //
 end;
 
+{ TImageAvailableListener }
+
+procedure TImageAvailableListener.DoImage(const AImage: JImage);
+begin
+  if Assigned(FOnImage) then
+    FOnImage(Self, AImage);
+end;
+
+procedure TImageAvailableListener.onImageAvailable(reader: JImageReader);
+var
+  LImage: JImage;
+begin
+  LImage := reader.acquireLatestImage;
+  try
+    DoImage(LImage);
+  finally
+    LImage.close;
+  end;
+end;
+
 { TCaptureSession }
 
 constructor TCaptureSession.Create(const APlatformSimpleCamera: TPlatformSimpleCamera);
@@ -249,6 +293,8 @@ begin
   FSurfaceTextureListener := TSurfaceTextureListener.Create;
   FSurfaceTextureListener.OnTextureAvailable := TextureAvailableHandler;
   FSurfaceTextureListener.OnTextureDestroyed := TextureDestroyedHandler;
+  FImageAvailableListener := TImageAvailableListener.Create;
+  FImageAvailableListener.OnImage := SimpleCamera.ImageHandler;
   FCaptureRequestHelper := TJDWCaptureRequestBuilderHelper.JavaClass.init;
   FCaptureSessionStateCallbackDelegate := TDWCameraCaptureSessionStateCallbackDelegate.Create(Self);
   FCaptureSessionStateCallback := TJDWCameraCaptureSessionStateCallback.JavaClass.init(FCaptureSessionStateCallbackDelegate);
@@ -265,6 +311,7 @@ end;
 destructor TCaptureSession.Destroy;
 begin
   FSurfaceTextureListener.Free;
+  FImageAvailableListener.Free;
   inherited;
 end;
 
@@ -311,6 +358,7 @@ begin
     FSession.close;
     FSession := nil;
   end;
+  FImageReader := nil;
   FSessionState := TCaptureSessionState.Stopped;
   FIsRecording := False;
 end;
@@ -331,8 +379,9 @@ begin
     LTemplateType := TJCameraDevice.JavaClass.TEMPLATE_PREVIEW;
   FCaptureRequestBuilder := CameraDevice.createCaptureRequest(LTemplateType);
   FCaptureRequestBuilder.addTarget(FPreviewSurface);
+  FCaptureRequestBuilder.addTarget(FImageReader.getSurface);
   if FWantRecord then
-   FCaptureRequestBuilder.addTarget(FMediaRecorder.getSurface);
+    FCaptureRequestBuilder.addTarget(FMediaRecorder.getSurface);
   TOSLog.d('> Session.setRepeatingRequest');
   Session.setRepeatingRequest(FCaptureRequestBuilder.build, nil, Handler); // FCaptureSessionCaptureCallback, Handler);
   TOSLog.d('> FMediaRecorder.start');
@@ -352,11 +401,11 @@ begin
   else
     FMediaRecorder.setAudioSource(TJMediaRecorder_AudioSource.JavaClass.DEFAULT);
   FMediaRecorder.setVideoSource(TJMediaRecorder_VideoSource.JavaClass.SURFACE);
-  // FMediaRecorder.setOutputFormat(TJMediaRecorder_OutputFormat.JavaClass.MPEG_4);
-  // FMediaRecorder.setAudioEncoder(TJMediaRecorder_AudioEncoder.JavaClass.AAC);
-  // FMediaRecorder.setVideoEncoder(TJMediaRecorder_VideoEncoder.JavaClass.H264);
-  // setProfile replaces the lines above
-  FMediaRecorder.setProfile(TJCamcorderProfile.JavaClass.get(TJCamcorderProfile.JavaClass.QUALITY_HIGH));
+  FMediaRecorder.setOutputFormat(TJMediaRecorder_OutputFormat.JavaClass.MPEG_4);
+  FMediaRecorder.setAudioEncoder(TJMediaRecorder_AudioEncoder.JavaClass.AAC);
+  FMediaRecorder.setVideoEncoder(TJMediaRecorder_VideoEncoder.JavaClass.H264);
+  // setProfile replaces the 3 lines above
+  // FMediaRecorder.setProfile(TJCamcorderProfile.JavaClass.get(TJCamcorderProfile.JavaClass.QUALITY_HIGH));
   FMediaRecorder.setVideoSize(FPlatformSimpleCamera.ViewSize.getWidth, FPlatformSimpleCamera.ViewSize.getHeight());
   FMediaRecorder.setVideoFrameRate(30);
   FMediaRecorder.setOutputFile(StringToJString(FPlatformSimpleCamera.FileName));
@@ -369,12 +418,15 @@ var
 begin
   if FSurfaceTexture <> nil then
   begin
-    FSessionState := TCaptureSessionState.Creating; // protected
+    FSessionState := TCaptureSessionState.Creating;
     UpdateSurfaceTexture;
+    FImageReader := TJImageReader.JavaClass.newInstance(ViewSize.getWidth, ViewSize.getHeight, TJImageFormat.JavaClass.JPEG, 2);
+    FImageReader.setOnImageAvailableListener(FImageAvailableListener, Handler);
     if FWantRecord then
       SetupMediaRecorder;
     LOutputs := TJArrayList.JavaClass.init(Ord(FWantRecord) + 1);
     LOutputs.add(FPreviewSurface);
+    LOutputs.add(FImageReader.getSurface);
     if FWantRecord then
       LOutputs.add(FMediaRecorder.getSurface);
     CameraDevice.createCaptureSession(TJList.Wrap(LOutputs), CaptureSessionStateCallback, Handler);
@@ -403,6 +455,13 @@ procedure TCaptureSession.TextureDestroyedHandler(Sender: TObject; const ATextur
 begin
   FSurfaceTexture := nil;
 end;
+
+{
+procedure TCaptureSession.TextureUpdatedHandler(Sender: TObject; const ATexture: JSurfaceTexture);
+begin
+  //
+end;
+}
 
 procedure TCaptureSession.UpdateSurfaceTexture;
 begin
@@ -503,6 +562,20 @@ begin
   FHandler := nil;
 end;
 
+procedure TPlatformSimpleCamera.ImageAvailable(const AImage: TStream);
+begin
+  TThread.Synchronize(nil, procedure begin DoImageAvailable(AImage) end);
+end;
+
+procedure TPlatformSimpleCamera.ImageHandler(Sender: TObject; const AImage: JImage);
+begin
+  // **** This routine occurs in a thread separate to the UI thread ****
+  if ImageProcessor <> nil then
+    ImageProcessor.ProcessImage(TAndroidHelper.JObjectToID(AImage));
+  // The intention here is to process the image and pass it to the ImageAvailable method
+  // At present, the code to convert it to an image usable by Delphi components slows down the output too much
+end;
+
 function TPlatformSimpleCamera.IsRecording: Boolean;
 begin
   Result := FCaptureSession.IsRecording;
@@ -516,8 +589,6 @@ end;
 procedure TPlatformSimpleCamera.CameraDisconnected(camera: JCameraDevice);
 begin
   FCameraDevice := nil;
-  // FIsCapturing := False;
-  // InternalSetActive(False);
 end;
 
 procedure TPlatformSimpleCamera.CameraError(camera: JCameraDevice; error: Integer);
@@ -529,8 +600,6 @@ procedure TPlatformSimpleCamera.CameraOpened(camera: JCameraDevice);
 begin
   TOSLog.d('TPlatformCamera.CameraOpened');
   FCameraDevice := camera;
-  // InternalSetActive(True);
-  // StartCapture;
   FCaptureSession.StartSession(True); // needs to start the recording session, too
 end;
 
@@ -596,6 +665,8 @@ end;
 
 procedure TPlatformSimpleCamera.OpenCamera;
 begin
+  FImageCount := 0;
+  FImageTime := 0;
   if CameraPositionChanged then
     FCameraManager.openCamera(FCameraID, FDeviceStateCallback, Handler)
   else
