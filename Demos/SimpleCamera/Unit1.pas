@@ -5,12 +5,12 @@ interface
 uses
   System.SysUtils, System.Types, System.UITypes, System.Classes, System.Variants, System.Actions,
   FMX.Types, FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Dialogs, FMX.ActnList,
-  FMX.Controls.Presentation, FMX.StdCtrls, FMX.Layouts, FMX.Media,
-  // DW.ImageProcessor,
+  FMX.Controls.Presentation, FMX.StdCtrls, FMX.Layouts,
+  DW.ImageProcessor,
   DW.ShareItems,
   DW.BarcodeReader.Types,
   DW.VideoPlayer,
-  DW.SimpleCamera;
+  DW.SimpleCamera, FMX.Objects;
 
 type
   TForm1 = class(TForm, IBarcodeReader)
@@ -22,8 +22,8 @@ type
     ActionList: TActionList;
     RecordAction: TAction;
     PlaybackAction: TAction;
-    MediaPlayerControl1: TMediaPlayerControl;
-    MediaPlayer1: TMediaPlayer;
+    PreviewImageLayout: TLayout;
+    PreviewImage: TImage;
     procedure RecordActionExecute(Sender: TObject);
     procedure RecordActionUpdate(Sender: TObject);
     procedure PlaybackActionUpdate(Sender: TObject);
@@ -33,6 +33,7 @@ type
     FPlayer: TVideoPlayer;
     FCaptureFileName: string;
     FShare: TShareItems;
+    procedure CameraImageAvailableHandler(Sender: TObject; const AImage: TStream);
   public
     function GetFormats: TBarcodeFormats;
     procedure ReceivedBarcodes(const ABarcodes: TBarcodes; const AError: string);
@@ -52,6 +53,7 @@ uses
   System.IOUtils,
   // DW.BarcodeImageProcessor.iOS,
   // DW.ZXingImageProcessor.iOS,
+  // DW.ZXingImageProcessor.Android,
   DW.OSLog;
 
 { TForm1 }
@@ -62,6 +64,7 @@ begin
   FCaptureFileName := TPath.Combine(TPath.GetDocumentsPath, 'test.mp4');
   FCamera := TSimpleCamera.Create;
   FCamera.Preview.Parent := PreviewLayout;
+  FCamera.OnImageAvailable := CameraImageAvailableHandler;
   // FCamera.ImageProcessor := TPlatformBarcodeImageProcessor.Create(Self);
   // FCamera.ImageProcessor := TPlatformZXingImageProcessor.Create(Self);
   FPlayer := TVideoPlayer.Create;
@@ -108,9 +111,8 @@ begin
     FCamera.IsVisible := False;
     FPlayer.IsVisible := True;
     FPlayer.Play(FCaptureFileName);
-//    FPlayer.IsVisible := False;
-//    MediaPlayer1.FileName := FCaptureFileName;
-//    MediaPlayer1.Play;
+// The following code is just to allow easy "export" of the recorded file outside of the app
+// It is just used for testing, separate from the code above
 //    if FShare = nil then
 //      FShare := TShareItems.Create;
 //    FShare.AddFile(FCaptureFileName);
@@ -138,6 +140,12 @@ begin
   end;
 //  else
 //    TOSLog.d('No barcodes or error!');
+end;
+
+procedure TForm1.CameraImageAvailableHandler(Sender: TObject; const AImage: TStream);
+begin
+  // This handler is called in synch with the UI thread
+  PreviewImage.Bitmap.LoadFromStream(AImage);
 end;
 
 end.
