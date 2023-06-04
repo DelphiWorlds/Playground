@@ -6,6 +6,7 @@ interface
 
 uses
   System.Classes,
+  System.SysUtils,
   DW.ImageProcessor,
   DW.OSControl;
 
@@ -32,6 +33,7 @@ type
     procedure SetIsVisible(const Value: Boolean);
     procedure SetRecordingState(const Value: TRecordingState);
   protected
+    procedure DoImageAvailable(const AImage: TStream);
     function IsRecording: Boolean; virtual;
     procedure PreviewResized; virtual;
     procedure RecordingStateChanged; virtual;
@@ -47,11 +49,13 @@ type
     destructor Destroy; override;
   end;
 
+  TImageAvailableEvent = procedure(Sender: TObject; const Image: TStream) of object;
   TRecordingStateChangedEvent = procedure(Sender: TObject; const State: TRecordingState) of object;
 
   TSimpleCamera = class(TObject)
   private
     FPlatformSimpleCamera: TCustomPlatformSimpleCamera;
+    FOnImageAvailable: TImageAvailableEvent;
     FOnRecordingStateChanged: TRecordingStateChangedEvent;
     function GetIncludeAudio: Boolean;
     function GetPreview: TCameraPreview;
@@ -61,6 +65,7 @@ type
     procedure SetIncludeAudio(const Value: Boolean);
     procedure SetIsVisible(const Value: Boolean);
   protected
+    procedure DoImageAvailable(const AImage: TStream);
     procedure DoRecordingStateChanged(const AState: TRecordingState);
   public
     constructor Create;
@@ -73,6 +78,7 @@ type
     property Preview: TCameraPreview read GetPreview;
     property IncludeAudio: Boolean read GetIncludeAudio write SetIncludeAudio;
     property OnRecordingStateChanged: TRecordingStateChangedEvent read FOnRecordingStateChanged write FOnRecordingStateChanged;
+    property OnImageAvailable: TImageAvailableEvent read FOnImageAvailable write FOnImageAvailable;
   end;
 
 implementation
@@ -117,6 +123,11 @@ begin
     TThread.Queue(nil, DoRecordingStateChanged)
   else
     DoRecordingStateChanged;
+end;
+
+procedure TCustomPlatformSimpleCamera.DoImageAvailable(const AImage: TStream);
+begin
+  FSimpleCamera.DoImageAvailable(AImage);
 end;
 
 procedure TCustomPlatformSimpleCamera.DoRecordingStateChanged;
@@ -205,6 +216,12 @@ end;
 function TSimpleCamera.IsRecording: Boolean;
 begin
   Result := FPlatformSimpleCamera.IsRecording;
+end;
+
+procedure TSimpleCamera.DoImageAvailable(const AImage: TStream);
+begin
+  if Assigned(FOnImageAvailable) then
+    FOnImageAvailable(Self, AImage);
 end;
 
 procedure TSimpleCamera.DoRecordingStateChanged(const AState: TRecordingState);
