@@ -14,11 +14,11 @@ This project may also serve as a starting point to replace current Camera suppor
 
 As per the purpose section, this demo contains as simple as practicable, an implementation of camera functionality, including showing a preview, recording video (and audio where permission is granted), and playback of the recorded video.
 
-## Barcode detection on iOS
+## Barcode detection
 
-This code also has support for integrating detection of barcodes on iOS, by way of implementing an image processor that uses the native image classes, rather than converting them to Delphi bitmaps, which can be quite costly in terms of processing time.
+This code also has support for integrating detection of barcodes on Android and iOS, by way of implementing an image processor that uses the native image classes, rather than converting them to Delphi bitmaps, which can be quite costly in terms of processing time.
 
-There are examples of image processors that use MLVision Kit (in `DW.BarcodeImageProcessor.iOS`), and one that uses the Zxing library by Edward Spelt (in `DW.ZXingImageProcessor.iOS`). For the latter, converting the image to a bitmap is unavoidable, since the Zxing code works with bitmaps.
+There are examples of image processors that use MLVision Kit (in `DW.BarcodeImageProcessor.Android` and `DW.BarcodeImageProcessor.iOS`), and using Zxing library by Edward Spelt (in `DW.ZXingImageProcessor.Android` and `DW.ZXingImageProcessor.iOS`). For the latter, converting the image to a bitmap is unavoidable, since the Zxing code works with bitmaps.
 
 In the demo, uncomment the appropriate code in order to use the barcode image processors.
 
@@ -28,7 +28,10 @@ In the demo, uncomment the appropriate code in order to use the barcode image pr
 
 This code is dependent on [Kastri](https://github.com/DelphiWorlds/Kastri), so the project search paths will need to refer to it.
 
-If using the MLVision Kit based image processor, you will need paths to the framework, as per the `Framework search path` in the project options.
+If using the MLVision Kit based image processor:
+
+* iOS: You will need paths to the MLVision Kit framework, as per the `Framework search path` in the project options.
+* Android: You will need to add `play-services-vision-17.0.2.jar` and `play-services-vision-common-17.0.2.jar` from the `Lib` folder to the Libraries node of the relevant Android target(s) in Project Manager. **Please [see this](https://docs.code-kungfu.com/books/hotfix-113-alexandria/page/fix-jar-libraries-added-to-android-64-bit-platform-target-are-not-compiled) regarding an issue in Delphi 11.3 related to adding libraries**
 
 If using the Zxing based image processor, you will need to configure your project search paths to point to the Zxing folders.
 
@@ -40,17 +43,23 @@ If using the Zxing based image processor, you will need to configure your projec
 
 * Barcode image processors:
 
-    As per the description, the current image processors are for iOS, aside from Zxing which has both Android and iOS (see [Status](#status)). Contributions of image processors for Android and/or alternative implementations are welcome. Please ensure that contributions adhere to [Delphi Worlds coding standards](https://github.com/DelphiWorlds/Kastri/blob/master/CodingStandards.md).
+    As per the description, the current image processors are for Android and iOS (see [Status](#status)). Contributions of image processors for Android and/or alternative implementations are welcome. Please ensure that contributions adhere to [Delphi Worlds coding standards](https://github.com/DelphiWorlds/Kastri/blob/master/CodingStandards.md).
 
 **The code/demo was built for Delphi 11.3, however it might be able to be modified to work in earlier versions**
 
 ## Status
 
+Jun 5th, 2023
+
+* Added Vision image processor for Android (i.e. Barcode scanning)
+
+    Now the Vision barcode scanning has both iOS and Android support. This is recommended over Zxing, which has extremely poor performance.
+
 Jun 4th, 2023
 
 * Added Zxing image processor for Android (i.e. Barcode scanning)
 
-    Note: Performance for this library seems to be absolutely horrendous on Android. That may or may not be my fault
+    Note: Performance for this library is absolutely horrendous on Android. iOS not so bad.
 
 * Added placeholder event for `OnImageAvailable` - it may or may not be removed
 
