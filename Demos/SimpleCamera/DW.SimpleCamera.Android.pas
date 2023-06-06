@@ -600,7 +600,7 @@ procedure TPlatformSimpleCamera.CameraOpened(camera: JCameraDevice);
 begin
   TOSLog.d('TPlatformCamera.CameraOpened');
   FCameraDevice := camera;
-  FCaptureSession.StartSession(True); // needs to start the recording session, too
+  FCaptureSession.StartSession(not FFileName.IsEmpty); // needs to start the recording session, too
 end;
 
 procedure TPlatformSimpleCamera.UpdateViewSize(const ASizes: TJavaObjectArray<Jutil_Size>);
