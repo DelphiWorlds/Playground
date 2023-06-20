@@ -19,37 +19,49 @@ uses
 type
   TVKObserver = class;
 
-  TControlContainers = TArray<TControl>;
+  TControlContainer = record
+    ContentBounds: TRectF;
+    Control: TControl;
+    Margins: TRectF;
+    constructor Create(const AControl: TControl);
+    procedure Restore;
+    procedure Save;
+  end;
+
+  TControlContainers = TArray<TControlContainer>;
 
   TCustomPlatformVKObserver = class(TObject)
   private
     class function IsParentOf(const AParent, AControl: TControl): Boolean;
   private
-    FActiveContainer: TControl;
+    FActiveContainerIndex: Integer;
     FActiveFrame: TRect;
     FContainers: TControlContainers;
     FVKObserver: TVKObserver;
     procedure AdjustContainer(const AVKTop: Integer);
     procedure DoFrameChanged;
-    function FindContainer(const AControl: TControl; out AContainer: TControl): Boolean;
+    function FindContainer(const AControl: TControl; out AIndex: Integer): Boolean;
     procedure FormChangingFocusControlMessageHandler(const ASender: TObject; const AMsg: TMessage);
     procedure RestoreContainer;
   protected
     procedure FrameChanged(const AFrame: TRect); virtual;
     procedure FocusChanged(const ANewFocusedControl: IControl); virtual;
+    property ActiveFrame: TRect read FActiveFrame;
   public
     constructor Create(const AVKObserver: TVKObserver); virtual;
     destructor Destroy; override;
-    procedure AddContainer(const AContainer: TControl);
+    procedure AddContainer(const AControl: TControl);
   end;
 
   TVKObserver = class(TObject)
   private
     FPlatformVKObserver: TCustomPlatformVKObserver;
+    function GetActiveFrame: TRect;
   public
     constructor Create;
     destructor Destroy; override;
-    procedure AddContainer(const AContainer: TControl);
+    procedure AddContainer(const AControl: TControl);
+    property ActiveFrame: TRect read GetActiveFrame;
   end;
 
 implementation
@@ -63,6 +75,23 @@ uses
   {$ELSE}
   // DW.VKObserver.Default;
   {$ENDIF}
+
+{ TControlContainer }
+
+constructor TControlContainer.Create(const AControl: TControl);
+begin
+  Control := AControl;
+end;
+
+procedure TControlContainer.Restore;
+begin
+  Control.Margins.Rect := Margins;
+end;
+
+procedure TControlContainer.Save;
+begin
+  Margins := Control.Margins.Rect;
+end;
 
 { TCustomPlatformVKObserver }
 
@@ -89,9 +118,9 @@ begin
   Result := LParent = AParent;
 end;
 
-procedure TCustomPlatformVKObserver.AddContainer(const AContainer: TControl);
+procedure TCustomPlatformVKObserver.AddContainer(const AControl: TControl);
 begin
-  FContainers := FContainers + [AContainer];
+  FContainers := FContainers + [TControlContainer.Create(AControl)];
 end;
 
 procedure TCustomPlatformVKObserver.AdjustContainer(const AVKTop: Integer);
@@ -102,28 +131,38 @@ begin
   if Screen.FocusControl <> nil then
   begin
     LControl := TControl(Screen.FocusControl.GetObject);
-    if FindContainer(LControl, FActiveContainer) then
+    if FindContainer(LControl, FActiveContainerIndex) then
     begin
-      FActiveContainer.Margins.Top := 0;
       LOffset := (LControl.AbsoluteRect.Bottom + 2) - AVKTop;
       if LOffset > 0 then
-        FActiveContainer.Margins.Top := -LOffset
+      begin
+        FContainers[FActiveContainerIndex].Save;
+        FContainers[FActiveContainerIndex].Control.Margins.Top := -LOffset;
+      end
       else
         RestoreContainer;
     end;
   end;
 end;
 
-function TCustomPlatformVKObserver.FindContainer(const AControl: TControl; out AContainer: TControl): Boolean;
+procedure TCustomPlatformVKObserver.RestoreContainer;
+begin
+  if FActiveContainerIndex > -1 then
+    FContainers[FActiveContainerIndex].Restore;
+  FActiveContainerIndex := -1;
+end;
+
+function TCustomPlatformVKObserver.FindContainer(const AControl: TControl; out AIndex: Integer): Boolean;
 var
-  LContainer: TControl;
+  I: Integer;
 begin
   Result := False;
-  for LContainer in FContainers do
+  AIndex := -1;
+  for I := 0 to Length(FContainers) - 1 do
   begin
-    if IsParentOf(LContainer, AControl) then
+    if IsParentOf(FContainers[I].Control, AControl) then
     begin
-      AContainer := LContainer;
+      AIndex := I;
       Result := True;
       Break;
     end;
@@ -154,13 +193,6 @@ begin
   FocusChanged(TFormChangingFocusControl(AMsg).NewFocusedControl);
 end;
 
-procedure TCustomPlatformVKObserver.RestoreContainer;
-begin
-  if FActiveContainer <> nil then
-    FActiveContainer.Margins.Top := 0;
-  FActiveContainer := nil;
-end;
-
 { TVKObserver }
 
 constructor TVKObserver.Create;
@@ -175,9 +207,14 @@ begin
   inherited;
 end;
 
-procedure TVKObserver.AddContainer(const AContainer: TControl);
+function TVKObserver.GetActiveFrame: TRect;
 begin
-  FPlatformVKObserver.AddContainer(AContainer);
+  Result := FPlatformVKObserver.ActiveFrame;
+end;
+
+procedure TVKObserver.AddContainer(const AControl: TControl);
+begin
+  FPlatformVKObserver.AddContainer(AControl);
 end;
 
 end.
