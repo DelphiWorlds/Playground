@@ -1,140 +1,152 @@
 unit DW.MediaManager.Win;
 
+{*******************************************************}
+{                                                       }
+{                      Kastri                           }
+{                                                       }
+{         Delphi Worlds Cross-Platform Library          }
+{                                                       }
+{  Copyright 2020-2021 Dave Nottage under MIT license   }
+{  which is located in the root folder of this library  }
+{                                                       }
+{*******************************************************}
+
 {$I DW.GlobalDefines.inc}
 
 interface
 
 uses
   // DW
-  DW.Photos;
+  DW.MediaManager, DW.Types;
 
 type
-  TPlatformPhotos = class(TCustomPlatformPhotos)
-  public
-    procedure RequestAuthorization; override;
+  TPlatformMediaManager = class(TCustomPlatformMediaManager)
+  protected
+    function GetAuthorizationStatus: TAuthorizationStatus; override;
+    procedure RequestPermission; override;
   end;
 
-  TPlatformPhotoCollections = class(TPhotoCollections)
+  TPlatformMediaCollections = class(TMediaCollections)
   protected
-    procedure DoReload; override;
+    procedure DoLoad; override;
   end;
 
 implementation
 
 uses
   // RTL
-  System.IOUtils, System.StrUtils, System.SysUtils,
+  System.IOUtils, System.StrUtils, System.SysUtils, System.Classes,
   // DW
-  DW.Classes.Helpers, DW.Types;
+  DW.Classes.Helpers;
 
 type
-  TPlatformPhoto = class(TPhoto)
+  TPlatformMediaItem = class(TMediaItem)
   private
     procedure InternalDoLoad;
   protected
     FPath: string;
-    procedure DoLoad(const AWidth, AHeight: Single); override;
   public
-    constructor Create;
+    constructor Create(const AID, AFileName: string); override;
     destructor Destroy; override;
+    procedure Load(const ALoadedHandler: TProc; const AWidth: Single = 0; const AHeight: Single = 0); override;
   end;
 
-  TPlatformPhotoCollection = class(TPhotoCollection)
+  TPlatformMediaCollection = class(TMediaCollection)
   private
-    procedure AddPhoto(const APath: string);
-    function GetPhotoFiles: TArray<string>;
+    procedure AddItem(const APath: string);
+    function GetFiles: TArray<string>;
   protected
     FPath: string;
-    procedure DoReload(const ACount: Integer); override;
+    procedure DoLoad; override;
   public
     constructor Create(const AID, ATitle: string); override;
     destructor Destroy; override;
   end;
 
-{ TPlatformPhoto }
+{ TPlatformMediaItem }
 
-constructor TPlatformPhoto.Create;
+constructor TPlatformMediaItem.Create;
 begin
   inherited;
   //
 end;
 
-destructor TPlatformPhoto.Destroy;
+destructor TPlatformMediaItem.Destroy;
 begin
   //
   inherited;
 end;
 
-procedure TPlatformPhoto.DoLoad(const AWidth, AHeight: Single);
+procedure TPlatformMediaItem.Load(const ALoadedHandler: TProc; const AWidth: Single = 0; const AHeight: Single = 0);
 begin
-  TDo.RunSync(InternalDoLoad, DoLoaded);
+  TDo.RunSync(InternalDoLoad, procedure begin ALoadedHandler end);
 end;
 
-procedure TPlatformPhoto.InternalDoLoad;
+procedure TPlatformMediaItem.InternalDoLoad;
 begin
   ImageStream.LoadFromFile(FPath);
 end;
 
-{ TPlatformPhotoCollection }
+{ TPlatformMediaCollection }
 
-constructor TPlatformPhotoCollection.Create(const AID, ATitle: string);
+constructor TPlatformMediaCollection.Create(const AID, ATitle: string);
 begin
   inherited;
   //
 end;
 
-destructor TPlatformPhotoCollection.Destroy;
+destructor TPlatformMediaCollection.Destroy;
 begin
   //
   inherited;
 end;
 
-procedure TPlatformPhotoCollection.AddPhoto(const APath: string);
+procedure TPlatformMediaCollection.AddItem(const APath: string);
 var
-  LPhoto: TPlatformPhoto;
+  LItem: TPlatformMediaItem;
 begin
-  LPhoto := TPlatformPhoto.Create;
-  LPhoto.FPath := APath;
-  LPhoto.FID := Count.ToString;
-  Add(LPhoto);
+  LItem := TPlatformMediaItem.Create(Count.ToString, APath);
+  Add(LItem);
 end;
 
-procedure TPlatformPhotoCollection.DoReload(const ACount: Integer);
+procedure TPlatformMediaCollection.DoLoad;
 var
   LFiles: TArray<string>;
   LFile: string;
 begin
-  LFiles := GetPhotoFiles;
+  LFiles := GetFiles;
   for LFile in LFiles do
   begin
     if MatchText(TPath.GetExtension(LFile), ['.jpg', '.jpeg', '.bmp', '.png']) then
-    begin
-      if (ACount = 0) or (Count < ACount)  then
-        AddPhoto(LFile);
-    end;
+      AddItem(LFile);
   end;
 end;
 
-function TPlatformPhotoCollection.GetPhotoFiles: TArray<string>;
+function TPlatformMediaCollection.GetFiles: TArray<string>;
 begin
-  Result := TDirectory.GetFiles('Z:\Temp\Photos', '*.*', TSearchOption.soTopDirectoryOnly);
+  Result := TDirectory.GetFiles(TPath.GetSharedPicturesPath, '*.*', TSearchOption.soTopDirectoryOnly);
 end;
 
-{ TPlatformPhotoCollections }
+{ TPlatformMediaCollections }
 
-procedure TPlatformPhotoCollections.DoReload;
+procedure TPlatformMediaCollections.DoLoad;
 var
-  LCollection: TPhotoCollection;
+  LCollection: TMediaCollection;
 begin
-  LCollection := TPlatformPhotoCollection.Create('1', 'Camera Roll');
+  LCollection := TPlatformMediaCollection.Create('1', 'Camera Roll');
   Add(LCollection);
 end;
 
-{ TPlatformPhotos }
+{ TPlatformMediaManager }
 
-procedure TPlatformPhotos.RequestAuthorization;
+function TPlatformMediaManager.GetAuthorizationStatus: TAuthorizationStatus;
 begin
-  AuthorizationStatus := TAuthorizationStatus.Authorized;
+  Result := TAuthorizationStatus.Authorized;
+end;
+
+procedure TPlatformMediaManager.RequestPermission;
+begin
+  DoAuthorizationStatus;
 end;
 
 end.
