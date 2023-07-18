@@ -98,6 +98,7 @@ end;
 constructor TCustomPlatformVKObserver.Create(const AVKObserver: TVKObserver);
 begin
   inherited Create;
+  FActiveContainerIndex := -1;
   FVKObserver := AVKObserver;
   TMessageManager.DefaultManager.SubscribeToMessage(TFormChangingFocusControl, FormChangingFocusControlMessageHandler);
 end;
