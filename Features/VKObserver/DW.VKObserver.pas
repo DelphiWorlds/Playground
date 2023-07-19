@@ -22,6 +22,7 @@ type
   TControlContainer = record
     ContentBounds: TRectF;
     Control: TControl;
+    HasSaved: Boolean;
     Margins: TRectF;
     constructor Create(const AControl: TControl);
     procedure Restore;
@@ -81,16 +82,19 @@ uses
 constructor TControlContainer.Create(const AControl: TControl);
 begin
   Control := AControl;
+  HasSaved := False;
 end;
 
 procedure TControlContainer.Restore;
 begin
-  Control.Margins.Rect := Margins;
+  if HasSaved then
+    Control.Margins.Rect := Margins;
 end;
 
 procedure TControlContainer.Save;
 begin
   Margins := Control.Margins.Rect;
+  HasSaved := True;
 end;
 
 { TCustomPlatformVKObserver }
@@ -131,6 +135,7 @@ var
 begin
   if Screen.FocusControl <> nil then
   begin
+    RestoreContainer;
     LControl := TControl(Screen.FocusControl.GetObject);
     if FindContainer(LControl, FActiveContainerIndex) then
     begin
@@ -139,9 +144,7 @@ begin
       begin
         FContainers[FActiveContainerIndex].Save;
         FContainers[FActiveContainerIndex].Control.Margins.Top := -LOffset;
-      end
-      else
-        RestoreContainer;
+      end;
     end;
   end;
 end;
