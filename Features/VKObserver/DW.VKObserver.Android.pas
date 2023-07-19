@@ -12,6 +12,7 @@ type
 
   TKeyboardStateChangedListener = class(TJavaLocal, JOnKeyboardStateChangedListener)
   private
+    FIsVKVisible: Boolean;
     FObserver: TPlatformVKObserver;
   public
     { JOnKeyboardStateChangedListener }
@@ -35,6 +36,8 @@ type
 implementation
 
 uses
+  System.SysUtils,
+  Androidapi.Helpers, Androidapi.JNI.App,
   FMX.Forms, FMX.Platform.Android, FMX.Platform.UI.Android,
   DW.UIHelper;
 
@@ -51,25 +54,32 @@ procedure TKeyboardStateChangedListener.onVirtualKeyboardFrameChanged(newFrame: 
 var
   LRect: TRect;
   LHeight: Integer;
+  LIsFullScreen: Boolean;
 begin
   LRect.TopLeft := ConvertPixelToPoint(TPointF.Create(newFrame.Left, newFrame.Top)).Round;
   LRect.BottomRight := ConvertPixelToPoint(TPointF.Create(newFrame.Right, newFrame.Bottom)).Round;
-  LHeight := LRect.Height;
-  LRect.Top := Round(Screen.Height - LRect.Height);
-  LRect.Height := LHeight;
-  if Screen.Width > Screen.Height then
-    LRect.Top := Round(LRect.Top - TUIHelper.GetStatusBarOffset);
+  LIsFullScreen := (TAndroidHelper.Activity.getWindow.getAttributes.flags and TJWindowManager_LayoutParams.JavaClass.FLAG_LAYOUT_NO_LIMITS) > 0;
+  if not LIsFullScreen and FIsVKVisible then
+  begin
+    LHeight := LRect.Height;
+    LRect.Top := Round(Screen.Height - LRect.Height);
+    LRect.Height := LHeight;
+    if Screen.Width > Screen.Height then
+      LRect.Top := Round(LRect.Top - TUIHelper.GetStatusBarOffset);
+  end;
+  if not FIsVKVisible then
+    LRect.Top := LRect.Bottom;
   FObserver.FrameChanged(LRect);
 end;
 
 procedure TKeyboardStateChangedListener.onVirtualKeyboardWillHidden;
 begin
-  //
+  FIsVKVisible := False;
 end;
 
 procedure TKeyboardStateChangedListener.onVirtualKeyboardWillShown;
 begin
-  //
+  FIsVKVisible := True;
 end;
 
 { TPlatformVKObserver }
