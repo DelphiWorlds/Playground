@@ -9,6 +9,7 @@ type
   TAPNSPriority = (Low, Medium, High);
 
   TAPNSMessageParams = record
+    IsProduction: Boolean;
     JWT: string;
     Priority: TAPNSPriority;
     Token: string;
@@ -257,7 +258,7 @@ begin
       LAlert.AddPair('body', TJSONString.Create(FBody));
     LAPS.AddPair('alert', LAlert);
   end;
-  if FIsMutableContent or not FCategory.IsEmpty then
+  if FIsMutableContent then
     LAPS.AddPair('mutable-content', TJSONNumber.Create(1));
   if not FImageURL.IsEmpty then
     LPayload.AddPair('imageUrl', FImageURL);

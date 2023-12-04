@@ -8,6 +8,12 @@ uses
   System.Classes, System.Net.HttpClient, System.SysUtils,
   DW.APNS;
 
+const
+  cAPNSURLProduction = 'https://api.push.apple.com';
+  cAPNSURLSandbox = 'https://api.sandbox.push.apple.com';
+
+  cAPNSURLs: array[Boolean] of string = (cAPNSURLSandbox, cAPNSURLProduction);
+
 type
   TAPNSSender = class(TInterfacedObject, IAPNSSender)
   private
@@ -34,7 +40,7 @@ begin
     LHTTP.CustomHeaders['apns-expiration'] := '0'; // Send immediately
     LContent := TStringStream.Create(APayload);
     try
-      LResponse := LHTTP.Post('https://api.development.push.apple.com/3/device/' + AParams.Token, LContent);
+      LResponse := LHTTP.Post(cAPNSURLs[AParams.IsProduction] + '/3/device/' + AParams.Token, LContent);
     finally
       LContent.Free;
     end;
