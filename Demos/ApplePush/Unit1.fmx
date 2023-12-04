@@ -1,0 +1,287 @@
+object Form1: TForm1
+  Left = 0
+  Top = 0
+  Caption = 'Apple Push'
+  ClientHeight = 568
+  ClientWidth = 728
+  Padding.Left = 4.000000000000000000
+  Padding.Top = 4.000000000000000000
+  Padding.Right = 4.000000000000000000
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [Desktop]
+  DesignerMasterStyle = 0
+  object ButtonsLayout: TLayout
+    Align = Bottom
+    Padding.Left = 4.000000000000000000
+    Padding.Top = 4.000000000000000000
+    Padding.Right = 4.000000000000000000
+    Padding.Bottom = 4.000000000000000000
+    Position.X = 4.000000000000000000
+    Position.Y = 524.000000000000000000
+    Size.Width = 720.000000000000000000
+    Size.Height = 44.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 5
+    object SendButton: TButton
+      Align = Right
+      Position.X = 612.000000000000000000
+      Position.Y = 4.000000000000000000
+      Size.Width = 104.000000000000000000
+      Size.Height = 36.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 0
+      Text = 'Send'
+      TextSettings.Trimming = None
+      OnClick = SendButtonClick
+    end
+  end
+  object P8FileLayout: TLayout
+    Align = Top
+    Position.X = 4.000000000000000000
+    Position.Y = 4.000000000000000000
+    Size.Width = 720.000000000000000000
+    Size.Height = 49.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 16
+    object P8FileLabel: TLabel
+      Align = Client
+      Size.Width = 720.000000000000000000
+      Size.Height = 24.000000000000000000
+      Size.PlatformDefault = False
+      TextSettings.Trimming = None
+      Text = 'P8 File:'
+      TabOrder = 0
+    end
+    object P8FileNameEdit: TEdit
+      Touch.InteractiveGestures = [LongTap, DoubleTap]
+      Align = Bottom
+      TabOrder = 1
+      Position.Y = 24.000000000000000000
+      Size.Width = 720.000000000000000000
+      Size.Height = 25.000000000000000000
+      Size.PlatformDefault = False
+      OnChange = ParamsChange
+      object P8FileButton: TEllipsesEditButton
+        Touch.InteractiveGestures = [LongTap]
+        CanFocus = False
+        Cursor = crArrow
+        TextSettings.Trimming = None
+        Size.Width = 28.000000000000000000
+        Size.Height = 21.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 0
+        OnClick = P8FileButtonClick
+      end
+    end
+  end
+  object MessageTextLayout: TLayout
+    Align = Client
+    Size.Width = 720.000000000000000000
+    Size.Height = 271.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 3
+    object BodyLabel: TLabel
+      Align = Top
+      Margins.Top = 4.000000000000000000
+      Position.Y = 102.000000000000000000
+      Size.Width = 720.000000000000000000
+      Size.Height = 17.000000000000000000
+      Size.PlatformDefault = False
+      TextSettings.Trimming = None
+      Text = 'Body:'
+      TabOrder = 4
+      TabStop = False
+    end
+    object BodyMemo: TMemo
+      Touch.InteractiveGestures = [Pan, LongTap, DoubleTap]
+      DataDetectorTypes = []
+      Align = Client
+      Margins.Top = 4.000000000000000000
+      Size.Width = 720.000000000000000000
+      Size.Height = 99.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 2
+      Viewport.Width = 720.000000000000000000
+      Viewport.Height = 99.000000000000000000
+    end
+    object SubtitleEdit: TEdit
+      Touch.InteractiveGestures = [LongTap, DoubleTap]
+      Align = Top
+      TabOrder = 1
+      Position.Y = 74.000000000000000000
+      Margins.Top = 4.000000000000000000
+      Size.Width = 720.000000000000000000
+      Size.Height = 24.000000000000000000
+      Size.PlatformDefault = False
+    end
+    object SubtitleLabel: TLabel
+      Align = Top
+      Margins.Top = 4.000000000000000000
+      Position.Y = 53.000000000000000000
+      Size.Width = 720.000000000000000000
+      Size.Height = 17.000000000000000000
+      Size.PlatformDefault = False
+      TextSettings.Trimming = None
+      Text = 'Subtitle:'
+      TabOrder = 6
+    end
+    object TitleEdit: TEdit
+      Touch.InteractiveGestures = [LongTap, DoubleTap]
+      Align = Top
+      TabOrder = 0
+      Position.Y = 25.000000000000000000
+      Margins.Top = 4.000000000000000000
+      Size.Width = 720.000000000000000000
+      Size.Height = 24.000000000000000000
+      Size.PlatformDefault = False
+      OnChange = ParamsChange
+    end
+    object TitleLabel: TLabel
+      Align = Top
+      Margins.Top = 4.000000000000000000
+      Position.Y = 4.000000000000000000
+      Size.Width = 720.000000000000000000
+      Size.Height = 17.000000000000000000
+      Size.PlatformDefault = False
+      TextSettings.Trimming = None
+      Text = 'Title:'
+      TabOrder = 7
+    end
+    object ImageURLLabel: TLabel
+      Align = Bottom
+      Margins.Top = 4.000000000000000000
+      Position.Y = 226.000000000000000000
+      Size.Width = 720.000000000000000000
+      Size.Height = 17.000000000000000000
+      Size.PlatformDefault = False
+      TextSettings.Trimming = None
+      Text = 'Image URL:'
+      TabOrder = 5
+      TabStop = False
+    end
+    object ImageURLEdit: TEdit
+      Touch.InteractiveGestures = [LongTap, DoubleTap]
+      Align = Bottom
+      TabOrder = 3
+      Position.Y = 247.000000000000000000
+      Margins.Top = 4.000000000000000000
+      Size.Width = 720.000000000000000000
+      Size.Height = 24.000000000000000000
+      Size.PlatformDefault = False
+    end
+  end
+  object TokenEdit: TEdit
+    Touch.InteractiveGestures = [LongTap, DoubleTap]
+    Align = Top
+    TabOrder = 4
+    Position.X = 4.000000000000000000
+    Position.Y = 228.000000000000000000
+    Margins.Top = 4.000000000000000000
+    Size.Width = 720.000000000000000000
+    Size.Height = 25.000000000000000000
+    Size.PlatformDefault = False
+    OnChange = ParamsChange
+    object ClearTokenEditButton: TClearEditButton
+      Touch.InteractiveGestures = [LongTap]
+      CanFocus = False
+      Cursor = crArrow
+      TextSettings.Trimming = None
+      Size.Width = 28.000000000000000000
+      Size.Height = 21.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 0
+      OnClick = ClearTokenEditButtonClick
+    end
+  end
+  object TokenLabel: TLabel
+    Align = Top
+    Margins.Top = 4.000000000000000000
+    Position.X = 4.000000000000000000
+    Position.Y = 207.000000000000000000
+    Size.Width = 720.000000000000000000
+    Size.Height = 17.000000000000000000
+    Size.PlatformDefault = False
+    TextSettings.Trimming = None
+    Text = 'Token:'
+    TabOrder = 13
+  end
+  object TeamIDLabel: TLabel
+    Align = Top
+    Margins.Top = 4.000000000000000000
+    Position.X = 4.000000000000000000
+    Position.Y = 107.000000000000000000
+    Size.Width = 720.000000000000000000
+    Size.Height = 17.000000000000000000
+    Size.PlatformDefault = False
+    TextSettings.Trimming = None
+    Text = 'Team ID:'
+    TabOrder = 12
+  end
+  object TeamIDEdit: TEdit
+    Touch.InteractiveGestures = [LongTap, DoubleTap]
+    Align = Top
+    TabOrder = 2
+    Position.X = 4.000000000000000000
+    Position.Y = 128.000000000000000000
+    Margins.Top = 4.000000000000000000
+    Size.Width = 720.000000000000000000
+    Size.Height = 25.000000000000000000
+    Size.PlatformDefault = False
+    OnChange = ParamsChange
+  end
+  object KeyLabel: TLabel
+    Align = Top
+    Margins.Top = 4.000000000000000000
+    Position.X = 4.000000000000000000
+    Position.Y = 57.000000000000000000
+    Size.Width = 720.000000000000000000
+    Size.Height = 17.000000000000000000
+    Size.PlatformDefault = False
+    TextSettings.Trimming = None
+    Text = 'Key:'
+    TabOrder = 10
+  end
+  object KeyIDEdit: TEdit
+    Touch.InteractiveGestures = [LongTap, DoubleTap]
+    Align = Top
+    TabOrder = 0
+    Position.X = 4.000000000000000000
+    Position.Y = 78.000000000000000000
+    Margins.Top = 4.000000000000000000
+    Size.Width = 720.000000000000000000
+    Size.Height = 25.000000000000000000
+    Size.PlatformDefault = False
+    OnChange = ParamsChange
+  end
+  object P8OpenDialog: TOpenDialog
+    Filter = 'APNS Key Files (*.p8)|*.p8'
+    Options = [ofHideReadOnly, ofFileMustExist, ofEnableSizing]
+    Left = 104
+    Top = 428
+  end
+  object BundleIDLabel: TLabel
+    Align = Top
+    Margins.Top = 4.000000000000000000
+    Position.X = 4.000000000000000000
+    Position.Y = 157.000000000000000000
+    Size.Width = 720.000000000000000000
+    Size.Height = 17.000000000000000000
+    Size.PlatformDefault = False
+    TextSettings.Trimming = None
+    Text = 'Bundle Identifier:'
+    TabOrder = 11
+  end
+  object BundleIDEdit: TEdit
+    Touch.InteractiveGestures = [LongTap, DoubleTap]
+    Align = Top
+    TabOrder = 1
+    Position.X = 4.000000000000000000
+    Position.Y = 178.000000000000000000
+    Margins.Top = 4.000000000000000000
+    Size.Width = 720.000000000000000000
+    Size.Height = 25.000000000000000000
+    Size.PlatformDefault = False
+    OnChange = ParamsChange
+  end
+end
