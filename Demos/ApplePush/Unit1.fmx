@@ -2,7 +2,7 @@ object Form1: TForm1
   Left = 0
   Top = 0
   Caption = 'Apple Push'
-  ClientHeight = 568
+  ClientHeight = 604
   ClientWidth = 728
   Padding.Left = 4.000000000000000000
   Padding.Top = 4.000000000000000000
@@ -18,7 +18,7 @@ object Form1: TForm1
     Padding.Right = 4.000000000000000000
     Padding.Bottom = 4.000000000000000000
     Position.X = 4.000000000000000000
-    Position.Y = 524.000000000000000000
+    Position.Y = 560.000000000000000000
     Size.Width = 720.000000000000000000
     Size.Height = 44.000000000000000000
     Size.PlatformDefault = False
@@ -78,7 +78,7 @@ object Form1: TForm1
   object MessageTextLayout: TLayout
     Align = Client
     Size.Width = 720.000000000000000000
-    Size.Height = 271.000000000000000000
+    Size.Height = 307.000000000000000000
     Size.PlatformDefault = False
     TabOrder = 3
     object BodyLabel: TLabel
@@ -96,14 +96,15 @@ object Form1: TForm1
     object BodyMemo: TMemo
       Touch.InteractiveGestures = [Pan, LongTap, DoubleTap]
       DataDetectorTypes = []
+      TextSettings.WordWrap = True
       Align = Client
       Margins.Top = 4.000000000000000000
       Size.Width = 720.000000000000000000
-      Size.Height = 99.000000000000000000
+      Size.Height = 135.000000000000000000
       Size.PlatformDefault = False
       TabOrder = 2
-      Viewport.Width = 720.000000000000000000
-      Viewport.Height = 99.000000000000000000
+      Viewport.Width = 716.000000000000000000
+      Viewport.Height = 131.000000000000000000
     end
     object SubtitleEdit: TEdit
       Touch.InteractiveGestures = [LongTap, DoubleTap]
@@ -151,7 +152,7 @@ object Form1: TForm1
     object ImageURLLabel: TLabel
       Align = Bottom
       Margins.Top = 4.000000000000000000
-      Position.Y = 226.000000000000000000
+      Position.Y = 262.000000000000000000
       Size.Width = 720.000000000000000000
       Size.Height = 17.000000000000000000
       Size.PlatformDefault = False
@@ -164,7 +165,7 @@ object Form1: TForm1
       Touch.InteractiveGestures = [LongTap, DoubleTap]
       Align = Bottom
       TabOrder = 3
-      Position.Y = 247.000000000000000000
+      Position.Y = 283.000000000000000000
       Margins.Top = 4.000000000000000000
       Size.Width = 720.000000000000000000
       Size.Height = 24.000000000000000000

@@ -66,6 +66,7 @@ implementation
 
 uses
   System.IOUtils, System.JSON,
+  FMX.DialogService.Async,
   DW.APNS, DW.APNSSender,
   DW.JWT.Types, DW.JWT.Grijjy;
 
@@ -166,9 +167,10 @@ var
   LCreator: IJWTCreator;
   LParams: TJWTCreatorParams;
   LMessage: IAPNSMessage;
+  LMessageParams: TAPNSMessageParams;
 begin
   LMessage := TAPNSMessage.Create;
-  // LMessage.Category := 'IMAGE_AND_TEXT';
+  LMessage.Category := 'IMAGE_AND_TEXT';
   LMessage.Title := TitleEdit.Text;
   LMessage.Body := BodyMemo.Text;
   LMessage.ImageUrl := ImageURLEdit.Text;
@@ -177,7 +179,12 @@ begin
   LParams.KeyID := KeyIDEdit.Text;
   LParams.Secret := TFile.ReadAllText(P8FileNameEdit.Text);
   LCreator := TJWTCreator.Create(LParams);
-  APNSSender.PostMessage(TAPNSMessageParams.Create(LCreator.GetJWT(60), BundleIDEdit.Text, TokenEdit.Text), LMessage.ToJSON);
+  LMessageParams := TAPNSMessageParams.Create(LCreator.GetJWT(60), BundleIDEdit.Text, TokenEdit.Text);
+  LMessageParams.IsProduction := False; // Set to True when using production
+  if APNSSender.PostMessage(LMessageParams, LMessage.ToJSON) then
+    TDialogServiceAsync.MessageDialog('Sent push', TMsgDlgType.mtInformation, [TMsgDlgBtn.mbOK], TMsgDlgBtn.mbOK, 0)
+  else
+    TDialogServiceAsync.MessageDialog('Send failed', TMsgDlgType.mtWarning, [TMsgDlgBtn.mbOK], TMsgDlgBtn.mbOK, 0);
 end;
 
 procedure TForm1.ParamsChange(Sender: TObject);
