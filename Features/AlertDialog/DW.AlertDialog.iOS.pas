@@ -1,15 +1,31 @@
 unit DW.AlertDialog.iOS;
 
+{*******************************************************}
+{                                                       }
+{                      Kastri                           }
+{                                                       }
+{         Delphi Worlds Cross-Platform Library          }
+{                                                       }
+{  Copyright 2020-2023 Dave Nottage under MIT license   }
+{  which is located in the root folder of this library  }
+{                                                       }
+{*******************************************************}
+
+{$I DW.GlobalDefines.inc}
+
 interface
 
 implementation
 
 uses
+  // RTL
   System.SysUtils,
+  // Mac
   Macapi.ObjectiveC, Macapi.Helpers,
+  // iOS
   iOSapi.Foundation, iOSapi.UIKit, iOSapi.Helpers, iOSapi.CoreGraphics,
-  DW.iOSapi.UIKit,
-  DW.AlertDialog;
+  // DW
+  DW.iOSapi.UIKit, DW.AlertDialog;
 
 type
   TAlertActionsHelper = record helper for TAlertActions
