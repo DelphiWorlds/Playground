@@ -1,0 +1,86 @@
+object AlertView: TAlertView
+  Align = Contents
+  Size.Width = 416.000000000000000000
+  Size.Height = 484.000000000000000000
+  Size.PlatformDefault = False
+  OnClick = FrameClick
+  object BackgroundRectangle: TRectangle
+    Align = Contents
+    Fill.Color = claBlack
+    HitTest = False
+    Opacity = 0.000000000000000000
+    Size.Width = 416.000000000000000000
+    Size.Height = 484.000000000000000000
+    Size.PlatformDefault = False
+  end
+  object ContentLayout: TLayout
+    Align = Client
+    HitTest = True
+    Size.Width = 416.000000000000000000
+    Size.Height = 484.000000000000000000
+    Size.PlatformDefault = False
+    object ContentRectangle: TRectangle
+      Align = Contents
+      Fill.Color = claWhite
+      HitTest = False
+      Size.Width = 416.000000000000000000
+      Size.Height = 484.000000000000000000
+      Size.PlatformDefault = False
+    end
+    object ButtonsLayout: TLayout
+      Align = Client
+      Size.Width = 416.000000000000000000
+      Size.Height = 359.000000000000000000
+      Size.PlatformDefault = False
+    end
+    object CancelButtonLayout: TLayout
+      Align = Bottom
+      Position.Y = 428.000000000000000000
+      Size.Width = 416.000000000000000000
+      Size.Height = 56.000000000000000000
+      Size.PlatformDefault = False
+      object CancelButton: TButton
+        Tag = -2
+        Align = Client
+        Margins.Left = 4.000000000000000000
+        Margins.Top = 4.000000000000000000
+        Margins.Right = 4.000000000000000000
+        Margins.Bottom = 4.000000000000000000
+        Size.Width = 408.000000000000000000
+        Size.Height = 48.000000000000000000
+        Size.PlatformDefault = False
+        Text = 'Cancel'
+        TextSettings.Trimming = None
+      end
+    end
+    object TitleLayout: TLayout
+      Align = Top
+      Size.Width = 416.000000000000000000
+      Size.Height = 69.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 0
+      object TitleLabel: TLabel
+        Align = Top
+        StyledSettings = [Family, Style, FontColor]
+        Size.Width = 416.000000000000000000
+        Size.Height = 25.000000000000000000
+        Size.PlatformDefault = False
+        TextSettings.Font.Size = 16.000000000000000000
+        TextSettings.HorzAlign = Center
+        TextSettings.Trimming = None
+        TabOrder = 1
+      end
+      object MessageLabel: TLabel
+        Align = Client
+        StyledSettings = [Family, Style, FontColor]
+        Size.Width = 416.000000000000000000
+        Size.Height = 44.000000000000000000
+        Size.PlatformDefault = False
+        TextSettings.Font.Size = 16.000000000000000000
+        TextSettings.HorzAlign = Center
+        TextSettings.Trimming = None
+        TabOrder = 0
+      end
+    end
+  end
+end

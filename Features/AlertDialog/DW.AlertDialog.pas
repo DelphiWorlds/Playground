@@ -1,5 +1,18 @@
 unit DW.AlertDialog;
 
+{*******************************************************}
+{                                                       }
+{                      Kastri                           }
+{                                                       }
+{         Delphi Worlds Cross-Platform Library          }
+{                                                       }
+{  Copyright 2020-2023 Dave Nottage under MIT license   }
+{  which is located in the root folder of this library  }
+{                                                       }
+{*******************************************************}
+
+{$I DW.GlobalDefines.inc}
+
 interface
 
 type
@@ -67,9 +80,12 @@ implementation
 uses
   {$IF Defined(ANDROID)}
   DW.AlertDialog.Android;
-  {$ENDIF}
-  {$IF Defined(IOS)}
+  {$ELSEIF Defined(IOS)}
   DW.AlertDialog.iOS;
+  {$ELSEIF Defined(MACOS)}
+  DW.AlertDialog.Mac;
+  {$ELSE}
+  DW.AlertDialog.Default;
   {$ENDIF}
 
 { TAlertAction }
