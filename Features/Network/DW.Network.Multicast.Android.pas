@@ -1,4 +1,4 @@
-unit DW.Multicaster.Android;
+unit DW.Network.Multicast.Android;
 
 // Sources:
 //   https://stackoverflow.com/questions/20059106/ipv6-multicast-example
@@ -9,86 +9,90 @@ interface
 uses
   System.SysUtils,
   Androidapi.JNIBridge, Androidapi.JNI.JavaTypes, Androidapi.JNI.Java.Net, Androidapi.JNI.Os, Androidapi.JNI.Net,
-  DW.Multicaster;
+  DW.Network.Multicast;
 
 type
-  TPlatformMulticaster = class;
+  TPlatformMulticastReceiver = class;
 
-  TMulticastRunnable = class(TJavaLocal, JRunnable)
+  TMulticastReceiverRunnable = class(TJavaLocal, JRunnable)
   private
-    FPlatformMulticaster: TPlatformMulticaster;
+    FReceiver: TPlatformMulticastReceiver;
     FThread: JThread;
   public
     { JRunnable }
     procedure run; cdecl;
   public
-    constructor Create(const APlatformMulticaster: TPlatformMulticaster); virtual;
+    constructor Create(const AReceiver: TPlatformMulticastReceiver); virtual;
     destructor Destroy; override;
   end;
 
-  TPlatformMulticaster = class(TCustomPlatformMulticaster)
+  TPlatformMulticastReceiver = class(TMulticastReceiver)
   private
     FRunnable: JRunnable;
     FLock: JWifiManager_MulticastLock;
     procedure CreateMulticastLock;
-    procedure InternalSend(const AData: TBytes; const APort: Integer; const AGroup: string);
   protected
-    procedure Broadcast(const AData: TBytes; const APort: Integer); override;
-    procedure DoRun;
-    procedure SetGroupIPv4(const Value: string); override;
-    procedure SetGroupIPv6(const Value: string); override;
-    procedure SetPort(const Value: Integer); override;
+    procedure Run;
+  public
     function Start: Boolean; override;
     procedure Stop; override;
   public
-    constructor Create(const AMulticaster: TMulticaster); override;
+    constructor Create;
     destructor Destroy; override;
+  end;
+
+  TPlatformMulticastSender = class(TMulticastSender)
+  private
+    procedure InternalSend(const AData: TBytes; const APort: Integer; const AGroup: string);
+  public
+    procedure Broadcast(const AData: TBytes; const APort: Integer); override;
   end;
 
 implementation
 
 uses
+  System.Classes,
   Androidapi.Helpers, Androidapi.JNI.GraphicsContentViewText, Androidapi.JNI,
   DW.OSLog,
   DW.Androidapi.JNI.Net, DW.Classes.Helpers;
 
-{ TMulticastRunnable }
+{ TMulticastReceiverRunnable }
 
-constructor TMulticastRunnable.Create(const APlatformMulticaster: TPlatformMulticaster);
+constructor TMulticastReceiverRunnable.Create(const AReceiver: TPlatformMulticastReceiver);
 begin
   inherited Create;
-  FPlatformMulticaster := APlatformMulticaster;
+  FReceiver := AReceiver;
   FThread := TJThread.JavaClass.init(Self);
   FThread.start;
 end;
 
-destructor TMulticastRunnable.Destroy;
+destructor TMulticastReceiverRunnable.Destroy;
 begin
   FThread := nil;
   inherited;
 end;
 
-procedure TMulticastRunnable.run;
+procedure TMulticastReceiverRunnable.run;
 begin
-  FPlatformMulticaster.DoRun;
+  FReceiver.Run;
 end;
 
-{ TPlatformMulticaster }
+{ TPlatformMulticastReceiver }
 
-constructor TPlatformMulticaster.Create(const AMulticaster: TMulticaster);
+constructor TPlatformMulticastReceiver.Create;
 begin
   inherited;
   //
 end;
 
-destructor TPlatformMulticaster.Destroy;
+destructor TPlatformMulticastReceiver.Destroy;
 begin
-  if Active then
+  if IsActive then
     Stop;
   inherited;
 end;
 
-procedure TPlatformMulticaster.CreateMulticastLock;
+procedure TPlatformMulticastReceiver.CreateMulticastLock;
 var
   LObject: JObject;
 begin
@@ -97,17 +101,17 @@ begin
   FLock.setReferenceCounted(True);
 end;
 
-function TPlatformMulticaster.Start: Boolean;
+function TPlatformMulticastReceiver.Start: Boolean;
 begin
   Stop;
   if FLock = nil then
     CreateMulticastLock;
   FLock.acquire;
-  FRunnable := TMulticastRunnable.Create(Self);
+  FRunnable := TMulticastReceiverRunnable.Create(Self);
   Result := True;
 end;
 
-procedure TPlatformMulticaster.Stop;
+procedure TPlatformMulticastReceiver.Stop;
 begin
   if FLock <> nil then
     FLock.release;
@@ -115,19 +119,19 @@ begin
 end;
 
 //!!!! Needs exception handling!!!!
-procedure TPlatformMulticaster.DoRun;
+procedure TPlatformMulticastReceiver.Run;
 var
   LBuffer: TJavaArray<Byte>;
   LSocket: JMulticastSocket;
   LGroup: JInetAddress;
   LPacket: JDatagramPacket;
 begin
-  LBuffer := TJavaArray<Byte>.Create(MaxPacketSize);
+  LBuffer := TJavaArray<Byte>.Create(1024); // MaxPacketSize
   LGroup := TJInetAddress.JavaClass.getByName(StringToJString(GroupIPv4));
   LSocket := TJMulticastSocket.JavaClass.init(Port);
   // LSocket.setLoopbackMode(True); // True = loopback is disabled :-/
   LSocket.joinGroup(LGroup);
-  while Active do
+  while IsActive do
   begin
     LPacket := TJDatagramPacket.JavaClass.init(LBuffer, LBuffer.Length);
     LSocket.receive(LPacket);
@@ -137,8 +141,16 @@ begin
   LSocket.close;
 end;
 
-//!!!! Needs exception handling!!!!
-procedure TPlatformMulticaster.InternalSend(const AData: TBytes; const APort: Integer; const AGroup: string);
+{ TPlatformMulticastSender }
+
+procedure TPlatformMulticastSender.Broadcast(const AData: TBytes; const APort: Integer);
+begin
+  TThread.CreateAnonymousThread(procedure begin InternalSend(AData, APort, GroupIPv4); end).Start;
+  TThread.CreateAnonymousThread(procedure begin InternalSend(AData, APort, GroupIPv6); end).Start;
+end;
+
+//!!!! Needs exception handling???
+procedure TPlatformMulticastSender.InternalSend(const AData: TBytes; const APort: Integer; const AGroup: string);
 var
   LSocket: JMulticastSocket;
   LPacket: JDatagramPacket;
@@ -155,40 +167,6 @@ begin
   LSocket.send(LPacket, 1);
   LSocket.close;
   TOSLog.d('Sent packet on Port: %d for Group: %s', [APort, AGroup]);
-end;
-
-procedure TPlatformMulticaster.Broadcast(const AData: TBytes; const APort: Integer);
-begin
-  TDo.Run(
-    procedure
-    begin
-      InternalSend(AData, APort, GroupIPv4);
-    end
-  );
-  TDo.Run(
-    procedure
-    begin
-      InternalSend(AData, APort, GroupIPv6);
-    end
-  );
-end;
-
-procedure TPlatformMulticaster.SetGroupIPv4(const Value: string);
-begin
-  inherited;
-  // If active, then stop, change, start
-end;
-
-procedure TPlatformMulticaster.SetGroupIPv6(const Value: string);
-begin
-  inherited;
-  // If active, then stop, change, start
-end;
-
-procedure TPlatformMulticaster.SetPort(const Value: Integer);
-begin
-  inherited;
-  // If active, then stop, change, start
 end;
 
 end.

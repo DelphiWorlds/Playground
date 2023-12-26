@@ -6,10 +6,10 @@ uses
   System.SysUtils, System.Types, System.UITypes, System.Classes, System.Variants,
   FMX.Types, FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Dialogs, FMX.Controls.Presentation, FMX.ScrollBox, FMX.Memo, FMX.StdCtrls,
   FMX.Layouts, FMX.Memo.Types,
-  DW.Multicaster, DW.Network;
+  DW.Network.Types, DW.Network.Multicast, DW.Network.Provider;
 
 type
-  TForm1 = class(TForm, INetworkNotifier)
+  TForm1 = class(TForm, INetworkListener)
     Timer: TTimer;
     Memo1: TMemo;
     Button1: TButton;
@@ -22,15 +22,16 @@ type
     ReceiveCheckBox: TCheckBox;
     procedure TimerTimer(Sender: TObject);
     procedure Button1Click(Sender: TObject);
-    procedure SendSwitchSwitch(Sender: TObject);
-    procedure ReceiveSwitchSwitch(Sender: TObject);
+    procedure SendCheckBoxChange(Sender: TObject);
+    procedure ReceiveCheckBoxChange(Sender: TObject);
   private
-    FMulticaster: TMulticaster;
+    FReceiver: IMulticastReceiver;
+    FSender: IMulticastSender;
     procedure DumpLocalAddresses;
-    procedure MulticasterDataReceivedHandler(Sender: TObject; const AIP: string; const AData: TBytes);
+    procedure ReceiverDataReceivedHandler(Sender: TObject; const AIP: string; const AData: TBytes);
   public
-    { INetworkNotifier }
-    procedure LocalAddressesChange(const ALocalAddresses: TLocalAddresses);
+    { INetworkListener }
+    procedure LocalAddressesChange;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -51,16 +52,17 @@ uses
 constructor TForm1.Create(AOwner: TComponent);
 begin
   inherited;
-  FMulticaster := TMulticaster.Create;
-  FMulticaster.Port := 64220;
-  FMulticaster.OnDataReceived := MulticasterDataReceivedHandler;
-  TNetwork.AddNotifier(Self);
+  FSender := MulticastProvider.CreateSender;
+  FReceiver := MulticastProvider.CreateReceiver;
+  FReceiver.Port := 64220;
+  FReceiver.OnDataReceived := ReceiverDataReceivedHandler;
+  NetworkProvider.AddListener(Self);
   DumpLocalAddresses;
 end;
 
 destructor TForm1.Destroy;
 begin
-  TNetwork.RemoveNotifier(Self);
+  NetworkProvider.RemoveListener(Self);
   inherited;
 end;
 
@@ -71,19 +73,24 @@ end;
 
 procedure TForm1.DumpLocalAddresses;
 var
-  LLocalAddress: TLocalAddress;
+  LLocalAddress: TIPAddress;
 begin
   LocalIPMemo.Lines.Clear;
-  for LLocalAddress in TNetwork.GetLocalAddresses do
-    LocalIPMemo.Lines.Add(Format('%s on %s (%d)', [LLocalAddress.IP, LLocalAddress.InterfaceName, LLocalAddress.InterfaceIndex]));
+  for LLocalAddress in NetworkProvider.GetLocalAddresses do
+    LocalIPMemo.Lines.Add(Format('%s on %s (index: %d)', [LLocalAddress.IP, LLocalAddress.InterfaceName, LLocalAddress.InterfaceIndex]));
 end;
 
-procedure TForm1.LocalAddressesChange(const ALocalAddresses: TLocalAddresses);
+procedure TForm1.LocalAddressesChange;
 begin
   DumpLocalAddresses;
 end;
 
-procedure TForm1.MulticasterDataReceivedHandler(Sender: TObject; const AIP: string; const AData: TBytes);
+procedure TForm1.ReceiveCheckBoxChange(Sender: TObject);
+begin
+  FReceiver.IsActive := ReceiveCheckBox.IsChecked;
+end;
+
+procedure TForm1.ReceiverDataReceivedHandler(Sender: TObject; const AIP: string; const AData: TBytes);
 begin
   TThread.ForceQueue(nil,
     procedure
@@ -93,19 +100,14 @@ begin
   );
 end;
 
-procedure TForm1.ReceiveSwitchSwitch(Sender: TObject);
-begin
-  FMulticaster.Active := ReceiveCheckBox.IsChecked;
-end;
-
-procedure TForm1.SendSwitchSwitch(Sender: TObject);
+procedure TForm1.SendCheckBoxChange(Sender: TObject);
 begin
   Timer.Enabled := SendCheckBox.IsChecked;
 end;
 
 procedure TForm1.TimerTimer(Sender: TObject);
 begin
-  FMulticaster.Broadcast('TEST', FMulticaster.Port);
+  FSender.Broadcast('TEST', 64220);
 end;
 
 end.

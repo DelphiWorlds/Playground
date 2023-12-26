@@ -2,7 +2,7 @@ object Form1: TForm1
   Left = 0
   Top = 0
   Caption = 'Form1'
-  ClientHeight = 729
+  ClientHeight = 730
   ClientWidth = 492
   FormFactor.Width = 320
   FormFactor.Height = 480
@@ -19,25 +19,26 @@ object Form1: TForm1
     DataDetectorTypes = []
     Align = Client
     Size.Width = 492.000000000000000000
-    Size.Height = 480.000000000000000000
+    Size.Height = 481.000000000000000000
     Size.PlatformDefault = False
     TabOrder = 2
     Viewport.Width = 488.000000000000000000
-    Viewport.Height = 476.000000000000000000
+    Viewport.Height = 477.000000000000000000
   end
   object Button1: TButton
     Align = Bottom
-    Position.Y = 681.000000000000000000
+    Position.Y = 682.000000000000000000
     Size.Width = 492.000000000000000000
     Size.Height = 48.000000000000000000
     Size.PlatformDefault = False
     TabOrder = 5
     Text = 'Clear'
+    TextSettings.Trimming = None
     OnClick = Button1Click
   end
   object Layout1: TLayout
     Align = Bottom
-    Position.Y = 609.000000000000000000
+    Position.Y = 610.000000000000000000
     Size.Width = 492.000000000000000000
     Size.Height = 36.000000000000000000
     Size.PlatformDefault = False
@@ -47,6 +48,7 @@ object Form1: TForm1
       Size.Width = 414.000000000000000000
       Size.Height = 36.000000000000000000
       Size.PlatformDefault = False
+      TextSettings.Trimming = None
       Text = 'Send'
       TabOrder = 0
     end
@@ -57,12 +59,12 @@ object Form1: TForm1
       Size.Height = 36.000000000000000000
       Size.PlatformDefault = False
       TabOrder = 1
-      OnClick = SendSwitchSwitch
+      OnChange = SendCheckBoxChange
     end
   end
   object Layout2: TLayout
     Align = Bottom
-    Position.Y = 645.000000000000000000
+    Position.Y = 646.000000000000000000
     Size.Width = 492.000000000000000000
     Size.Height = 36.000000000000000000
     Size.PlatformDefault = False
@@ -72,6 +74,7 @@ object Form1: TForm1
       Size.Width = 414.000000000000000000
       Size.Height = 36.000000000000000000
       Size.PlatformDefault = False
+      TextSettings.Trimming = None
       Text = 'Receive'
       TabOrder = 0
     end
@@ -82,7 +85,7 @@ object Form1: TForm1
       Size.Height = 36.000000000000000000
       Size.PlatformDefault = False
       TabOrder = 1
-      OnClick = ReceiveSwitchSwitch
+      OnChange = ReceiveCheckBoxChange
     end
   end
   object LocalIPMemo: TMemo

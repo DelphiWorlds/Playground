@@ -1,19 +1,12 @@
-unit DW.Network.Win;
+unit DW.Network.Socket.Win;
 
 interface
 
 uses
   System.SysUtils, System.Net.Socket,
-  DW.Network;
+  DW.Network.Socket;
 
 type
-  TPlatformNetwork = class(TNetwork)
-  private
-    class constructor CreateClass;
-  protected
-    function DoGetLocalAddresses: TLocalAddresses; override;
-  end;
-
   TPlatformSocket = class(TSocket)
   private
     FMarshaller: TMarshaller;
@@ -34,13 +27,14 @@ implementation
 
 uses
   DW.OSLog,
+  DW.Network.Types, DW.Network.Provider,
   Winapi.ShellAPI, Winapi.IpHlpApi, Winapi.IpTypes, Winapi.IpExport, Winapi.Windows, Winapi.WinSock, Winapi.Winsock2;
 
 const
   ntdll_dll ='ntdll.dll';
   ws2_32 = 'ws2_32.dll';
 
-  // Because Winsock2 has it wrong :-(
+  // Because the Winapi.Winsock2 unit has it wrong :-(
   IP_MULTICAST_TTL = 10;
   IP_MULTICAST_LOOP = 11;
   IP_ADD_MEMBERSHIP = 12;
@@ -73,6 +67,13 @@ type
     pad: array[0..125] of Byte;
   end;
 
+  TPlatformNetworkProvider = class(TCustomPlatformNetworkProvider)
+  protected
+    function GetLocalAddresses: TIPAddresses; override;
+  public
+    constructor Create;
+  end;
+
 function bindsocket(s: TSocket; name: PSockAddr; namelen: Integer): Integer; stdcall;
   external ws2_32 name 'bind';
 function recvfrom(const s: TSocket; var Buf; len, flags: Integer; from: PSOCKADDR; fromlen: PInteger): Integer; stdcall;
@@ -83,23 +84,24 @@ function RtlIpv6AddressToString(addr: pin6_addr; dst: PChar): Pointer; stdcall; 
 
 // https://docs.microsoft.com/en-us/windows/win32/api/iphlpapi/nf-iphlpapi-getadaptersaddresses?redirectedfrom=MSDN
 
-{ TPlatformNetwork }
+{ TPlatformNetworkProvider }
 
-class constructor TPlatformNetwork.CreateClass;
+constructor TPlatformNetworkProvider.Create;
 var
   LData: WSAData;
 begin
+  inherited;
   WSAStartup(WINSOCK_VERSION, LData);
 end;
 
-function TPlatformNetwork.DoGetLocalAddresses: TLocalAddresses;
+function TPlatformNetworkProvider.GetLocalAddresses: TIPAddresses;
 var
   LFlags: Cardinal;
   LLength: u_long;
   LAddresses, LAddress: PIP_ADAPTER_ADDRESSES;
   LUnicastAddress: PIP_ADAPTER_UNICAST_ADDRESS;
-  LLocalAddress: TLocalAddress;
-  LLocalAddresses: TLocalAddresses;
+  LLocalAddress: TIPAddress;
+  LLocalAddresses: TIPAddressesList;
   LIP: string;
 begin
   SetLength(LIP, 128);
@@ -145,7 +147,7 @@ begin
   finally
     FreeMem(LAddresses);
   end;
-  Result := LLocalAddresses;
+  Result := LLocalAddresses.Items;
 end;
 
 { TPlatformSocket }
@@ -307,13 +309,13 @@ begin
       end;
     end;
     if not Result then
-      TNetwork.Error('TPlatformSocket.JoinGroup for receiver');
+      TOSLog.e('TPlatformSocket.JoinGroup for receiver');
   end;
   if not Group.IsEmpty and (Port = 0) and (IPVersion = TIPVersion.IPv6) then
   begin
     Result := setsockopt(Handle, IPPROTO_IPV6, IPV6_MULTICAST_IF, PAnsiChar(@InterfaceIndex), SizeOf(InterfaceIndex)) <> -1;
     if not Result then
-      TNetwork.Error('TPlatformSocket.JoinGroup for IPv6 sender');
+      TOSLog.e('TPlatformSocket.JoinGroup for IPv6 sender');
   end;
 end;
 
@@ -355,5 +357,8 @@ begin
   end;
   Result := LBytesSent <> -1;
 end;
+
+initialization
+  NetworkProvider := TPlatformNetworkProvider.Create;
 
 end.

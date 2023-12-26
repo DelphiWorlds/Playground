@@ -1,32 +1,30 @@
-unit DW.Network.Android;
+unit DW.Network.Provider.Android;
 
 interface
-
-uses
-  DW.Network;
-
-type
-  TPlatformNetwork = class(TNetwork)
-  protected
-    function DoGetLocalAddresses: TLocalAddresses; override;
-  end;
 
 implementation
 
 uses
   System.SysUtils,
-  Androidapi.JNI.Java.Net, Androidapi.JNI.JavaTypes, Androidapi.Helpers, Androidapi.JNIBridge;
+  Androidapi.JNI.Java.Net, Androidapi.JNI.JavaTypes, Androidapi.Helpers, Androidapi.JNIBridge,
+  DW.Network.Provider, DW.Network.Types;
 
-{ TPlatformNetwork }
+type
+  TPlatformNetworkProvider = class(TCustomPlatformNetworkProvider)
+  protected
+    function GetLocalAddresses: TIPAddresses; override;
+  end;
 
-function TPlatformNetwork.DoGetLocalAddresses: TLocalAddresses;
+{ TPlatformNetworkProvider }
+
+function TPlatformNetworkProvider.GetLocalAddresses: TIPAddresses;
 var
   LInterfaces, LAddresses: JEnumeration;
   LInterface: JNetworkInterface;
   LAddress: JInetAddress;
   LName, LHostAddress: string;
-  LLocalAddress: TLocalAddress;
-  LLocalAddresses: TLocalAddresses;
+  LLocalAddress: TIPAddress;
+  LLocalAddresses: TIPAddressesList;
 begin
   LInterfaces := TJNetworkInterface.JavaClass.getNetworkInterfaces;
   while LInterfaces.hasMoreElements do
@@ -63,7 +61,10 @@ begin
         LLocalAddresses.Add(LLocalAddress);
     end;
   end;
-  Result := LLocalAddresses;
+  Result := LLocalAddresses.Items;
 end;
+
+initialization
+  NetworkProvider := TPlatformNetworkProvider.Create;
 
 end.
