@@ -103,3 +103,24 @@ This is a temporary file that documents some shortcomings with Java2OP. It is no
 
   Java2OP can **safely** ignore any classes where the name is just a number, as classes cannot be named this way in source.
 
+  There is a flow-on issue from this one, in that some init methods are declared with a parameter of the anonymous inner class type, rather than the outer type e.g. when importing ExoPlayer2 mentioned in this report:
+
+  https://quality.embarcadero.com/browse/RSP-40380
+
+  emits:
+
+  ```delphi
+  JNetworkTypeObserver_ReceiverClass = interface(JBroadcastReceiverClass)
+    ['{A183356D-FB9A-436B-A96A-C647937DCC65}']
+    {class} function init(networkTypeObserver: JNetworkTypeObserver; 1: JNetworkTypeObserver_1): JNetworkTypeObserver_Receiver; cdecl;
+    {class} procedure onReceive(context: JContext; intent: JIntent); cdecl;
+  end;
+ 
+  [JavaSignature('com/google/android/exoplayer2/util/NetworkTypeObserver$Receiver')]
+  JNetworkTypeObserver_Receiver = interface(JBroadcastReceiver)
+    ['{B7B8C4AE-7096-4881-9486-13ADED1CB660}']
+  end;
+  TJNetworkTypeObserver_Receiver = class(TJavaGenericImport<JNetworkTypeObserver_ReceiverClass, JNetworkTypeObserver_Receiver>) end;
+  ```
+
+  JNetworkTypeObserver_1 should actually be JNetworkTypeObserver, which is the outer class.
