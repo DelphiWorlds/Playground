@@ -103,7 +103,7 @@ This is a temporary file that documents some shortcomings with Java2OP. It is no
 
   Java2OP can **safely** ignore any classes where the name is just a number, as classes cannot be named this way in source.
 
-  There is a flow-on issue from this one, in that some init methods are declared with a parameter of the anonymous inner class type, rather than the outer type e.g. when importing ExoPlayer2 mentioned in this report:
+  There is a flow-on issue from this one e.g. when importing ExoPlayer2 mentioned in this report:
 
   https://quality.embarcadero.com/browse/RSP-40380
 
@@ -123,4 +123,4 @@ This is a temporary file that documents some shortcomings with Java2OP. It is no
   TJNetworkTypeObserver_Receiver = class(TJavaGenericImport<JNetworkTypeObserver_ReceiverClass, JNetworkTypeObserver_Receiver>) end;
   ```
 
-  JNetworkTypeObserver_1 should actually be JNetworkTypeObserver, which is the outer class.
+  The Receiver child class of NetworkTypeObserver does not even have a public constructor
