@@ -8,6 +8,28 @@ uses
   DW.SwipeView;
 
 type
+  TMouseInfo = record
+    Down: Boolean;
+    DownPt: TPointF;
+    Moved: Boolean;
+    procedure MouseDown(const X, Y: Single);
+    procedure MouseMove(const X, Y: Single);
+    procedure MouseUp;
+  end;
+
+  // Interposer class that adds functionality to TImage
+  TImage = class(FMX.Objects.TImage)
+  private
+    FMouse: TMouseInfo;
+    FMouseParent: TControl;
+  protected
+    procedure Click; override;
+    procedure MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Single); override;
+    procedure MouseMove(Shift: TShiftState; X, Y: Single); override;
+    procedure MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y: Single); override;
+    property MouseParent: TControl read FMouseParent write FMouseParent;
+  end;
+
   TForm1 = class(TForm)
     Image1: TImage;
     Image2: TImage;
@@ -22,10 +44,11 @@ type
     FImageCount: Integer;
     FImageFileNames: TArray<string>;
     FImageIndex: Integer;
-     function GetLayoutImage(const APosition: TLayoutPosition): TImage;
+    function GetLayoutImage(const APosition: TLayoutPosition): TImage;
+    procedure ImageClickHandler(Sender: TObject);
     procedure LoadImageFileNames;
     procedure SetupImages;
-   procedure SwipeViewSwipeHandler(Sender: TObject; const ASwipeDirection: TMoveDirection);
+    procedure SwipeViewSwipeHandler(Sender: TObject; const ASwipeDirection: TMoveDirection);
     procedure UpdateLeftImage;
     procedure UpdateRightImage;
     property Image[const APosition: TLayoutPosition]: TImage read GetLayoutImage;
@@ -43,15 +66,79 @@ implementation
 uses
   System.IOUtils;
 
+type
+  TOpenControl = class(TControl);
+
+{ TMouseInfo }
+
+procedure TMouseInfo.MouseDown(const X, Y: Single);
+begin
+  Down := True;
+  Moved := False;
+  DownPt := PointF(X, Y);
+end;
+
+procedure TMouseInfo.MouseMove(const X, Y: Single);
+begin
+  if Down and not Moved then
+    Moved := (Abs(X - DownPt.X) > 10) or (Abs(Y - DownPt.Y) > 10);
+end;
+
+procedure TMouseInfo.MouseUp;
+begin
+  Down := False;
+end;
+
+{ TImage }
+
+procedure TImage.Click;
+begin
+  // Call the click event only if the mouse has not "moved"
+  if not FMouse.Moved then
+    inherited;
+end;
+
+procedure TImage.MouseDown(Button: TMouseButton; Shift: TShiftState; X, Y: Single);
+begin
+  inherited;
+  FMouse.MouseDown(X, Y);
+  // Pass the mouse event on to the control interested in the event
+  TOpenControl(FMouseParent).MouseDown(Button, Shift, X, Y);
+end;
+
+procedure TImage.MouseMove(Shift: TShiftState; X, Y: Single);
+begin
+  inherited;
+  FMouse.MouseMove(X, Y);
+  // Pass the mouse event on to the control interested in the event
+  TOpenControl(FMouseParent).MouseMove(Shift, X, Y);
+end;
+
+procedure TImage.MouseUp(Button: TMouseButton; Shift: TShiftState; X, Y: Single);
+begin
+  inherited;
+  FMouse.MouseUp;
+  // Pass the mouse event on to the control interested in the event
+  TOpenControl(FMouseParent).MouseUp(Button, Shift, X, Y);
+end;
+
+{ TForm1 }
+
 constructor TForm1.Create(AOwner: TComponent);
 begin
   inherited;
   Image1.Parent := SwipeView1.Layout[TLayoutPosition.Left];
+  Image1.MouseParent := SwipeView1;
   Image1.Align := TAlignLayout.Client;
+  Image1.OnClick := ImageClickHandler;
   Image2.Parent := SwipeView1.Layout[TLayoutPosition.Center];
+  Image2.MouseParent := SwipeView1;
   Image2.Align := TAlignLayout.Client;
+  Image2.OnClick := ImageClickHandler;
   Image3.Parent := SwipeView1.Layout[TLayoutPosition.Right];
+  Image3.MouseParent := SwipeView1;
   Image3.Align := TAlignLayout.Client;
+  Image3.OnClick := ImageClickHandler;
   // Works around an apparent bug in Delphi
   SwipeView1.Width := Width;
   SwipeView1.OnSwiped := SwipeViewSwipeHandler;
@@ -73,6 +160,11 @@ begin
       Break;
     end;
   end;
+end;
+
+procedure TForm1.ImageClickHandler(Sender: TObject);
+begin
+  ShowMessage('Clicked');
 end;
 
 procedure TForm1.SetupImages;
