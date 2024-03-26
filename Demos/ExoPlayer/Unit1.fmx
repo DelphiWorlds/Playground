@@ -1,0 +1,71 @@
+object Form1: TForm1
+  Left = 0
+  Top = 0
+  Caption = 'Form1'
+  ClientHeight = 874
+  ClientWidth = 546
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [Desktop]
+  DesignerMasterStyle = 0
+  object PlayerLayout: TLayout
+    Align = Client
+    Size.Width = 546.000000000000000000
+    Size.Height = 648.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 1
+  end
+  object ButtonsLayout: TLayout
+    Align = Bottom
+    Padding.Left = 6.000000000000000000
+    Padding.Top = 6.000000000000000000
+    Padding.Right = 6.000000000000000000
+    Padding.Bottom = 6.000000000000000000
+    Position.Y = 832.000000000000000000
+    Size.Width = 546.000000000000000000
+    Size.Height = 42.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 3
+    object PlayButton: TButton
+      Align = Left
+      Position.X = 6.000000000000000000
+      Position.Y = 6.000000000000000000
+      Size.Width = 83.000000000000000000
+      Size.Height = 30.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 1
+      Text = 'PlayButton'
+      TextSettings.Trimming = None
+      OnClick = PlayButtonClick
+    end
+    object Button1: TButton
+      Align = Left
+      Margins.Left = 16.000000000000000000
+      Position.X = 105.000000000000000000
+      Position.Y = 6.000000000000000000
+      Size.Width = 83.000000000000000000
+      Size.Height = 30.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 0
+      Text = 'PlayButton'
+      TextSettings.Trimming = None
+      Visible = False
+      OnClick = PlayButtonClick
+    end
+  end
+  object VideosListBox: TListBox
+    Align = Bottom
+    Position.Y = 648.000000000000000000
+    Size.Width = 546.000000000000000000
+    Size.Height = 184.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 4
+    DisableFocusEffect = True
+    ItemHeight = 28.000000000000000000
+    DefaultItemStyles.ItemStyle = ''
+    DefaultItemStyles.GroupHeaderStyle = ''
+    DefaultItemStyles.GroupFooterStyle = ''
+    Viewport.Width = 542.000000000000000000
+    Viewport.Height = 180.000000000000000000
+  end
+end
