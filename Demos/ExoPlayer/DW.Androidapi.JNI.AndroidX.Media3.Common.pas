@@ -69,6 +69,72 @@ type
   JTracks = interface;
   JVideoSize = interface;
 
+  JBasePlayerClass = interface(JObjectClass)
+    ['{08D14E5F-172C-4189-8A90-2441B0C2E7B2}']
+  end;
+
+  [JavaSignature('androidx/media3/common/BasePlayer')]
+  JBasePlayer = interface(JObject)
+    ['{4074E0EF-CA91-4699-826E-280AF87E7C0B}']
+    procedure addMediaItem(mediaitem: JMediaItem); overload; cdecl;
+    procedure addMediaItem(int: Integer; mediaitem: JMediaItem); overload; cdecl;
+    procedure addMediaItems(list: JList); cdecl;
+    function canAdvertiseSession: Boolean; cdecl;
+    procedure clearMediaItems; cdecl;
+    function getBufferedPercentage: Integer; cdecl;
+    function getContentDuration: Int64; cdecl;
+    function getCurrentLiveOffset: Int64; cdecl;
+    function getCurrentManifest: JObject; cdecl;
+    function getCurrentMediaItem: JMediaItem; cdecl;
+    function getCurrentWindowIndex: Integer; cdecl;
+    function getMediaItemAt(int: Integer): JMediaItem; cdecl;
+    function getMediaItemCount: Integer; cdecl;
+    function getNextMediaItemIndex: Integer; cdecl;
+    function getNextWindowIndex: Integer; cdecl;
+    function getPreviousMediaItemIndex: Integer; cdecl;
+    function getPreviousWindowIndex: Integer; cdecl;
+    function hasNext: Boolean; cdecl;
+    function hasNextMediaItem: Boolean; cdecl;
+    function hasNextWindow: Boolean; cdecl;
+    function hasPrevious: Boolean; cdecl;
+    function hasPreviousMediaItem: Boolean; cdecl;
+    function hasPreviousWindow: Boolean; cdecl;
+    function isCommandAvailable(int: Integer): Boolean; cdecl;
+    function isCurrentMediaItemDynamic: Boolean; cdecl;
+    function isCurrentMediaItemLive: Boolean; cdecl;
+    function isCurrentMediaItemSeekable: Boolean; cdecl;
+    function isCurrentWindowDynamic: Boolean; cdecl;
+    function isCurrentWindowLive: Boolean; cdecl;
+    function isCurrentWindowSeekable: Boolean; cdecl;
+    function isPlaying: Boolean; cdecl;
+    procedure moveMediaItem(int: Integer; int_1: Integer); cdecl;
+    procedure next; cdecl;
+    procedure pause; cdecl;
+    procedure play; cdecl;
+    procedure previous; cdecl;
+    procedure removeMediaItem(int: Integer); cdecl;
+    procedure replaceMediaItem(int: Integer; mediaitem: JMediaItem); cdecl;
+    procedure seekBack; cdecl;
+    procedure seekForward; cdecl;
+    procedure seekTo(long: Int64); overload; cdecl;
+    procedure seekTo(int: Integer; long: Int64); overload; cdecl;
+    procedure seekTo(int: Integer; long: Int64; int_1: Integer; boolean: Boolean); overload; cdecl;
+    procedure seekToDefaultPosition(int: Integer); overload; cdecl;
+    procedure seekToDefaultPosition; overload; cdecl;
+    procedure seekToNext; cdecl;
+    procedure seekToNextMediaItem; cdecl;
+    procedure seekToNextWindow; cdecl;
+    procedure seekToPrevious; cdecl;
+    procedure seekToPreviousMediaItem; cdecl;
+    procedure seekToPreviousWindow; cdecl;
+    procedure setMediaItem(mediaitem: JMediaItem); overload; cdecl;
+    procedure setMediaItem(mediaitem: JMediaItem; long: Int64); overload; cdecl;
+    procedure setMediaItem(mediaitem: JMediaItem; boolean: Boolean); overload; cdecl;
+    procedure setMediaItems(list: JList); cdecl;
+    procedure setPlaybackSpeed(float: Single); cdecl;
+  end;
+  TJBasePlayer = class(TJavaGenericImport<JBasePlayerClass, JBasePlayer>) end;
+
   JErrorMessageProviderClass = interface(IJavaClass)
     ['{6234D9BA-CA32-460E-883B-EAE4AC74DF34}']
   end;
