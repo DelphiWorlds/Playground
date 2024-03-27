@@ -18,99 +18,6 @@ uses
   DW.ExoPlayer, DW.ExoPlayer.View.Android,
   DW.Androidapi.JNI.AndroidX.Media3.ExoPlayer, DW.Androidapi.JNI.AndroidX.Media3.UI, DW.Androidapi.JNI.AndroidX.Media3.Common;
 
-(*
-class PlayerActivity : AppCompatActivity() {
-
-    private val viewBinding by lazy(LazyThreadSafetyMode.NONE) {
-        ActivityPlayerBinding.inflate(layoutInflater)
-    }
-
-    private val playbackStateListener: Player.Listener = playbackStateListener()
-    private var player: ExoPlayer? = null
-
-    private var playWhenReady = true
-    private var currentItem = 0
-    private var playbackPosition = 0L
-
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(viewBinding.root)
-    }
-
-    public override fun onStart() {
-        super.onStart()
-        if (Util.SDK_INT > 23) {
-            initializePlayer()
-        }
-    }
-
-    public override fun onResume() {
-        super.onResume()
-        hideSystemUi()
-        if (Util.SDK_INT <= 23 || player == null) {
-            initializePlayer()
-        }
-    }
-
-    public override fun onPause() {
-        super.onPause()
-        if (Util.SDK_INT <= 23) {
-            releasePlayer()
-        }
-    }
-
-    public override fun onStop() {
-        super.onStop()
-        if (Util.SDK_INT > 23) {
-            releasePlayer()
-        }
-    }
-
-    private fun initializePlayer() {
-        val trackSelector = DefaultTrackSelector(this).apply {
-            setParameters(buildUponParameters().setMaxVideoSizeSd())
-        }
-        player = ExoPlayer.Builder(this)
-            .setTrackSelector(trackSelector)
-            .build()
-            .also { exoPlayer ->
-                viewBinding.videoView.player = exoPlayer
-
-                val mediaItem = MediaItem.Builder()
-                    .setUri(getString(R.string.media_url_dash))
-                    .setMimeType(MimeTypes.APPLICATION_MPD)
-                    .build()
-                exoPlayer.setMediaItem(mediaItem)
-                exoPlayer.playWhenReady = playWhenReady
-                exoPlayer.seekTo(currentItem, playbackPosition)
-                exoPlayer.addListener(playbackStateListener)
-                exoPlayer.prepare()
-            }
-    }
-
-    private fun releasePlayer() {
-        player?.let { exoPlayer ->
-            playbackPosition = exoPlayer.currentPosition
-            currentItem = exoPlayer.currentMediaItemIndex
-            playWhenReady = exoPlayer.playWhenReady
-            exoPlayer.removeListener(playbackStateListener)
-            exoPlayer.release()
-        }
-        player = null
-    }
-
-    @SuppressLint("InlinedApi")
-    private fun hideSystemUi() {
-        WindowCompat.setDecorFitsSystemWindows(window, false)
-        WindowInsetsControllerCompat(window, viewBinding.videoView).let { controller ->
-            controller.hide(WindowInsetsCompat.Type.systemBars())
-            controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-        }
-    }
-}
-
-*)
-
 type
   TPlatformExoPlayer = class;
 
@@ -169,22 +76,29 @@ type
     FPlayerView: JPlayerView;
     FPlayWhenReady: Boolean;
     FPresentation: TAndroidExoPlayerView;
+    procedure CreatePlayer;
+    function HasPlayer: Boolean;
     procedure PlayerViewTouchHandler(view: JView; event: JMotionEvent);
-    procedure PreparePlayer;
     procedure ReleasePlayer;
   protected
     procedure BecameActive; override;
+    procedure Pause; override;
+    procedure Play(const AURL: string = ''); override;
     procedure PlaybackStateChanged(const APlaybackState: Integer);
-    procedure SetControlsTimeout(const Value: Integer); override;
+    procedure Prepare(const AURL: string); override;
+    procedure SetControllerTimeout(const Value: Integer); override;
+    procedure SetUseController(const Value: Boolean); override;
+    procedure Stop; override;
+    procedure ShowController(const Value: Boolean); override;
     procedure WillBecomeInactive; override;
   public
-    constructor Create;
-    procedure Play(const AURL: string); override;
+    constructor Create(const AExoPlayer: TExoPlayer); override;
   end;
 
 implementation
 
 uses
+  System.SysUtils,
   Androidapi.Helpers;
 
 { TPlayerListener }
@@ -382,7 +296,7 @@ end;
 
 { TPlatformExoPlayer }
 
-constructor TPlatformExoPlayer.Create;
+constructor TPlatformExoPlayer.Create(const AExoPlayer: TExoPlayer);
 begin
   inherited;
   FPlayWhenReady := True;
@@ -390,61 +304,81 @@ begin
   FPresentation := TAndroidExoPlayerView(View.Presentation);
   FPresentation.OnTouch := PlayerViewTouchHandler;
   FPlayerView := FPresentation.View;
-  FControlsTimeout := FPlayerView.getControllerShowTimeoutMs;
-  FPlayer := TJExoPlayer_Builder.JavaClass.init(TAndroidHelper.Context)
-    // .setTrackSelector(FTrackSelector)
-    .build;
-  FPlayerView.setPlayer(FPlayer);
+  FControllerTimeout := FPlayerView.getControllerShowTimeoutMs;
+  FUseController := FPlayerView.getUseController;
+end;
+
+procedure TPlatformExoPlayer.CreatePlayer;
+begin
+  if not HasPlayer then
+  begin
+    FPlayer := TJExoPlayer_Builder.JavaClass.init(TAndroidHelper.Context)
+      // .setTrackSelector(FTrackSelector)
+      .build;
+    FPlayer.addListener(FPlayerListener);
+    FPlayerView.setPlayer(FPlayer);
+    SetPlayerState(TPlayerState.Stopped);
+  end;
 end;
 
 procedure TPlatformExoPlayer.PlayerViewTouchHandler(view: JView; event: JMotionEvent);
 begin
+  ViewTouched;
   if FPlayerView.isControllerFullyVisible then
     FPlayerView.hideController
   else
     FPlayerView.showController;
 end;
 
-procedure TPlatformExoPlayer.Play(const AURL: string);
-var
-  LMediaItem: JMediaItem;
+procedure TPlatformExoPlayer.Pause;
 begin
-  if FPlayer = nil then
-    PreparePlayer;
-  // https://storage.googleapis.com/exoplayer-test-media-0/BigBuckBunny_320x180.mp4
-  LMediaItem := TJMediaItem.JavaClass.fromUri(StringToJString(AURL));
-  FPlayer.setMediaItem(LMediaItem);
+  if HasPlayer then
+  begin
+    FPlayer.pause;
+    SetPlayerState(TPlayerState.Paused);
+  end
+  else
+    SetPlayerState(TPlayerState.NoPlayer);
+end;
+
+procedure TPlatformExoPlayer.Play(const AURL: string = '');
+begin
+  if not AURL.IsEmpty then
+    Prepare(AURL);
   // FPlayer.setPlayWhenReady(FPlayWhenReady);
   // FPlayer.seekTo(FCurrentMediaItemIndex, FCurrentPosition);
-  FPlayer.addListener(FPlayerListener);
-  FPlayer.prepare;
-  FPlayer.play;
+  if HasPlayer then
+  begin
+    FPlayer.play;
+    SetPlayerState(TPlayerState.Playing);
+  end;
 end;
 
 procedure TPlatformExoPlayer.PlaybackStateChanged(const APlaybackState: Integer);
 begin
-(*
-private fun playbackStateListener() = object : Player.Listener {
-    override fun onPlaybackStateChanged(playbackState: Int) {
-        val stateString: String = when (playbackState) {
-            ExoPlayer.STATE_IDLE -> "ExoPlayer.STATE_IDLE      -"
-            ExoPlayer.STATE_BUFFERING -> "ExoPlayer.STATE_BUFFERING -"
-            ExoPlayer.STATE_READY -> "ExoPlayer.STATE_READY     -"
-            ExoPlayer.STATE_ENDED -> "ExoPlayer.STATE_ENDED     -"
-            else -> "UNKNOWN_STATE             -"
-        }
-        Log.d(TAG, "changed state to $stateString")
-    }
-}
-*)
+//  ExoPlayer.STATE_IDLE
+//  ExoPlayer.STATE_BUFFERING
+//  ExoPlayer.STATE_READY
+//  ExoPlayer.STATE_ENDED
+  if APlaybackState = TJExoPlayer.JavaClass.STATE_ENDED then
+    SetPlayerState(TPlayerState.Completed);
 end;
 
-procedure TPlatformExoPlayer.PreparePlayer;
+procedure TPlatformExoPlayer.Prepare(const AURL: string);
+var
+  LMediaItem: JMediaItem;
 begin
-  FPlayer := TJExoPlayer_Builder.JavaClass.init(TAndroidHelper.Context)
-    // .setTrackSelector(FTrackSelector)
-    .build;
-  TAndroidExoPlayerView(View.Presentation).View.setPlayer(FPlayer);
+  CreatePlayer;
+  LMediaItem := TJMediaItem.JavaClass.fromUri(StringToJString(AURL));
+  FPlayer.setMediaItem(LMediaItem);
+  FPlayer.prepare;
+  // FPlayerView.setUseController(FUseController);
+  SetPlayerState(TPlayerState.Prepared);
+end;
+
+function TPlatformExoPlayer.HasPlayer: Boolean;
+begin
+  Result := FPlayer <> nil;
 end;
 
 procedure TPlatformExoPlayer.ReleasePlayer;
@@ -455,24 +389,48 @@ begin
   // FPlayer.removeListener(FPlayerListener);
   FPlayer.release;
   FPlayer := nil;
+  SetPlayerState(TPlayerState.NoPlayer);
 end;
 
-procedure TPlatformExoPlayer.SetControlsTimeout(const Value: Integer);
+procedure TPlatformExoPlayer.SetControllerTimeout(const Value: Integer);
 begin
   inherited;
   FPlayerView.setControllerShowTimeoutMs(Value);
 end;
 
+procedure TPlatformExoPlayer.SetUseController(const Value: Boolean);
+begin
+  inherited;
+  FPlayerView.setUseController(Value);
+end;
+
+procedure TPlatformExoPlayer.ShowController(const Value: Boolean);
+begin
+  if Value then
+    FPlayerView.showController
+  else
+    FPlayerView.hideController;
+end;
+
+procedure TPlatformExoPlayer.Stop;
+begin
+  if HasPlayer then
+  begin
+    FPlayer.setPlayWhenReady(False);
+    FPlayer.stop;
+    FPlayer.seekTo(0);
+  end;
+end;
+
 procedure TPlatformExoPlayer.BecameActive;
 begin
   inherited;
-  PreparePlayer;
+  CreatePlayer; // and resume, if needed?
 end;
 
 procedure TPlatformExoPlayer.WillBecomeInactive;
 begin
   inherited;
-  // If it is playing something
   ReleasePlayer;
 end;
 

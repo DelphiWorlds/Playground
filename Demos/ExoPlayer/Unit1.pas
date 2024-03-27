@@ -13,12 +13,17 @@ type
     ButtonsLayout: TLayout;
     PlayButton: TButton;
     VideosListBox: TListBox;
-    Button1: TButton;
+    StopButton: TButton;
+    HideControlsCheckBox: TCheckBox;
     procedure PlayButtonClick(Sender: TObject);
+    procedure HideControlsCheckBoxChange(Sender: TObject);
+    procedure VideosListBoxChange(Sender: TObject);
+    procedure StopButtonClick(Sender: TObject);
   private
     FExoPlayer: TExoPlayer;
     FVideos: TArray<string>;
     procedure AddVideos;
+    procedure PrepareVideo;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -36,9 +41,10 @@ implementation
 constructor TForm1.Create(AOwner: TComponent);
 begin
   inherited;
-  AddVideos;
   FExoPlayer := TExoPlayer.Create;
   FExoPlayer.View.Parent := PlayerLayout;
+  FExoPlayer.ControllerTimeout := 1000; // ms. Set to 0 to prevent player controls from showing
+  AddVideos;
 end;
 
 procedure TForm1.AddVideos;
@@ -55,6 +61,7 @@ begin
   for LVideo in FVideos do
     VideosListBox.Items.AddStrings(LVideo.Substring(LVideo.LastIndexOf('/') + 1));
   VideosListBox.ItemIndex := 0;
+  PrepareVideo;
 end;
 
 destructor TForm1.Destroy;
@@ -63,10 +70,30 @@ begin
   inherited;
 end;
 
+procedure TForm1.HideControlsCheckBoxChange(Sender: TObject);
+begin
+  FExoPlayer.UseController := not HideControlsCheckBox.IsChecked;
+end;
+
 procedure TForm1.PlayButtonClick(Sender: TObject);
 begin
-  if VideosListBox.ItemIndex > -1 then
-    FExoPlayer.Play(FVideos[VideosListBox.ItemIndex]);
+  FExoPlayer.Play;
+end;
+
+procedure TForm1.PrepareVideo;
+begin
+  FExoPlayer.Prepare(FVideos[VideosListBox.ItemIndex]);
+end;
+
+procedure TForm1.StopButtonClick(Sender: TObject);
+begin
+  FExoPlayer.Stop;
+end;
+
+procedure TForm1.VideosListBoxChange(Sender: TObject);
+begin
+  FExoPlayer.Stop;
+  PrepareVideo;
 end;
 
 end.

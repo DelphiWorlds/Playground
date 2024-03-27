@@ -34,11 +34,11 @@ object Form1: TForm1
       Size.Height = 30.000000000000000000
       Size.PlatformDefault = False
       TabOrder = 1
-      Text = 'PlayButton'
+      Text = 'Play'
       TextSettings.Trimming = None
       OnClick = PlayButtonClick
     end
-    object Button1: TButton
+    object StopButton: TButton
       Align = Left
       Margins.Left = 16.000000000000000000
       Position.X = 105.000000000000000000
@@ -47,10 +47,20 @@ object Form1: TForm1
       Size.Height = 30.000000000000000000
       Size.PlatformDefault = False
       TabOrder = 0
-      Text = 'PlayButton'
+      Text = 'Stop'
       TextSettings.Trimming = None
-      Visible = False
-      OnClick = PlayButtonClick
+      OnClick = StopButtonClick
+    end
+    object HideControlsCheckBox: TCheckBox
+      Align = Right
+      Position.X = 420.000000000000000000
+      Position.Y = 6.000000000000000000
+      Size.Width = 120.000000000000000000
+      Size.Height = 30.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 2
+      Text = 'Hide Controls'
+      OnChange = HideControlsCheckBoxChange
     end
   end
   object VideosListBox: TListBox
@@ -65,6 +75,7 @@ object Form1: TForm1
     DefaultItemStyles.ItemStyle = ''
     DefaultItemStyles.GroupHeaderStyle = ''
     DefaultItemStyles.GroupFooterStyle = ''
+    OnChange = VideosListBoxChange
     Viewport.Width = 542.000000000000000000
     Viewport.Height = 180.000000000000000000
   end
