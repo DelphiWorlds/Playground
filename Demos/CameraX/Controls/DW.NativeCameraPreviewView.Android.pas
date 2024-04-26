@@ -6,12 +6,10 @@ unit DW.NativeCameraPreviewView.Android;
 {                                                       }
 {         Delphi Worlds Cross-Platform Library          }
 {                                                       }
-{  Copyright 2020-2021 Dave Nottage under MIT license   }
+{  Copyright 2020-2024 Dave Nottage under MIT license   }
 {  which is located in the root folder of this library  }
 {                                                       }
 {*******************************************************}
-
-{$I DW.GlobalDefines.inc}
 
 interface
 
@@ -55,7 +53,8 @@ end;
 function TAndroidNativeCameraPreviewView.CreateView: JView;
 begin
   FView := TJPreviewView.JavaClass.init(TAndroidHelper.Context);
-  FView.setImplementationMode(TJPreviewView_ImplementationMode.JavaClass.COMPATIBLE);
+  FView.setImplementationMode(TJPreviewView_ImplementationMode.JavaClass.COMPATIBLE); // <--- Background goes black
+  // FView.setImplementationMode(TJPreviewView_ImplementationMode.JavaClass.PERFORMANCE); // <--- Background goes white
   Result := FView;
 end;
 

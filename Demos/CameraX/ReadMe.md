@@ -24,6 +24,13 @@ Please provide feedback about this demo as per [the main ReadMe.](https://github
 
 ## Status 
 
+* Apr 26th, 2024:
+
+Updated Android libraries
+Included resources from libraries and merged with project resources
+
+Sadly, still non-functional
+
 * May 24th, 2023:
 
 Updated Android libraries

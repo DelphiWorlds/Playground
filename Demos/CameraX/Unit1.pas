@@ -12,7 +12,7 @@ uses
   Androidapi.JNI.JavaTypes, Androidapi.JNIBridge,
   DW.NativeCameraPreviewView,
   DW.Androidapi.JNI.AndroidX.Camera, DW.Androidapi.JNI.Concurrent, DW.Androidapi.JNI.AndroidX.Lifecycle,
-  DW.Androidapi.JNI.AndroidX.Camera.Lifecycle;
+  DW.Androidapi.JNI.AndroidX.Camera.Lifecycle, DW.Androidapi.JNI.Guava;
 
 type
   TForm1 = class(TForm)
@@ -20,6 +20,7 @@ type
     Button1: TButton;
     procedure Button1Click(Sender: TObject);
   private
+    FCamera: Jcore_Camera;
     FCameraExecutor: JExecutorService;
     FCameraProvider: JProcessCameraProvider;
     FCameraProviderFuture: JListenableFuture;
@@ -69,7 +70,8 @@ end;
 
 procedure TForm1.RequestPermissions;
 begin
-  PermissionsService.RequestPermissions([cPermissionReadExternalStorage, cPermissionWriteExternalStorage, cPermissionCamera],
+  // PermissionsService.RequestPermissions([cPermissionReadExternalStorage, cPermissionWriteExternalStorage, cPermissionCamera],
+  PermissionsService.RequestPermissions([cPermissionCamera],
     procedure(const APermissions: TPermissionArray; const AGrantResults: TPermissionStatusArray)
     begin
       if AGrantResults.AreAllGranted then
@@ -90,20 +92,27 @@ end;
 procedure TForm1.CameraProviderFutureListenerHandler;
 var
   LNativePreviewView: JPreviewView;
+  LCameraSelector: JCameraSelector;
 begin
   TOSLog.d('+TForm1.CameraProviderFutureListenerHandler');
   FCameraProvider := TJProcessCameraProvider.Wrap(FCameraProviderFuture.&get);
+
+  // LNativePreviewView provides the surface for LPreview
+  LNativePreviewView := TAndroidNativeCameraPreviewView(FCameraPreview.Presentation).View;
   FPreview := TJPreview_Builder.JavaClass.init.build;
+  FPreview.setSurfaceProvider(LNativePreviewView.getSurfaceProvider);
+
 
   FPreviewUseCaseGroup := TJUseCaseGroup_Builder.JavaClass.init
     .addUseCase(FPreview)
     .build;
-  FCameraProvider.unbindAll;
-  FCameraProvider.bindToLifecycle(TJProcessLifecycleOwner.JavaClass.get, TJCameraSelector.JavaClass.DEFAULT_BACK_CAMERA, FPreviewUseCaseGroup);
 
-  // LNativePreviewView provides the surface for LPreview
-  LNativePreviewView := TAndroidNativeCameraPreviewView(FCameraPreview.Presentation).View;
-  FPreview.setSurfaceProvider(LNativePreviewView.getSurfaceProvider);
+  FCameraProvider.unbindAll;
+  LCameraSelector := TJCameraSelector.JavaClass.DEFAULT_BACK_CAMERA;
+  FCamera := FCameraProvider.bindToLifecycle(TJProcessLifecycleOwner.JavaClass.get, LCameraSelector, FPreviewUseCaseGroup);
+
+
+  // TOSLog.d('> LNativePreviewView Width: %d, Height: %d', [LNativePreviewView.getWidth, LNativePreviewView.getHeight]);
   TOSLog.d('-TForm1.CameraProviderFutureListenerHandler');
 end;
 

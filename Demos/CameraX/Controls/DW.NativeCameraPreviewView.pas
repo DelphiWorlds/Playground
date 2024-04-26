@@ -6,12 +6,10 @@ unit DW.NativeCameraPreviewView;
 {                                                       }
 {         Delphi Worlds Cross-Platform Library          }
 {                                                       }
-{  Copyright 2020-2021 Dave Nottage under MIT license   }
+{  Copyright 2020-2024 Dave Nottage under MIT license   }
 {  which is located in the root folder of this library  }
 {                                                       }
 {*******************************************************}
-
-{$I DW.GlobalDefines.inc}
 
 interface
 
@@ -43,7 +41,7 @@ type
     constructor Create(AOwner: TComponent); override;
   end;
 
-  [ComponentPlatformsAttribute(pidAndroid32Arm or pidAndroid64Arm)]
+  [ComponentPlatformsAttribute(pidAndroidArm32 or pidAndroidArm64)]
   TNativeCameraPreviewView = class(TCustomNativeCameraPreviewView)
   published
     property Align;
