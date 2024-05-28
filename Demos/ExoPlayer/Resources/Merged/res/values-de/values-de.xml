@@ -60,4 +60,13 @@
 	<string name="exo_track_surround_7_point_1">7.1-Surround-Sound</string>
 	<string name="exo_track_unknown">Unbekannt</string>
 	<string msgid="6277540029070332960" name="status_bar_notification_info_overflow">"999+"</string>
+	<string name="exo_download_completed">Download abgeschlossen</string>
+	<string name="exo_download_description">Herunterladen</string>
+	<string name="exo_download_downloading">Wird heruntergeladen</string>
+	<string name="exo_download_failed">Download fehlgeschlagen</string>
+	<string name="exo_download_notification_channel_name">Downloads</string>
+	<string name="exo_download_paused">Downloads pausiert</string>
+	<string name="exo_download_paused_for_network">Auf Netzwerkverbindung wird gewartet</string>
+	<string name="exo_download_paused_for_wifi">Auf WLAN-Verbindung wird gewartet</string>
+	<string name="exo_download_removing">Downloads werden entfernt</string>
 </resources>

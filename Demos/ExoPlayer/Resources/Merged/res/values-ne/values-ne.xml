@@ -60,4 +60,13 @@
 	<string name="exo_track_surround_7_point_1">7.1 सराउन्ड साउन्ड</string>
 	<string name="exo_track_unknown">अज्ञात</string>
 	<string msgid="6277540029070332960" name="status_bar_notification_info_overflow">"९९९+"</string>
+	<string name="exo_download_completed">डाउनलोड सम्पन्न भयो</string>
+	<string name="exo_download_description">डाउनलोड गर्नुहोस्</string>
+	<string name="exo_download_downloading">डाउनलोड गरिँदै छ</string>
+	<string name="exo_download_failed">डाउनलोड गर्न सकिएन</string>
+	<string name="exo_download_notification_channel_name">डाउनलोडहरू</string>
+	<string name="exo_download_paused">डाउनलोड गर्ने कार्य पज गरियो</string>
+	<string name="exo_download_paused_for_network">इन्टरनेटमा कनेक्ट भएपछि डाउनलोड गरिने छ</string>
+	<string name="exo_download_paused_for_wifi">WiFi मा कनेक्ट भएपछि डाउनलोड गरिने छ</string>
+	<string name="exo_download_removing">डाउनलोडहरू हटाउँदै</string>
 </resources>

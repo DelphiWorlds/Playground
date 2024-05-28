@@ -60,4 +60,13 @@
 	<string name="exo_track_surround_7_point_1">7․1 ծավալային ձայն</string>
 	<string name="exo_track_unknown">Անհայտ</string>
 	<string msgid="6277540029070332960" name="status_bar_notification_info_overflow">"999+"</string>
+	<string name="exo_download_completed">Ներբեռնումն ավարտվեց</string>
+	<string name="exo_download_description">Ներբեռնել</string>
+	<string name="exo_download_downloading">Ներբեռնում</string>
+	<string name="exo_download_failed">Չհաջողվեց ներբեռնել</string>
+	<string name="exo_download_notification_channel_name">Ներբեռնումներ</string>
+	<string name="exo_download_paused">Ներբեռնումները դադարեցված են</string>
+	<string name="exo_download_paused_for_network">Ցանցի որոնում</string>
+	<string name="exo_download_paused_for_wifi">Wi-Fi ցանցի որոնում</string>
+	<string name="exo_download_removing">Ներբեռնումները հեռացվում են</string>
 </resources>

@@ -60,4 +60,13 @@
 	<string name="exo_track_surround_7_point_1">Son envolvente 7.1</string>
 	<string name="exo_track_unknown">Descoñecido</string>
 	<string msgid="6277540029070332960" name="status_bar_notification_info_overflow">"&gt;999"</string>
+	<string name="exo_download_completed">Completouse a descarga</string>
+	<string name="exo_download_description">Descargar</string>
+	<string name="exo_download_downloading">Descargando</string>
+	<string name="exo_download_failed">Produciuse un erro na descarga</string>
+	<string name="exo_download_notification_channel_name">Descargas</string>
+	<string name="exo_download_paused">As descargas están en pausa</string>
+	<string name="exo_download_paused_for_network">As descargas están agardando pola rede</string>
+	<string name="exo_download_paused_for_wifi">As descargas están agardando pola wifi</string>
+	<string name="exo_download_removing">Quitando descargas</string>
 </resources>
