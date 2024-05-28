@@ -356,11 +356,11 @@ end;
 
 procedure TPlatformExoPlayer.PlaybackStateChanged(const APlaybackState: Integer);
 begin
-//  ExoPlayer.STATE_IDLE
-//  ExoPlayer.STATE_BUFFERING
-//  ExoPlayer.STATE_READY
-//  ExoPlayer.STATE_ENDED
-  if APlaybackState = TJExoPlayer.JavaClass.STATE_ENDED then
+//  ExoPlayer.STATE_IDLE = 1
+//  ExoPlayer.STATE_BUFFERING = 2
+//  ExoPlayer.STATE_READY = 3
+//  ExoPlayer.STATE_ENDED = 4
+  if APlaybackState = 4 then // Using TJExoPlayer.JavaClass.STATE_ENDED crashes on Android 8.x - why? I do not know
     SetPlayerState(TPlayerState.Completed);
 end;
 
