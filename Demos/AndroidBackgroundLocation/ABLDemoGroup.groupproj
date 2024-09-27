@@ -1,0 +1,48 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{DB7229F1-36DD-4059-B796-4064EE088827}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="ABLDemo.dproj">
+            <Dependencies>Service\ABLDemoService.dproj</Dependencies>
+        </Projects>
+        <Projects Include="Service\ABLDemoService.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="ABLDemo" DependsOnTargets="ABLDemoService">
+        <MSBuild Projects="ABLDemo.dproj"/>
+    </Target>
+    <Target Name="ABLDemo:Clean" DependsOnTargets="ABLDemoService:Clean">
+        <MSBuild Projects="ABLDemo.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="ABLDemo:Make" DependsOnTargets="ABLDemoService:Make">
+        <MSBuild Projects="ABLDemo.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="ABLDemoService">
+        <MSBuild Projects="Service\ABLDemoService.dproj"/>
+    </Target>
+    <Target Name="ABLDemoService:Clean">
+        <MSBuild Projects="Service\ABLDemoService.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="ABLDemoService:Make">
+        <MSBuild Projects="Service\ABLDemoService.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="ABLDemo;ABLDemoService"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="ABLDemo:Clean;ABLDemoService:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="ABLDemo:Make;ABLDemoService:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>
