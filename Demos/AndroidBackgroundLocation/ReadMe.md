@@ -16,6 +16,16 @@ Incorporates suggestions made by Alex Sawers from [this issue on the Kastri repo
 
 If (and this is fairly unlikely given the issues, see below) it can be improved, this description will be expanded.
 
+## Project Configuration
+
+In `AndroidManifest.template.xml`, **replace** the `<%services%>` tag with:
+
+```xml
+        <service android:name="com.embarcadero.services.ABLDemoService" android:exported="false" android:foregroundServiceType="location" />
+```
+
+This is because Delphi is yet (as of Delphi 12.2) to support having the `foregroundServiceType` attribute
+
 ## Status
 
 * Sep 27th, 2024
