@@ -20,7 +20,6 @@ implementation
 uses
   System.SysUtils,
   Androidapi.JNI.GraphicsContentViewText, Androidapi.Helpers,
-  DW.OSLog,
   DW.Android.Helpers;
 
 const
@@ -50,7 +49,6 @@ var
 begin
   if TOSVersion.Check(8) then
   begin
-    TOSLog.d('Starting foreground..');
     if AChannelId.IsEmpty then
       LChannelId := CreateNotificationChannel
     else
@@ -81,10 +79,7 @@ end;
 class procedure TForegroundServiceHelper.StopForeground(const AService: JService);
 begin
   if TOSVersion.Check(8) and TAndroidHelperEx.IsServiceForeground(JStringToString(AService.getClass.getName)) then
-  begin
-    TOSLog.d('Stopping foreground..');
     AService.stopForeground(True);
-  end;
 end;
 
 end.

@@ -3,18 +3,20 @@ unit ABL.ServiceModule;
 interface
 
 uses
-  System.SysUtils, System.Classes, System.Android.Service,
+  System.SysUtils, System.Classes, System.Android.Service, System.JSON,
   AndroidApi.JNI.GraphicsContentViewText, Androidapi.JNI.Os, Androidapi.JNI.Location, Androidapi.JNI.JavaTypes,
-  DW.FusedLocation;
+  DW.FusedLocation,
+  DW.LocationService.Common, ABL.LocationSender;
 
 type
   TServiceModule = class(TAndroidService, IFusedLocationOwner)
     function AndroidServiceStartCommand(const Sender: TObject; const Intent: JIntent; Flags, StartId: Integer): Integer;
     procedure AndroidServiceCreate(Sender: TObject);
-    procedure AndroidServiceDestroy(Sender: TObject);
   private
     FFusedLocation: IFusedLocation;
-    procedure SendMessage(const AKind: Integer; const AMsg: string);
+    FLocationSender: ILocationSender;
+    function CheckServiceInfo(const AInfo: TLocationServiceInfo): Boolean;
+    function CanStartForeground: Boolean;
   public
     { IFusedLocationOwner }
     procedure LocationReceived(const ALocation: JLocation);
@@ -26,18 +28,17 @@ var
 
 implementation
 
-{%CLASSGROUP 'FMX.Controls.TControl'}
+{%CLASSGROUP 'System.Classes.TPersistent'}
 
 {$R *.dfm}
 
 uses
-  System.Sensors, System.DateUtils,
+  System.Sensors, System.DateUtils, System.Permissions,
   Androidapi.JNIBridge, Androidapi.JNI.App, Androidapi.Helpers,
   DW.OSLog,
-  DW.Android.Helpers, DW.ForegroundServiceHelper, DW.Location.Types, DW.Androidapi.JNI.AndroidX.LocalBroadcastManager, DW.MessageReceiver.Consts,
-  ABL.Common;
+  DW.Android.Helpers, DW.ForegroundServiceHelper, DW.Location.Types, DW.Consts.Android,
+  DW.BroadcastMessage.Sender;
 
-// TODO: Refactor to elsewhere??
 type
   TLocationDataHelper = record helper for TLocationData
     procedure FromLocation(const ALocation: JLocation);
@@ -48,7 +49,9 @@ type
 procedure TLocationDataHelper.FromLocation(const ALocation: JLocation);
 begin
   Self := Default(TLocationData);
-  DateTime := UnixToDateTime(ALocation.getTime); // UTC
+  // For some weird reason, ALocation.getTime is returning a value millenia into the future?? Or UnixToDateTime is broken.
+  // DateTime := UnixToDateTime(ALocation.getTime); // UTC
+  DateTime := TTimeZone.Local.ToUniversalTime(Now);
   Location := TLocationCoord2D.Create(ALocation.getLatitude, ALocation.getLongitude);
   IsMocked := ALocation.isFromMockProvider;
   if ALocation.hasAccuracy then
@@ -75,7 +78,6 @@ end;
 
 // TODO:
 //   Start service from boot
-//   Modifiable - update frequency, accuracy, priority, smallest distance change
 
 // Highest priority:
 //   Remain running for long periods
@@ -86,31 +88,41 @@ end;
 procedure TServiceModule.AndroidServiceCreate(Sender: TObject);
 begin
   FFusedLocation := TFusedLocation.Create(Self);
+  FLocationSender := TLocationSender.Create;
+  // Set a URL that points to a REST server that can store location data.
+  FLocationSender.URL := 'https://radsoft.com.au:8086/locations/add';
 end;
 
-procedure TServiceModule.AndroidServiceDestroy(Sender: TObject);
+function TServiceModule.CanStartForeground: Boolean;
 begin
-  TOSLog.d('TServiceModule.AndroidServiceDestroy');
+  Result := PermissionsService.IsPermissionGranted(cPermissionAccessBackgroundLocation);
+end;
+
+function TServiceModule.CheckServiceInfo(const AInfo: TLocationServiceInfo): Boolean;
+begin
+  Result := AInfo.IsServiceInfo;
+  if Result then
+  begin
+    if AInfo.IsActive then
+      FFusedLocation.Start(AInfo.Options)
+    else
+      FFusedLocation.Stop;
+  end;
 end;
 
 function TServiceModule.AndroidServiceStartCommand(const Sender: TObject; const Intent: JIntent; Flags, StartId: Integer): Integer;
 var
-  LInfo: TABLServiceInfo;
+  LInfo: TLocationServiceInfo;
 begin
-  LInfo.FromIntent(Intent);
-  case LInfo.ForegroundMode of
-    TActionMode.Start:
-      TForegroundServiceHelper.StartForeground(JavaService, 'X', 'X');
-    TActionMode.Stop:
-      TForegroundServiceHelper.StopForeground(JavaService);
-  end;
-  case LInfo.LocationMode of
-    TActionMode.Start:
-      FFusedLocation.Start;
-    TActionMode.Stop:
-      FFusedLocation.Stop;
-  end;
-  Result := TJService.JavaClass.START_STICKY;
+  LInfo := TLocationServiceInfo.Create(Intent);
+  // If the service was *not* started from the app, just start it in the foreground.
+  // There is no RELIABLE way to know whether the app is in the foreground - the system could kill it and not be able to persist its state anywhere
+  if CanStartForeground and not LInfo.IsServiceInfo then
+    TForegroundServiceHelper.StartForeground(JavaService, 'ABL Demo', 'Service in foreground');
+  CheckServiceInfo(LInfo);
+  FFusedLocation.CheckIntent(Intent);
+  // START_NOT_STICKY is returned, as the service does not need to continue running if the application is.
+  Result := TJService.JavaClass.START_NOT_STICKY;
 end;
 
 procedure TServiceModule.LocationReceived(const ALocation: JLocation);
@@ -119,22 +131,17 @@ var
 begin
   LData.FromLocation(ALocation);
   TOSLog.d('Received: %.5f, %.5f', [LData.Location.Latitude, LData.Location.Longitude]);
-  SendMessage(0, LData.ToJSON);
+  // Uncomment this line when using a REST server that can update location data
+  FLocationSender.SendLocation(LData);
+  // Message type 0 is a notification of a location update
+  TBroadcastMessageSender.Send(0, LData.ToJSON);
 end;
 
 procedure TServiceModule.LocationUpdatesChange(const AIsActive: Boolean);
 begin
-  TOSLog.d('TServiceModule.LocationUpdatesChange > AIsActive: %s', [BoolToStr(AIsActive, True)]);
-end;
-
-procedure TServiceModule.SendMessage(const AKind: Integer; const AMsg: string);
-var
-  LIntent: JIntent;
-begin
-  LIntent := TJIntent.JavaClass.init(MessageReceiverConsts.ACTION_MESSAGE);
-  LIntent.putExtra(MessageReceiverConsts.EXTRA_MESSAGE_KIND, AKind);
-  LIntent.putExtra(MessageReceiverConsts.EXTRA_MESSAGE, StringToJString(AMsg));
-  TJLocalBroadcastManager.JavaClass.getInstance(TAndroidHelper.Context).sendBroadcast(LIntent);
+  // Message type 1 is a notification that the location updates have started/stopped
+  TOSLog.d('TServiceModule.LocationUpdatesChange - AIsActive: %s', [BoolToStr(AIsActive, True)]);
+  TBroadcastMessageSender.Send(1, '');
 end;
 
 end.

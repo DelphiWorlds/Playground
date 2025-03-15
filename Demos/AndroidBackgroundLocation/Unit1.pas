@@ -3,11 +3,12 @@ unit Unit1;
 interface
 
 uses
-  System.SysUtils, System.Types, System.UITypes, System.Classes, System.Variants, System.Messaging, System.JSON,
+  System.SysUtils, System.Types, System.UITypes, System.Classes, System.Variants, System.JSON,
   Androidapi.JNI.GraphicsContentViewText,
   FMX.Types, FMX.Controls, FMX.Forms, FMX.Graphics, FMX.Dialogs, FMX.Layouts, FMX.Controls.Presentation, FMX.StdCtrls, FMX.Memo.Types,
   FMX.ScrollBox, FMX.Memo,
-  DW.MessageReceiver;
+  DW.BroadcastMessage.Receiver,
+  DW.LocationService.Manager, DW.LocationService.Common;
 
 type
   TForm1 = class(TForm)
@@ -16,13 +17,11 @@ type
     MessagesMemo: TMemo;
     procedure StartStopLocationButtonClick(Sender: TObject);
   private
-    FHasLaunched: Boolean;
-    FMessageReceiver: TJSONMessageReceiver;
-    procedure ApplicationEventMessageHandler(const Sender: TObject; const AMsg: TMessage);
-    procedure StartService(const AServiceName: string; const AIntent: JIntent);
-    procedure ServiceMessageHandler(const AMsg: TJSONValue);
-    procedure SetLocationUpdates(const AIsActive: Boolean);
-    procedure SetServiceForeground(const ANeedsForeground: Boolean);
+    FMessageReceiver: TJSONBroadcastMessageReceiver;
+    FPreferences: ILocationPreferences;
+    FServiceManager: ILocationServiceManager;
+    procedure ServiceMessageHandler(const AKind: Integer; const AMsg: TJSONValue);
+    procedure UpdateStartStopLocationButton;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -37,103 +36,70 @@ implementation
 
 uses
   Androidapi.Helpers, Androidapi.JNI.JavaTypes, Androidapi.JNI.App,
-  FMX.Platform,
-  DW.OSLog,
-  DW.JSON,
-  ABL.LocationPermissions, ABL.Common;
-
-const
-  EMBTJavaServicePrefix = 'com.embarcadero.services.';
+  DW.OSLog, DW.JSON, DW.BroadcastMessage.Sender,
+  DW.LocationPermissions, DW.Location.Types;
 
 { TForm1 }
 
 constructor TForm1.Create(AOwner: TComponent);
 begin
   inherited;
-  TMessageManager.DefaultManager.SubscribeToMessage(TApplicationEventMessage, ApplicationEventMessageHandler);
-  FMessageReceiver := TJSONMessageReceiver.Create(ServiceMessageHandler);
+  FServiceManager := TLocationServiceManager.Create('ABLDemoService');
+  FPreferences := TLocationPreferences.Create;
+  FMessageReceiver := TJSONBroadcastMessageReceiver.Create(ServiceMessageHandler);
+  UpdateStartStopLocationButton;
 end;
 
 destructor TForm1.Destroy;
 begin
-  TMessageManager.DefaultManager.Unsubscribe(TApplicationEventMessage, ApplicationEventMessageHandler);
+  //
   inherited;
-end;
-
-procedure TForm1.ApplicationEventMessageHandler(const Sender: TObject; const AMsg: TMessage);
-begin
-  case TApplicationEventMessage(AMsg).Value.Event of
-    TApplicationEvent.BecameActive:
-    begin
-      // This check is only if the service should not start as soon as the app does
-      if FHasLaunched then
-      begin
-        TOSLog.d('TApplicationEvent.BecameActive > SetServiceForeground(False)');
-        SetServiceForeground(False);
-      end;
-      FHasLaunched := False;
-    end;
-    TApplicationEvent.WillBecomeInactive:
-    begin
-      if LocationPermissions.CanStartForeground then
-      begin
-        TOSLog.d('TApplicationEvent.WillBecomeInactive > SetServiceForeground(True)');
-        SetServiceForeground(True);
-      end;
-    end;
-  end;
-end;
-
-procedure TForm1.StartService(const AServiceName: string; const AIntent: JIntent);
-var
-  LService: string;
-begin
-  LService := AServiceName;
-  if not LService.StartsWith(EMBTJavaServicePrefix) then
-    LService := EMBTJavaServicePrefix + LService;
-  AIntent.setClassName(TAndroidHelper.Context.getPackageName, StringToJString(LService));
-  TAndroidHelper.Activity.startService(AIntent);
 end;
 
 procedure TForm1.StartStopLocationButtonClick(Sender: TObject);
 begin
-  LocationPermissions.RequestBackground(
-    procedure(const ACanStart: Boolean)
-    begin
-      if ACanStart then
+  if not FPreferences.GetIsActive then
+  begin
+    LocationPermissions.RequestBackground(
+      procedure(const ACanStart: Boolean)
       begin
-        TOSLog.d('StartStopLocationButtonClick > SetLocationUpdates(True)');
-        SetLocationUpdates(True);
-      end;
-    end
-  );
-end;
-
-procedure TForm1.SetLocationUpdates(const AIsActive: Boolean);
-var
-  LInfo: TABLServiceInfo;
-begin
-  if AIsActive then
-    LInfo.LocationMode := TActionMode.Start
+        if ACanStart then
+          FServiceManager.StartLocationUpdates
+      end
+    );
+  end
   else
-    LInfo.LocationMode := TActionMode.Stop;
-  StartService('ABLDemoService', LInfo.ToIntent);
+    FServiceManager.StopLocationUpdates;
 end;
 
-procedure TForm1.SetServiceForeground(const ANeedsForeground: Boolean);
+procedure TForm1.UpdateStartStopLocationButton;
+const
+  cButtonCaptions: array[Boolean] of string = ('Start Location', 'Stop Location');
+begin
+  StartStopLocationButton.Text := cButtonCaptions[FPreferences.GetIsActive];
+end;
+
+procedure TForm1.ServiceMessageHandler(const AKind: Integer; const AMsg: TJSONValue);
+const
+  cActiveCaptions: array[Boolean] of string = ('Inactive', 'Active');
 var
-  LInfo: TABLServiceInfo;
+  LLocationData: TLocationData;
 begin
-  if ANeedsForeground then
-    LInfo.ForegroundMode := TActionMode.Start
-  else
-    LInfo.ForegroundMode := TActionMode.Stop;
-  StartService('ABLDemoService', LInfo.ToIntent);
-end;
-
-procedure TForm1.ServiceMessageHandler(const AMsg: TJSONValue);
-begin
-  MessagesMemo.Lines.Add(TJSONHelper.Tidy(AMsg));
+  case AKind of
+    0:
+    begin
+      TOSLog.d('> Location received in app');
+      MessagesMemo.Lines.Add(TJSONHelper.Tidy(AMsg));
+      LLocationData.FromJSONValue(AMsg);
+      // Location properties can now be accessed from LLocationData
+    end;
+    1:
+    begin
+      TOSLog.d('> Location updates changed in app');
+      MessagesMemo.Lines.Add('Location updates changed to: ' + cActiveCaptions[FPreferences.GetIsActive]);
+      UpdateStartStopLocationButton;
+    end;
+  end;
 end;
 
 end.

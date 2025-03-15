@@ -6,7 +6,7 @@ unit DW.Location.Types;
 {                                                       }
 {         Delphi Worlds Cross-Platform Library          }
 {                                                       }
-{  Copyright 2020-2024 Dave Nottage under MIT license   }
+{  Copyright 2020-2025 Dave Nottage under MIT license   }
 {  which is located in the root folder of this library  }
 {                                                       }
 {*******************************************************}
@@ -17,7 +17,7 @@ interface
 
 uses
   // RTL
-  System.Sensors;
+  System.JSON, System.Sensors;
 
 const
   cInvalidLatitude = 91;
@@ -40,6 +40,7 @@ type
     Location: TLocationCoord2D;
     Speed: Double;
     procedure FromJSON(const AJSON: string);
+    procedure FromJSONValue(const AValue: TJSONValue);
     procedure Reset;
     function ToJSON: string;
   end;
@@ -47,7 +48,8 @@ type
 implementation
 
 uses
-  System.JSON, System.DateUtils;
+  DW.OSLog, System.SysUtils,
+  System.DateUtils;
 
 { TLocationData }
 
@@ -68,12 +70,11 @@ function TLocationData.ToJSON: string;
 var
   LJSON, LLocation: TJSONObject;
 begin
-  // Flags!!!
   LJSON := TJSONObject.Create;
   try
     LJSON.AddPair('Accuracy', Accuracy);
     LJSON.AddPair('Altitude', Altitude);
-    LJSON.AddPair('Bearing', Altitude);
+    LJSON.AddPair('Bearing', Bearing);
     LJSON.AddPair('DateTime', DateToISO8601(DateTime));
     LJSON.AddPair('IsCached', IsCached);
     LJSON.AddPair('IsMocked', IsMocked);
@@ -88,27 +89,44 @@ begin
   end;
 end;
 
+procedure TLocationData.FromJSONValue(const AValue: TJSONValue);
+var
+  LLocation: TJSONValue;
+  LDateTimeValue: string;
+begin
+  TOSLog.d('+TLocationData.FromJSONValue - AValue = nil: %s', [BoolToStr(AValue = nil, True)]);
+  AValue.TryGetValue('Accuracy', Accuracy);
+  AValue.TryGetValue('Altitude', Altitude);
+  AValue.TryGetValue('Bearing', Bearing);
+  if AValue.TryGetValue('DateTime', LDateTimeValue) then
+  try
+    TOSLog.d('> DateTime := ISO8601ToDate(LDateTimeValue) : %s', [LDateTimeValue]);
+    DateTime := ISO8601ToDate(LDateTimeValue);
+  except
+    on E: Exception do
+      TOSLog.d('%s: %s', [E.ClassName, E.Message]);
+  end;
+  TOSLog.d('> AValue.TryGetValue(''IsCached''');
+  AValue.TryGetValue('IsCached', IsCached);
+  TOSLog.d('> AValue.TryGetValue(''IsMocked'', IsMocked)');
+  AValue.TryGetValue('IsMocked', IsMocked);
+  if AValue.TryGetValue('Location', LLocation) then
+  begin
+    LLocation.TryGetValue('Latitude', Location.Latitude);
+    LLocation.TryGetValue('Longitude', Location.Longitude);
+  end;
+  AValue.TryGetValue('Speed', Accuracy);
+  TOSLog.d('-TLocationData.FromJSONValue');
+end;
+
 procedure TLocationData.FromJSON(const AJSON: string);
 var
-  LValue, LLocation: TJSONValue;
-  LDateTimeValue: string;
+  LValue: TJSONValue;
 begin
   LValue := TJSONObject.ParseJSONValue(AJSON);
   if LValue <> nil then
   try
-    LValue.TryGetValue('Accuracy', Accuracy);
-    LValue.TryGetValue('Altitude', Altitude);
-    LValue.TryGetValue('Bearing', Bearing);
-    if LValue.TryGetValue('DateTime', LDateTimeValue) then
-      DateTime := ISO8601ToDate(LDateTimeValue);
-    LValue.TryGetValue('IsCached', IsCached);
-    LValue.TryGetValue('IsMocked', IsMocked);
-    if LValue.TryGetValue('Location', LLocation) then
-    begin
-      LLocation.TryGetValue('Latitude', Location.Latitude);
-      LLocation.TryGetValue('Longitude', Location.Longitude);
-    end;
-    LValue.TryGetValue('Speed', Accuracy);
+    FromJSONValue(LValue);
   finally
     LValue.Free;
   end;

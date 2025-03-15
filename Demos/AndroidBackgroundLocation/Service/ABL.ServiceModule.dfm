@@ -1,7 +1,7 @@
 object ServiceModule: TServiceModule
   OnCreate = AndroidServiceCreate
-  OnDestroy = AndroidServiceDestroy
   OnStartCommand = AndroidServiceStartCommand
-  Height = 238
-  Width = 324
+  Height = 298
+  Width = 405
+  PixelsPerInch = 120
 end
