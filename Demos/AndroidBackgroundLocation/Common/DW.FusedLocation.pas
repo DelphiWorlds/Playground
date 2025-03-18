@@ -219,7 +219,8 @@ class function TFusedLocationOptions.Defaults: TFusedLocationOptions;
 begin
   Result.Interval := cDefaultLocationInterval;
   Result.FastestInterval := cDefaultLocationFastestInterval;
-  Result.Priority := TJLocationRequest.JavaClass.PRIORITY_BALANCED_POWER_ACCURACY;
+  // Result.Priority := TJLocationRequest.JavaClass.PRIORITY_BALANCED_POWER_ACCURACY;
+  Result.Priority := TJLocationRequest.JavaClass.PRIORITY_HIGH_ACCURACY;
   Result.SmallestDisplacement := 0;
 end;
 
