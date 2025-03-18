@@ -132,7 +132,7 @@ begin
   LData.FromLocation(ALocation);
   TOSLog.d('Received: %.5f, %.5f', [LData.Location.Latitude, LData.Location.Longitude]);
   // Uncomment this line when using a REST server that can update location data
-  FLocationSender.SendLocation(LData);
+  // FLocationSender.SendLocation(LData);
   // Message type 0 is a notification of a location update
   TBroadcastMessageSender.Send(0, LData.ToJSON);
 end;
