@@ -1,15 +1,5 @@
 unit DW.VKObserver;
 
-{*******************************************************}
-{                                                       }
-{                    Kastri Free                        }
-{                                                       }
-{          DelphiWorlds Cross-Platform Library          }
-{                                                       }
-{*******************************************************}
-
-{$I DW.GlobalDefines.inc}
-
 interface
 
 uses
@@ -23,6 +13,7 @@ type
     ContentBounds: TRectF;
     Control: TControl;
     HasSaved: Boolean;
+    Height: Single;
     Margins: TRectF;
     constructor Create(const AControl: TControl);
     procedure Restore;
@@ -88,12 +79,16 @@ end;
 procedure TControlContainer.Restore;
 begin
   if HasSaved then
+  begin
     Control.Margins.Rect := Margins;
+    Control.Height := Height;
+  end;
 end;
 
 procedure TControlContainer.Save;
 begin
   Margins := Control.Margins.Rect;
+  Height := Control.Height;
   HasSaved := True;
 end;
 
@@ -144,6 +139,7 @@ begin
       begin
         FContainers[FActiveContainerIndex].Save;
         FContainers[FActiveContainerIndex].Control.Margins.Top := -LOffset;
+        FContainers[FActiveContainerIndex].Control.Height := FContainers[FActiveContainerIndex].Control.Height + LOffset;
       end;
     end;
   end;
