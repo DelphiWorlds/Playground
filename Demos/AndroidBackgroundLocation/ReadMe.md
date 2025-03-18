@@ -139,6 +139,11 @@ end;
 
 ## Status
 
+* March 18th, 2025
+
+  - Added MapView, plotting of locations received by the app
+  - Ensured location updates default to high accuracy
+
 * March 15th, 2025
 
   - No longer fails when the app is quit
