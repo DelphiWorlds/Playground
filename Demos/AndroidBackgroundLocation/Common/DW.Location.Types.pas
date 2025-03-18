@@ -94,21 +94,17 @@ var
   LLocation: TJSONValue;
   LDateTimeValue: string;
 begin
-  TOSLog.d('+TLocationData.FromJSONValue - AValue = nil: %s', [BoolToStr(AValue = nil, True)]);
   AValue.TryGetValue('Accuracy', Accuracy);
   AValue.TryGetValue('Altitude', Altitude);
   AValue.TryGetValue('Bearing', Bearing);
   if AValue.TryGetValue('DateTime', LDateTimeValue) then
   try
-    TOSLog.d('> DateTime := ISO8601ToDate(LDateTimeValue) : %s', [LDateTimeValue]);
     DateTime := ISO8601ToDate(LDateTimeValue);
   except
     on E: Exception do
       TOSLog.d('%s: %s', [E.ClassName, E.Message]);
   end;
-  TOSLog.d('> AValue.TryGetValue(''IsCached''');
   AValue.TryGetValue('IsCached', IsCached);
-  TOSLog.d('> AValue.TryGetValue(''IsMocked'', IsMocked)');
   AValue.TryGetValue('IsMocked', IsMocked);
   if AValue.TryGetValue('Location', LLocation) then
   begin
@@ -116,7 +112,6 @@ begin
     LLocation.TryGetValue('Longitude', Location.Longitude);
   end;
   AValue.TryGetValue('Speed', Accuracy);
-  TOSLog.d('-TLocationData.FromJSONValue');
 end;
 
 procedure TLocationData.FromJSON(const AJSON: string);
