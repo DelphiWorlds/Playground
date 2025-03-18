@@ -22,7 +22,9 @@ Changes made in early March 2025 have greatly improved the reliability.
 
 These instructions are for when you are creating your own project. They have already been included in the demo.
 
-In Project Options of the application, in the Uses Permissions section for both Android 32-bit and Android 64-bit targets:
+In Project Options of the application:
+
+In the Uses Permissions section for both Android 32-bit and Android 64-bit targets:
 
 Standard
 * Foreground service
@@ -30,6 +32,8 @@ Standard
 
 "Dangerous"
 * Access background location
+
+If you use a MapView (such as the demo does), in the Version Info section, enter your [`apiKey` for Google Maps](https://developers.google.com/maps/documentation/android-sdk/get-api-key).
 
 In `AndroidManifest.template.xml` for the application:
 
@@ -66,7 +70,7 @@ Location updates are started/stopped in the demo by calling `StartLocationUpdate
 
 ### Receiving location updates in the application
 
-When location updates are received by the service, or when the location updates become active/inactive, the service sends a broadcast message, which the application can receive via a message receiver. In the demo, these messages are handled by the `ServiceMessageHandler` method
+When location updates are received by the service, or when the location updates become active/inactive, the service sends a broadcast message, which the application can receive via a message receiver. In the demo, these messages are handled by the `ServiceMessageHandler` method, which will plot points and draw lines between them in the MapView.
 
 ## Technical information
 
