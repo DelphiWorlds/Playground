@@ -32,19 +32,70 @@ object Form1: TForm1
       OnClick = StartStopLocationButtonClick
     end
   end
-  object MessagesMemo: TMemo
-    Touch.InteractiveGestures = [Pan, LongTap, DoubleTap]
-    DataDetectorTypes = []
+  object TabControl: TTabControl
     Align = Client
-    Margins.Left = 6.000000000000000000
-    Margins.Top = 6.000000000000000000
-    Margins.Right = 6.000000000000000000
-    Margins.Bottom = 6.000000000000000000
-    Size.Width = 588.000000000000000000
-    Size.Height = 844.000000000000000000
+    Size.Width = 600.000000000000000000
+    Size.Height = 856.000000000000000000
     Size.PlatformDefault = False
+    TabIndex = 1
     TabOrder = 1
-    Viewport.Width = 588.000000000000000000
-    Viewport.Height = 844.000000000000000000
+    TabPosition = PlatformDefault
+    OnChange = TabControlChange
+    Sizes = (
+      600s
+      830s
+      600s
+      830s)
+    object MessagesTab: TTabItem
+      CustomIcon = <
+        item
+        end>
+      TextSettings.Trimming = None
+      IsSelected = False
+      Size.Width = 72.000000000000000000
+      Size.Height = 26.000000000000000000
+      Size.PlatformDefault = False
+      StyleLookup = ''
+      TabOrder = 0
+      Text = 'Messages'
+      ExplicitSize.cx = 90.000000000000000000
+      ExplicitSize.cy = 26.000000000000000000
+      object MessagesMemo: TMemo
+        Touch.InteractiveGestures = [Pan, LongTap, DoubleTap]
+        DataDetectorTypes = []
+        Align = Client
+        Margins.Left = 6.000000000000000000
+        Margins.Top = 6.000000000000000000
+        Margins.Right = 6.000000000000000000
+        Margins.Bottom = 6.000000000000000000
+        Size.Width = 588.000000000000000000
+        Size.Height = 818.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 1
+        Viewport.Width = 584.000000000000000000
+        Viewport.Height = 814.000000000000000000
+      end
+    end
+    object MapTab: TTabItem
+      CustomIcon = <
+        item
+        end>
+      TextSettings.Trimming = None
+      IsSelected = True
+      Size.Width = 44.000000000000000000
+      Size.Height = 26.000000000000000000
+      Size.PlatformDefault = False
+      StyleLookup = ''
+      TabOrder = 0
+      Text = 'Map'
+      ExplicitSize.cx = 62.000000000000000000
+      ExplicitSize.cy = 26.000000000000000000
+      object MapView: TMapView
+        Align = Client
+        Size.Width = 600.000000000000000000
+        Size.Height = 830.000000000000000000
+        Size.PlatformDefault = False
+      end
+    end
   end
 end
