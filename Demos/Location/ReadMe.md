@@ -1,5 +1,7 @@
 # Location Demo
 
+**NOTE: THIS DEMO HAS BEEN ABANDONED** in preference to the [Android Background Location demo](https://github.com/DelphiWorlds/Playground/tree/main/Demos/AndroidBackgroundLocation), so please refer to that.
+
 ## Purpose
 
 To replace the existing Cross-Platform Location Demo in Kastri, subsituting a standard Service with a JobIntentService (even though this is deprecated)
