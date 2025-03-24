@@ -43,9 +43,9 @@ In `AndroidManifest.template.xml` for the application:
   <service android:name="com.embarcadero.services.ABLDemoService" android:exported="false" android:foregroundServiceType="location" />
 ```
 
-This is because Delphi is yet (as of Delphi 12.2) to support having the `foregroundServiceType` attribute
+This is because Delphi is yet (as of Delphi 12.3) to support having the `foregroundServiceType` attribute
 
-**Add** the following _after_ the `<%serapplication-meta-datavices%>` tag:
+**Add** the following _after_ the `<%application-meta-data%>` tag:
 
 ```xml
   <meta-data android:name="com.google.android.gms.version" android:value="12451000" />
