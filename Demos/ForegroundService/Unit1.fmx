@@ -1,0 +1,86 @@
+object Form1: TForm1
+  Left = 0
+  Top = 0
+  Caption = 'Form1'
+  ClientHeight = 748
+  ClientWidth = 552
+  FormFactor.Width = 320
+  FormFactor.Height = 480
+  FormFactor.Devices = [Desktop]
+  DesignerMasterStyle = 0
+  object ButtonsLayout: TLayout
+    Align = Bottom
+    Padding.Left = 6.000000000000000000
+    Padding.Top = 6.000000000000000000
+    Padding.Right = 6.000000000000000000
+    Padding.Bottom = 6.000000000000000000
+    Position.Y = 704.000000000000000000
+    Size.Width = 552.000000000000000000
+    Size.Height = 44.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 0
+    object StartStopButton: TButton
+      Action = StartStopAction
+      Align = Left
+      ImageIndex = -1
+      Position.X = 6.000000000000000000
+      Position.Y = 6.000000000000000000
+      Size.Width = 123.000000000000000000
+      Size.Height = 32.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 0
+      TextSettings.Trimming = None
+    end
+  end
+  object TabControl: TTabControl
+    Align = Client
+    Size.Width = 552.000000000000000000
+    Size.Height = 704.000000000000000000
+    Size.PlatformDefault = False
+    TabIndex = 1
+    TabOrder = 1
+    TabPosition = PlatformDefault
+    Sizes = (
+      552s
+      678s)
+    object MessagesTab: TTabItem
+      CustomIcon = <
+        item
+        end>
+      TextSettings.Trimming = None
+      IsSelected = False
+      Size.Width = 72.000000000000000000
+      Size.Height = 26.000000000000000000
+      Size.PlatformDefault = False
+      StyleLookup = ''
+      TabOrder = 0
+      Text = 'Messages'
+      ExplicitSize.cx = 90.000000000000000000
+      ExplicitSize.cy = 26.000000000000000000
+      object MessagesMemo: TMemo
+        Touch.InteractiveGestures = [Pan, LongTap, DoubleTap]
+        DataDetectorTypes = []
+        Align = Client
+        Margins.Left = 6.000000000000000000
+        Margins.Top = 6.000000000000000000
+        Margins.Right = 6.000000000000000000
+        Margins.Bottom = 6.000000000000000000
+        Size.Width = 540.000000000000000000
+        Size.Height = 666.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 1
+        Viewport.Width = 536.000000000000000000
+        Viewport.Height = 662.000000000000000000
+      end
+    end
+  end
+  object ActionList: TActionList
+    Left = 160
+    Top = 200
+    object StartStopAction: TAction
+      Text = 'Start'
+      OnExecute = StartStopActionExecute
+      OnUpdate = StartStopActionUpdate
+    end
+  end
+end

@@ -1,0 +1,48 @@
+﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+    <PropertyGroup>
+        <ProjectGuid>{DB7229F1-36DD-4059-B796-4064EE088827}</ProjectGuid>
+    </PropertyGroup>
+    <ItemGroup>
+        <Projects Include="FSDemo.dproj">
+            <Dependencies>Service\FSDemoService.dproj</Dependencies>
+        </Projects>
+        <Projects Include="Service\FSDemoService.dproj">
+            <Dependencies/>
+        </Projects>
+    </ItemGroup>
+    <ProjectExtensions>
+        <Borland.Personality>Default.Personality.12</Borland.Personality>
+        <Borland.ProjectType/>
+        <BorlandProject>
+            <Default.Personality/>
+        </BorlandProject>
+    </ProjectExtensions>
+    <Target Name="FSDemo" DependsOnTargets="FSDemoService">
+        <MSBuild Projects="FSDemo.dproj"/>
+    </Target>
+    <Target Name="FSDemo:Clean" DependsOnTargets="FSDemoService:Clean">
+        <MSBuild Projects="FSDemo.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="FSDemo:Make" DependsOnTargets="FSDemoService:Make">
+        <MSBuild Projects="FSDemo.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="FSDemoService">
+        <MSBuild Projects="Service\FSDemoService.dproj"/>
+    </Target>
+    <Target Name="FSDemoService:Clean">
+        <MSBuild Projects="Service\FSDemoService.dproj" Targets="Clean"/>
+    </Target>
+    <Target Name="FSDemoService:Make">
+        <MSBuild Projects="Service\FSDemoService.dproj" Targets="Make"/>
+    </Target>
+    <Target Name="Build">
+        <CallTarget Targets="FSDemo;FSDemoService"/>
+    </Target>
+    <Target Name="Clean">
+        <CallTarget Targets="FSDemo:Clean;FSDemoService:Clean"/>
+    </Target>
+    <Target Name="Make">
+        <CallTarget Targets="FSDemo:Make;FSDemoService:Make"/>
+    </Target>
+    <Import Project="$(BDS)\Bin\CodeGear.Group.Targets" Condition="Exists('$(BDS)\Bin\CodeGear.Group.Targets')"/>
+</Project>
