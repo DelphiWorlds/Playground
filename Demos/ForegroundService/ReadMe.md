@@ -20,7 +20,7 @@ In contrast, the `connectedDevice` foreground service type **can** be started at
 * `BLUETOOTH_SCAN`
 * `UWB_RANGING`
 
-This demo will cover both these types, and you can choose which one, or another service type entirely, depending on your needs - just remember that if you need your service to start at boot time, you will need to choose one that Android allows. This is the full list of those that are **NOT** permitted to start at boot time:
+This demo will use `connectedDevice`, but you can choose another service type entirely, depending on your needs - just remember that if you need your service to start at boot time, you will need to choose one that Android allows. This is the full list of those that are **NOT** permitted to start at boot time:
 
 * `dataSync`
 * `camera`
