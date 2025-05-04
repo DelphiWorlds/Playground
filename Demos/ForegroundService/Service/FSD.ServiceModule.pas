@@ -68,6 +68,8 @@ begin
 end;
 
 function TServiceModule.AndroidServiceStartCommand(const Sender: TObject; const Intent: JIntent; Flags, StartId: Integer): Integer;
+var
+  LServiceType: Integer;
 begin
   TOSLog.d('+TServiceModule.AndroidServiceStartCommand');
   // Some other action might need to be taken if the service is started at boot time
@@ -75,7 +77,14 @@ begin
     TOSLog.d('> Started at boot time');
   // If the app is not in the foreground, the service needs to be put into the foreground
   if not IsAppForeground then
-    TForegroundServiceHelper.StartForeground(JavaService, 'FS Demo', 'Service in foreground', TJServiceInfo.JavaClass.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE);
+  begin
+    // Ensure that the relevant constant is available!
+    if TOSVersion.Check(10) then
+      LServiceType := TJServiceInfo.JavaClass.FOREGROUND_SERVICE_TYPE_CONNECTED_DEVICE
+    else
+      LServiceType := 0;
+    TForegroundServiceHelper.StartForeground(JavaService, 'FS Demo', 'Service in foreground', LServiceType);
+  end;
   if not FTimer.Enabled then
     FTimer.Enabled := True;
   // Notify the app that the service is now running
