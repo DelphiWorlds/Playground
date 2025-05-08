@@ -20,9 +20,11 @@ Changes made in early March 2025 have greatly improved the reliability.
 
 ## Project Configuration
 
-These instructions are for when you are creating your own project. They have already been included in the demo.
-
 In Project Options of the application:
+
+### Permissions
+
+Note: Permissions have already been configured in the demo
 
 In the Uses Permissions section for both Android 32-bit and Android 64-bit targets:
 
@@ -33,7 +35,13 @@ Standard
 "Dangerous"
 * Access background location
 
+### Maps
+
 If you use a MapView (such as the demo does), in the Version Info section, enter your [`apiKey` for Google Maps](https://developers.google.com/maps/documentation/android-sdk/get-api-key).
+
+### Services
+
+Note: This part has already been configured in the demo
 
 In `AndroidManifest.template.xml` for the application:
 
@@ -44,6 +52,10 @@ In `AndroidManifest.template.xml` for the application:
 ```
 
 This is because Delphi is yet (as of Delphi 12.3) to support having the `foregroundServiceType` attribute
+
+### Metadata
+
+Note: This part has already been configured in the demo
 
 **Add** the following _after_ the `<%application-meta-data%>` tag:
 
