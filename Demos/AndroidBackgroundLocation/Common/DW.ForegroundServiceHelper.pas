@@ -44,6 +44,12 @@ type
     function setForegroundServiceBehavior(behavior: Integer): JNotification_Builder; cdecl;
   end;
   TJNotification_BuilderEx = class(TJavaGenericImport<JNotification_BuilderClass, JNotification_BuilderEx>) end;
+
+  JServiceEx = interface(JService)
+    ['{9820589D-F14D-442E-9508-84597B8EA546}']
+    procedure startForeground(id: Integer; notification: JNotification; foregroundServiceType: Integer); cdecl; overload;
+  end;
+  TJServiceEx = class(TJavaGenericImport<JServiceClass, JServiceEx>) end;
 {$ENDIF}
 
 class function TForegroundServiceHelper.CreateNotificationChannel: JString;
@@ -98,7 +104,11 @@ begin
         LBuilder.setForegroundServiceBehavior(TJNotification.JavaClass.FOREGROUND_SERVICE_IMMEDIATE);
         {$ENDIF}
       end;
+      {$IF Defined(DELPHI_11)}
+      TJServiceEx.Wrap(AService).startForeground(cServiceForegroundId, LBuilder.build, TJServiceInfo.JavaClass.FOREGROUND_SERVICE_TYPE_LOCATION);
+      {$ELSE}
       AService.startForeground(cServiceForegroundId, LBuilder.build, TJServiceInfo.JavaClass.FOREGROUND_SERVICE_TYPE_LOCATION);
+      {$ENDIF}
     end
     else
       AService.startForeground(cServiceForegroundId, LBuilder.build);
