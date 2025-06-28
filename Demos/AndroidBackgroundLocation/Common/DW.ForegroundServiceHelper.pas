@@ -38,6 +38,7 @@ const
 type
   JNotification_BuilderEx = interface(Androidapi.JNI.App.JNotification_Builder)
     ['{887287FB-F04E-413A-AECF-19D9C70A9FC7}']
+    function setForegroundServiceBehavior(behavior: Integer): JNotification_Builder; cdecl;
   end;
   TJNotification_BuilderEx = class(TJavaGenericImport<JNotification_BuilderClass, JNotification_BuilderEx>) end;
 {$ENDIF}
@@ -85,7 +86,7 @@ begin
       if TOSVersion.Check(12) then
       begin
         {$IF Defined(DELPHI_11)}
-        TJNotification_BuilderEx.Wrap(LBuilder).setForegroundServiceBehavior(TJNotification.JavaClass.FOREGROUND_SERVICE_IMMEDIATE);
+        TJNotification_BuilderEx.Wrap(LBuilder).setForegroundServiceBehavior(1);
         {$ELSE}
         LBuilder.setForegroundServiceBehavior(TJNotification.JavaClass.FOREGROUND_SERVICE_IMMEDIATE);
         {$ENDIF}
