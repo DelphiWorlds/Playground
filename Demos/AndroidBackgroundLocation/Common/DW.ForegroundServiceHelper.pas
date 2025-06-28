@@ -17,8 +17,15 @@ type
 
 implementation
 
+{$IF CompilerVersion < 36}
+{$DEFINE DELPHI_11}
+{$ENDIF}
+
 uses
   System.SysUtils,
+  {$IF Defined(DELPHI_11)}
+  Androidapi.JNIBridge,
+  {$ENDIF}
   Androidapi.JNI.GraphicsContentViewText, Androidapi.Helpers,
   DW.Android.Helpers;
 
@@ -26,6 +33,14 @@ const
   cServiceForegroundId = 3988; // Just a random number
   cNotificationChannelId = 'ForegroundService';
   cNotificationChannelName = 'ForegroundService';
+
+{$IF Defined(DELPHI_11)}
+type
+  JNotification_BuilderEx = interface(Androidapi.JNI.App.JNotification_Builder)
+    ['{887287FB-F04E-413A-AECF-19D9C70A9FC7}']
+  end;
+  TJNotification_BuilderEx = class(TJavaGenericImport<JNotification_BuilderClass, JNotification_BuilderEx>) end;
+{$ENDIF}
 
 class function TForegroundServiceHelper.CreateNotificationChannel: JString;
 var
@@ -68,7 +83,13 @@ begin
     if TOSVersion.Check(10) then
     begin
       if TOSVersion.Check(12) then
+      begin
+        {$IF Defined(DELPHI_11)}
+        TJNotification_BuilderEx.Wrap(LBuilder).setForegroundServiceBehavior(TJNotification.JavaClass.FOREGROUND_SERVICE_IMMEDIATE);
+        {$ELSE}
         LBuilder.setForegroundServiceBehavior(TJNotification.JavaClass.FOREGROUND_SERVICE_IMMEDIATE);
+        {$ENDIF}
+      end;
       AService.startForeground(cServiceForegroundId, LBuilder.build, TJServiceInfo.JavaClass.FOREGROUND_SERVICE_TYPE_LOCATION);
     end
     else
