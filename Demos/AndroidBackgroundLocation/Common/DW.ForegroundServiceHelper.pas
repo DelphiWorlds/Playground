@@ -24,7 +24,7 @@ implementation
 uses
   System.SysUtils,
   {$IF Defined(DELPHI_11)}
-  Androidapi.JNIBridge,
+  Androidapi.JNIBridge, Androidapi.JNI.Support,
   {$ENDIF}
   Androidapi.JNI.GraphicsContentViewText, Androidapi.Helpers,
   DW.Android.Helpers;
@@ -36,7 +36,10 @@ const
 
 {$IF Defined(DELPHI_11)}
 type
-  JNotification_BuilderEx = interface(Androidapi.JNI.App.JNotification_Builder)
+  JNotification_Builder = Japp_NotificationCompat_Builder;
+  JNotification_BuilderClass = Japp_NotificationCompat_BuilderClass;
+
+  JNotification_BuilderEx = interface(JNotification_Builder)
     ['{887287FB-F04E-413A-AECF-19D9C70A9FC7}']
     function setForegroundServiceBehavior(behavior: Integer): JNotification_Builder; cdecl;
   end;
@@ -72,7 +75,11 @@ begin
     LIntent := TJIntent.Create;
     LIntent.setClassName(TAndroidHelper.Context.getPackageName, StringToJString('com.embarcadero.firemonkey.FMXNativeActivity'));
     LFlags := TJIntent.JavaClass.FLAG_ACTIVITY_NEW_TASK or TJPendingIntent.JavaClass.FLAG_IMMUTABLE;
+    {$IF Defined(DELPHI_11)}
+    LBuilder := TJNotification_BuilderEx.JavaClass.init(TAndroidHelper.Context, LChannelId);
+    {$ELSE}
     LBuilder := TJNotification_Builder.JavaClass.init(TAndroidHelper.Context, LChannelId);
+    {$ENDIF}
     LBuilder.setAutoCancel(True);
     LBuilder.setContentTitle(StrToJCharSequence(ANotificationCaption));
     LBuilder.setContentText(StrToJCharSequence(ANotificationText));
