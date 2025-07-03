@@ -17,6 +17,8 @@ type
 
 implementation
 
+// NOTE: Changes for Delphi 11 were "quick and dirty" - and will also disappear once Delphi 13 is released.
+// If you are affected, you should upgrade. Try Delphi 12 CE, for instance
 {$IF CompilerVersion < 36}
 {$DEFINE DELPHI_11}
 {$ENDIF}
@@ -105,7 +107,7 @@ begin
         {$ENDIF}
       end;
       {$IF Defined(DELPHI_11)}
-      TJServiceEx.Wrap(AService).startForeground(cServiceForegroundId, LBuilder.build, TJServiceInfo.JavaClass.FOREGROUND_SERVICE_TYPE_LOCATION);
+      TJServiceEx.Wrap(AService).startForeground(cServiceForegroundId, LBuilder.build, 8);
       {$ELSE}
       AService.startForeground(cServiceForegroundId, LBuilder.build, TJServiceInfo.JavaClass.FOREGROUND_SERVICE_TYPE_LOCATION);
       {$ENDIF}
