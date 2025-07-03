@@ -135,16 +135,19 @@ begin
   IsServiceInfo := (AIntent.getAction <> nil) and AIntent.getAction.equals(ACTION_SERVICE_INFO);
   if IsServiceInfo then
   begin
-    IsActive := AIntent.getBooleanExtra(EXTRA_ACTIVE, False);
+    IsActive := AIntent.getIntExtra(EXTRA_ACTIVE, 0) <> 0;
     if AIntent.hasExtra(EXTRA_OPTIONS) then
       Options.FromJSON(JStringToString(AIntent.getStringExtra(EXTRA_OPTIONS)));
   end;
 end;
 
 function TLocationServiceInfo.ToIntent: JIntent;
+var
+  LValue: Integer;
 begin
   Result := TJIntent.JavaClass.init(ACTION_SERVICE_INFO);
-  Result.putExtra(EXTRA_ACTIVE, IsActive);
+  LValue := Ord(IsActive);
+  Result.putExtra(EXTRA_ACTIVE, LValue); // Boolean doesn't work??
   Result.putExtra(EXTRA_OPTIONS, StringToJString(Options.ToJSON));
 end;
 
