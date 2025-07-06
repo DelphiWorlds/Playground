@@ -28,6 +28,7 @@ type
     function IsActive: Boolean;
     procedure LocationReceived(const ALocation: JLocation);
     procedure LocationUpdatesChange(const AIsActive: Boolean);
+    procedure RequestLastKnownLocation;
     procedure SetOptions(const Value: TFusedLocationOptions);
     procedure Start; overload;
     procedure Start(const AOptions: TFusedLocationOptions); overload;
@@ -49,6 +50,7 @@ type
     function IsActive: Boolean;
     procedure LocationReceived(const ALocation: JLocation);
     procedure LocationUpdatesChange(const AIsActive: Boolean);
+    procedure RequestLastKnownLocation;
     procedure SetOptions(const Value: TFusedLocationOptions);
     procedure Start; overload;
     procedure Start(const AOptions: TFusedLocationOptions); overload;
@@ -188,6 +190,11 @@ procedure TFusedLocation.LocationUpdatesChange(const AIsActive: Boolean);
 begin
   FIsActive := AIsActive;
   FOwner.LocationUpdatesChange(FIsActive);
+end;
+
+procedure TFusedLocation.RequestLastKnownLocation;
+begin
+  FClient.requestLastKnownLocation;
 end;
 
 procedure TFusedLocation.Start;
