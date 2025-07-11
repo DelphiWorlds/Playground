@@ -10,19 +10,33 @@ uses
   FMX.ScrollBox, FMX.Memo, FMX.TabControl, FMX.Maps,
   DW.Location.Types,
   DW.BroadcastMessage.Receiver,
-  DW.LocationService.Manager, DW.LocationService.Common;
+  DW.LocationService.Manager, DW.LocationService.Common, FMX.ListBox, FMX.Edit;
 
 type
   TForm1 = class(TForm)
-    ButtonsLayout: TLayout;
-    StartStopLocationButton: TButton;
+    ConfigLayout: TLayout;
+    UpdateButton: TButton;
     MessagesMemo: TMemo;
     TabControl: TTabControl;
     MessagesTab: TTabItem;
     MapTab: TTabItem;
     MapView: TMapView;
-    procedure StartStopLocationButtonClick(Sender: TObject);
+    PriorityLayout: TLayout;
+    PriorityLabel: TLabel;
+    PriorityComboBox: TComboBox;
+    IntervalLayout: TLayout;
+    IntervalLabel: TLabel;
+    IntervalEdit: TEdit;
+    SmallestDisplacementLayout: TLayout;
+    SmallestDisplacementLabel: TLabel;
+    SmallestDisplacementEdit: TEdit;
+    ButtonLayout: TLayout;
+    StopButton: TButton;
+    ClearMessagesButton: TButton;
+    procedure UpdateButtonClick(Sender: TObject);
     procedure TabControlChange(Sender: TObject);
+    procedure StopButtonClick(Sender: TObject);
+    procedure ClearMessagesButtonClick(Sender: TObject);
   private
     FMap: JGoogleMap;
     FMapReadyCallback: JOnMapReadyCallback;
@@ -31,9 +45,14 @@ type
     FPreferences: ILocationPreferences;
     FServiceManager: ILocationServiceManager;
     procedure AddLocationToMap(const AData: TLocationData);
+    function GetPriorityIndex(const AValue: Integer): Integer;
+    function GetPriorityText(const AValue: Integer): string;
+    procedure LocationUpdatesChanged;
     procedure ServiceMessageHandler(const AKind: Integer; const AMsg: TJSONValue);
+    procedure UpdateButtons;
+    procedure UpdateConfigControls;
     procedure UpdateGoogleMap;
-    procedure UpdateStartStopLocationButton;
+    procedure UpdateLocationOptions;
   public
     constructor Create(AOwner: TComponent); override;
     destructor Destroy; override;
@@ -50,7 +69,15 @@ uses
   System.Sensors,
   Androidapi.Helpers, Androidapi.JNI.JavaTypes, Androidapi.JNI.App, Androidapi.JNIBridge,
   DW.OSLog, DW.JSON, DW.BroadcastMessage.Sender,
-  DW.LocationPermissions;
+  DW.LocationPermissions, DW.FusedLocation;
+
+const
+  cPriorityValues: array[0..3] of Integer = (
+    102, // PRIORITY_BALANCED_POWER_ACCURACY
+    100, // PRIORITY_HIGH_ACCURACY
+    104, // PRIORITY_LOW_POWER
+    105  // PRIORITY_PASSIVE
+  );
 
 type
   TLocationCoord2DHelper = record helper for TLocationCoord2D
@@ -108,14 +135,60 @@ begin
   FServiceManager := TLocationServiceManager.Create('ABLDemoService');
   FPreferences := TLocationPreferences.Create;
   FMessageReceiver := TJSONBroadcastMessageReceiver.Create(ServiceMessageHandler);
-  UpdateStartStopLocationButton;
   UpdateGoogleMap;
+  if FPreferences.GetIsActive then
+    UpdateConfigControls;
+  LocationUpdatesChanged;
 end;
 
 destructor TForm1.Destroy;
 begin
   //
   inherited;
+end;
+
+function TForm1.GetPriorityIndex(const AValue: Integer): Integer;
+var
+  I: Integer;
+begin
+  Result := 0;
+  for I := Low(cPriorityValues) to High(cPriorityValues) do
+  begin
+    if cPriorityValues[I] = AValue then
+    begin
+      Result := I - Low(cPriorityValues);
+      Break;
+    end;
+  end;
+end;
+
+function TForm1.GetPriorityText(const AValue: Integer): string;
+var
+  I: Integer;
+begin
+  Result := 'Unknown';
+  for I := Low(cPriorityValues) to High(cPriorityValues) do
+  begin
+    if cPriorityValues[I] = AValue then
+    begin
+      Result := PriorityComboBox.Items[I - Low(cPriorityValues)];
+      Break;
+    end;
+  end;
+end;
+
+procedure TForm1.LocationUpdatesChanged;
+const
+  cActiveCaptions: array[Boolean] of string = ('Inactive', 'Active');
+begin
+  MessagesMemo.Lines.Add('Location updates are: ' + cActiveCaptions[FPreferences.GetIsActive]);
+  if FPreferences.GetIsActive then
+  begin
+    MessagesMemo.Lines.Add(Format('Priority: %s', [GetPriorityText(FPreferences.GetOptions.Priority)]));
+    MessagesMemo.Lines.Add(Format('Interval: %d ms', [FPreferences.GetOptions.Interval]));
+    MessagesMemo.Lines.Add(Format('Smallest Displacement: %.0f m', [FPreferences.GetOptions.SmallestDisplacement]));
+  end;
+  UpdateButtons;
 end;
 
 procedure TForm1.UpdateGoogleMap;
@@ -134,20 +207,36 @@ begin
   end;
 end;
 
-procedure TForm1.StartStopLocationButtonClick(Sender: TObject);
+procedure TForm1.UpdateLocationOptions;
+var
+  LInfo: TLocationServiceInfo;
 begin
-  if not FPreferences.GetIsActive then
-  begin
-    LocationPermissions.RequestBackground(
-      procedure(const ACanStart: Boolean)
-      begin
-        if ACanStart then
-          FServiceManager.StartLocationUpdates
-      end
-    );
-  end
-  else
-    FServiceManager.StopLocationUpdates;
+  LInfo.Options := TFusedLocationOptions.Defaults;
+  LInfo.Options.Priority := cPriorityValues[PriorityComboBox.ItemIndex];
+  LInfo.Options.Interval := StrToInt(IntervalEdit.Text);
+  LInfo.Options.SmallestDisplacement := StrToInt(SmallestDisplacementEdit.Text);
+  FServiceManager.StartLocationUpdates(LInfo);
+end;
+
+procedure TForm1.UpdateButtonClick(Sender: TObject);
+begin
+  LocationPermissions.RequestBackground(
+    procedure(const ACanStart: Boolean)
+    begin
+      if ACanStart then
+        UpdateLocationOptions;
+    end
+  );
+end;
+
+procedure TForm1.StopButtonClick(Sender: TObject);
+begin
+  FServiceManager.StopLocationUpdates;
+end;
+
+procedure TForm1.ClearMessagesButtonClick(Sender: TObject);
+begin
+  MessagesMemo.Lines.Clear;
 end;
 
 procedure TForm1.TabControlChange(Sender: TObject);
@@ -155,16 +244,22 @@ begin
   MapView.Visible := TabControl.ActiveTab = MapTab;
 end;
 
-procedure TForm1.UpdateStartStopLocationButton;
+procedure TForm1.UpdateButtons;
 const
-  cButtonCaptions: array[Boolean] of string = ('Start Location', 'Stop Location');
+  cUpdateButtonCaptions: array[Boolean] of string = ('Start', 'Update');
 begin
-  StartStopLocationButton.Text := cButtonCaptions[FPreferences.GetIsActive];
+  UpdateButton.Text := cUpdateButtonCaptions[FPreferences.GetIsActive];
+  StopButton.Enabled := FPreferences.GetIsActive;
+end;
+
+procedure TForm1.UpdateConfigControls;
+begin
+  PriorityComboBox.ItemIndex := GetPriorityIndex(FPreferences.GetOptions.Priority);
+  IntervalEdit.Text := FPreferences.GetOptions.Interval.ToString;
+  SmallestDisplacementEdit.Text := FPreferences.GetOptions.SmallestDisplacement.ToString;
 end;
 
 procedure TForm1.ServiceMessageHandler(const AKind: Integer; const AMsg: TJSONValue);
-const
-  cActiveCaptions: array[Boolean] of string = ('Inactive', 'Active');
 var
   LLocationData: TLocationData;
 begin
@@ -180,8 +275,7 @@ begin
     1:
     begin
       TOSLog.d('> Location updates changed in app');
-      MessagesMemo.Lines.Add('Location updates changed to: ' + cActiveCaptions[FPreferences.GetIsActive]);
-      UpdateStartStopLocationButton;
+      LocationUpdatesChanged;
     end;
   end;
 end;

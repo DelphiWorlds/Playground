@@ -8,50 +8,165 @@ object Form1: TForm1
   FormFactor.Height = 480
   FormFactor.Devices = [Desktop]
   DesignerMasterStyle = 0
-  object ButtonsLayout: TLayout
-    Align = Bottom
+  object ConfigLayout: TLayout
+    Align = Top
     Padding.Left = 6.000000000000000000
     Padding.Top = 6.000000000000000000
     Padding.Right = 6.000000000000000000
     Padding.Bottom = 6.000000000000000000
-    Position.Y = 856.000000000000000000
     Size.Width = 600.000000000000000000
-    Size.Height = 44.000000000000000000
+    Size.Height = 244.000000000000000000
     Size.PlatformDefault = False
     TabOrder = 0
-    object StartStopLocationButton: TButton
-      Align = Left
+    object PriorityLayout: TLayout
+      Align = Top
+      Margins.Bottom = 6.000000000000000000
       Position.X = 6.000000000000000000
       Position.Y = 6.000000000000000000
-      Size.Width = 123.000000000000000000
-      Size.Height = 32.000000000000000000
+      Size.Width = 588.000000000000000000
+      Size.Height = 56.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 2
+      object PriorityLabel: TLabel
+        Align = Client
+        Margins.Bottom = 6.000000000000000000
+        Size.Width = 588.000000000000000000
+        Size.Height = 26.000000000000000000
+        Size.PlatformDefault = False
+        Text = 'Priority:'
+        TabOrder = 0
+      end
+      object PriorityComboBox: TComboBox
+        Align = Bottom
+        Items.Strings = (
+          'Balanced Power Accuracy'
+          'High Accuracy'
+          'Low Power'
+          'No Power')
+        ItemIndex = 0
+        Position.Y = 32.000000000000000000
+        Size.Width = 588.000000000000000000
+        Size.Height = 24.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 1
+      end
+    end
+    object IntervalLayout: TLayout
+      Align = Top
+      Margins.Bottom = 6.000000000000000000
+      Position.X = 6.000000000000000000
+      Position.Y = 68.000000000000000000
+      Size.Width = 588.000000000000000000
+      Size.Height = 56.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 1
+      object IntervalLabel: TLabel
+        Align = Client
+        Margins.Bottom = 6.000000000000000000
+        Size.Width = 588.000000000000000000
+        Size.Height = 26.000000000000000000
+        Size.PlatformDefault = False
+        Text = 'Interval:'
+        TabOrder = 0
+      end
+      object IntervalEdit: TEdit
+        Touch.InteractiveGestures = [LongTap, DoubleTap]
+        Align = Bottom
+        TabOrder = 1
+        KeyboardType = NumberPad
+        Text = '5000'
+        Position.Y = 32.000000000000000000
+        Size.Width = 588.000000000000000000
+        Size.Height = 24.000000000000000000
+        Size.PlatformDefault = False
+      end
+    end
+    object SmallestDisplacementLayout: TLayout
+      Align = Top
+      Margins.Bottom = 6.000000000000000000
+      Position.X = 6.000000000000000000
+      Position.Y = 130.000000000000000000
+      Size.Width = 588.000000000000000000
+      Size.Height = 56.000000000000000000
       Size.PlatformDefault = False
       TabOrder = 0
-      Text = 'Start Location'
-      TextSettings.Trimming = None
-      OnClick = StartStopLocationButtonClick
+      object SmallestDisplacementLabel: TLabel
+        Align = Client
+        Margins.Bottom = 6.000000000000000000
+        Size.Width = 588.000000000000000000
+        Size.Height = 26.000000000000000000
+        Size.PlatformDefault = False
+        Text = 'Smallest Displacement:'
+        TabOrder = 0
+      end
+      object SmallestDisplacementEdit: TEdit
+        Touch.InteractiveGestures = [LongTap, DoubleTap]
+        Align = Bottom
+        TabOrder = 1
+        KeyboardType = NumberPad
+        Text = '5'
+        Position.Y = 32.000000000000000000
+        Size.Width = 588.000000000000000000
+        Size.Height = 24.000000000000000000
+        Size.PlatformDefault = False
+      end
+    end
+    object ButtonLayout: TLayout
+      Align = Client
+      Padding.Left = 4.000000000000000000
+      Padding.Top = 4.000000000000000000
+      Padding.Right = 4.000000000000000000
+      Padding.Bottom = 4.000000000000000000
+      Size.Width = 588.000000000000000000
+      Size.Height = 46.000000000000000000
+      Size.PlatformDefault = False
+      TabOrder = 3
+      object UpdateButton: TButton
+        Align = Left
+        Position.X = 4.000000000000000000
+        Position.Y = 4.000000000000000000
+        Size.Width = 92.000000000000000000
+        Size.Height = 38.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 0
+        Text = 'Update'
+        TextSettings.Trimming = None
+        OnClick = UpdateButtonClick
+      end
+      object StopButton: TButton
+        Align = Right
+        Position.X = 492.000000000000000000
+        Position.Y = 4.000000000000000000
+        Size.Width = 92.000000000000000000
+        Size.Height = 38.000000000000000000
+        Size.PlatformDefault = False
+        TabOrder = 1
+        Text = 'Stop'
+        TextSettings.Trimming = None
+        OnClick = StopButtonClick
+      end
     end
   end
   object TabControl: TTabControl
     Align = Client
     Size.Width = 600.000000000000000000
-    Size.Height = 856.000000000000000000
+    Size.Height = 604.000000000000000000
     Size.PlatformDefault = False
-    TabIndex = 1
+    TabIndex = 0
     TabOrder = 1
     TabPosition = PlatformDefault
     OnChange = TabControlChange
     Sizes = (
       600s
-      830s
+      578s
       600s
-      830s)
+      578s)
     object MessagesTab: TTabItem
       CustomIcon = <
         item
         end>
       TextSettings.Trimming = None
-      IsSelected = False
+      IsSelected = True
       Size.Width = 72.000000000000000000
       Size.Height = 26.000000000000000000
       Size.PlatformDefault = False
@@ -69,11 +184,11 @@ object Form1: TForm1
         Margins.Right = 6.000000000000000000
         Margins.Bottom = 6.000000000000000000
         Size.Width = 588.000000000000000000
-        Size.Height = 818.000000000000000000
+        Size.Height = 566.000000000000000000
         Size.PlatformDefault = False
         TabOrder = 1
         Viewport.Width = 584.000000000000000000
-        Viewport.Height = 814.000000000000000000
+        Viewport.Height = 562.000000000000000000
       end
     end
     object MapTab: TTabItem
@@ -81,7 +196,7 @@ object Form1: TForm1
         item
         end>
       TextSettings.Trimming = None
-      IsSelected = True
+      IsSelected = False
       Size.Width = 44.000000000000000000
       Size.Height = 26.000000000000000000
       Size.PlatformDefault = False
@@ -93,9 +208,24 @@ object Form1: TForm1
       object MapView: TMapView
         Align = Client
         Size.Width = 600.000000000000000000
-        Size.Height = 830.000000000000000000
+        Size.Height = 578.000000000000000000
         Size.PlatformDefault = False
       end
     end
+  end
+  object ClearMessagesButton: TButton
+    Align = Bottom
+    Margins.Left = 6.000000000000000000
+    Margins.Right = 6.000000000000000000
+    Margins.Bottom = 8.000000000000000000
+    Position.X = 6.000000000000000000
+    Position.Y = 848.000000000000000000
+    Size.Width = 588.000000000000000000
+    Size.Height = 44.000000000000000000
+    Size.PlatformDefault = False
+    TabOrder = 3
+    Text = 'Clear Messages'
+    TextSettings.Trimming = None
+    OnClick = ClearMessagesButtonClick
   end
 end
