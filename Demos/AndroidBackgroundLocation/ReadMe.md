@@ -60,6 +60,7 @@ Note: This part has already been configured in the demo
 **Add** the following _after_ the `<%application-meta-data%>` tag:
 
 ```xml
+  <!--- Add the following line ONLY if you're NOT using another service that requires it, e.g. Maps -->
   <meta-data android:name="com.google.android.gms.version" android:value="12451000" />
   <meta-data android:name="com.delphiworlds.kastri.DWFusedLocationClient.KEY_SERVICE_CLASS_NAME" android:value="com.embarcadero.services.ABLDemoService" />
 ```
