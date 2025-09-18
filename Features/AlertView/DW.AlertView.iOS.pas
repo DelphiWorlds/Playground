@@ -21,7 +21,7 @@ uses
   // iOS
   iOSapi.CocoaTypes, iOSapi.UIKit, // Needs to be before DW.iOSapi.UIKit
   // DW
-  DW.AlertView, DW.iOSapi.UIKit;
+  {$IF CompilerVersion < 37} DW.iOSapi.UIKit, {$ENDIF} DW.AlertView;
 
 type
   TAlertAction = record
@@ -72,6 +72,11 @@ begin
     Result := StrToNSStr(ASource);
 end;
 
+function SharedApplication: UIApplication;
+begin
+  Result := TUIApplication.OCClass.sharedApplication;
+end;
+
 { TPlatformAlertView }
 
 constructor TPlatformAlertView.Create;
@@ -107,7 +112,7 @@ begin
   FAlerts.Clear;
   for LAlertAction in FAlertActions do
     InternalAddAction(LAlertAction);
-  TiOSHelper.SharedApplication.keyWindow.rootViewController.presentViewController(FController, True, nil);
+  SharedApplication.keyWindow.rootViewController.presentViewController(FController, True, nil);
 end;
 
 procedure TPlatformAlertView.DoShow(const ATitle: string; const AMessageText: string);
@@ -123,7 +128,7 @@ begin
   LPopover := FController.popoverPresentationController;
   if LPopover <> nil then
   begin
-    LView := TiOSHelper.SharedApplication.keyWindow.rootViewController.view;
+    LView := TUIApplication.OCClass.sharedApplication.keyWindow.rootViewController.view;
     LPopover.setSourceView(LView);
     // Middle of the view horizontally, bottom of the view vertically minus a few pixels, 1 pixel x 1 pixel size
     LPopover.setSourceRect(CGRectMake(LView.bounds.size.width / 2.0, LView.bounds.size.height - 8, 1, 1));
@@ -132,18 +137,20 @@ begin
   FAlerts.Clear;
   for LAlertAction in FAlertActions do
     InternalAddAction(LAlertAction);
-  TiOSHelper.SharedApplication.keyWindow.rootViewController.presentViewController(FController, True, ControllerCompletionHandler);
+  SharedApplication.keyWindow.rootViewController.presentViewController(FController, True, ControllerCompletionHandler);
 end;
 
 procedure TPlatformAlertView.InternalAddAction(const AAction: TAlertAction);
 var
   LNativeAction: UIAlertAction;
+  LStyle: UIAlertControllerStyle;
 begin
-  LNativeAction := TUIAlertAction.Wrap(TUIAlertAction.OCClass.actionWithTitle(StrToNSStr(AAction.Title), UIAlertActionStyleDefault, ControllerActionHandler));
+  LStyle := UIAlertActionStyleDefault;
   if AAction.Style = TAlertActionStyle.Cancel then
-    LNativeAction.setStyle(UIAlertActionStyleCancel)
+    LStyle := UIAlertActionStyleCancel
   else if AAction.Style = TAlertActionStyle.Destructive then
-    LNativeAction.setStyle(UIAlertActionStyleDestructive);
+    LStyle := UIAlertActionStyleDestructive;
+  LNativeAction := TUIAlertAction.Wrap(TUIAlertAction.OCClass.actionWithTitle(StrToNSStr(AAction.Title), LStyle, ControllerActionHandler));
   FAlerts.Add(NSObjectToID(LNativeAction), AAction);
   FController.addAction(LNativeAction);
 end;
