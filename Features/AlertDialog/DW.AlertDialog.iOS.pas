@@ -25,7 +25,7 @@ uses
   // iOS
   iOSapi.Foundation, iOSapi.UIKit, iOSapi.Helpers, iOSapi.CoreGraphics,
   // DW
-  DW.iOSapi.UIKit, DW.AlertDialog;
+  {$IF CompilerVersion < 37} DW.iOSapi.UIKit, {$ENDIF} DW.AlertDialog;
 
 type
   TAlertActionsHelper = record helper for TAlertActions
@@ -129,12 +129,16 @@ begin
 end;
 
 function TAlertDialog.CreateNativeAction(const AAction: TAlertAction): UIAlertAction;
+var
+  LStyle: UIAlertActionStyle;
 begin
-  Result := TUIAlertAction.Wrap(TUIAlertAction.OCClass.actionWithTitle(StrToNSStr(AAction.Title), UIAlertActionStyleDefault, ControllerActionHandler));
   if AAction.Style = TAlertActionStyle.Cancel then
-    Result.setStyle(UIAlertActionStyleCancel)
+    LStyle := UIAlertActionStyleCancel
   else if AAction.Style = TAlertActionStyle.Destructive then
-    Result.setStyle(UIAlertActionStyleDestructive);
+    LStyle := UIAlertActionStyleDestructive
+  else
+    LStyle := UIAlertActionStyleDefault;
+  Result := TUIAlertAction.Wrap(TUIAlertAction.OCClass.actionWithTitle(StrToNSStr(AAction.Title), LStyle, ControllerActionHandler));
 end;
 
 procedure TAlertDialog.ControllerActionHandler(action: UIAlertAction);
