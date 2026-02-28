@@ -4,6 +4,8 @@
 
 To automatically log when exceptions occur, and make it (slightly) easier to handle the Grijjy exception report
 
+**NOTE: This code is meant for Android, iOS and macOS only, i.e. Windows is NOT supported**
+
 ## Project Configuration
 
 If using the `DW.GrijjyErrorReporting` unit in your own code, please refer to the comments at the top of that unit.
