@@ -6,6 +6,8 @@ To automatically log when exceptions occur, and make it (slightly) easier to han
 
 **NOTE: This code is meant for Android, iOS and macOS only, i.e. Windows is NOT supported**
 
+This code can be especially useful for catching Delphi exceptions in *startup* code, which on Android can result in the **app being stuck on the splash screen, or crash before the user actually sees anything at all**. In those particular scenarios you will need a [log viewer](https://github.com/DelphiWorlds/HowTo/tree/main/Solutions/LogViewers#viewing-the-logs) to see what happened.
+
 ## Project Configuration
 
 If using the `DW.GrijjyErrorReporting` unit in your own code, please refer to the comments at the top of that unit.
